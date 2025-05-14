@@ -25,11 +25,21 @@ import {
 } from '../redux/JobStatusSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
-import { increment } from '../redux/TimerSlice';
+import { 
+  increment, 
+  startTimer, 
+  pauseTimer, 
+  resumeTimer,
+  selectJobTimer 
+} from '../redux/TimerSlice';
 
 const LocationTracker = ({
   isJobStarted,
   setIsJobStarted,
+  isPaused,
+  handlePause,
+  handleResume,
+  handleStartStop,
   data,
   orgId,
   showTracker,
@@ -39,6 +49,10 @@ const LocationTracker = ({
   const dispatch = useDispatch();
   const [isStopped, setStopped] = useState(false);
 
+  // Get job-specific timer info from Redux
+  const jobTimer = useSelector(state => selectJobTimer(state, data.id));
+  const activeJobId = useSelector(state => state.timer.activeJobId);
+
   const responseApi = useSelector(state => state.jobsStatusReducer.data);
   // console.log('responseApi', responseApi.timer);
 
@@ -47,6 +61,17 @@ const LocationTracker = ({
 
   const [location, setLocation] = useState([]);
   const [permissionGranted, setPermissionGranted] = useState(false);
+
+  // Log props for debugging
+  useEffect(() => {
+    console.log(`LocationTracker render for job ${data.id} - props:`, { 
+      isJobStarted, 
+      isPaused, 
+      showTracker, 
+      timer,
+      isActive: activeJobId === data.id 
+    });
+  }, [isJobStarted, isPaused, showTracker, timer, activeJobId, data.id]);
 
   useEffect(() => {
     const requestPermission = async () => {
@@ -79,11 +104,12 @@ const LocationTracker = ({
             longitude,
             date: new Date().toISOString(),
           });
-          console.log('Location:', updatedLocations);
-          // Save updated locations to AsyncStorage
-          AsyncStorage.setItem('locations', JSON.stringify(updatedLocations))
-            .then(() => console.log('Locations saved to AsyncStorage'))
-            .catch(error => console.error('Error saving locations:', error));
+          console.log(`Location for job ${data.id}:`, updatedLocations);
+          // Save updated locations to AsyncStorage with job-specific key
+          const locationsKey = `locations_${data.id}`;
+          AsyncStorage.setItem(locationsKey, JSON.stringify(updatedLocations))
+            .then(() => console.log(`Locations saved to AsyncStorage for job ${data.id}`))
+            .catch(error => console.error(`Error saving locations for job ${data.id}:`, error));
 
           return updatedLocations;
         });
@@ -104,11 +130,11 @@ const LocationTracker = ({
   useEffect(() => {
     if (permissionGranted) {
       getLocation();
-      if (timer!=null) {
-       startTracking()
+      if (timer != null && isJobStarted && !isPaused) {
+        startTracking()
       }
     }
-  }, [permissionGranted]);
+  }, [permissionGranted, isJobStarted, isPaused]);
 
   const hasLocationPermission = async () => {
     if (Platform.OS === 'ios') {
@@ -135,8 +161,14 @@ const LocationTracker = ({
       return;
     }
 
+    console.log(`Starting location tracking interval for job ${data.id}`);
     // getLocation();
     setShowTracker(true);
+
+    // Clear existing interval if any
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
     intervalRef.current = setInterval(() => {
       getLocation();
@@ -144,78 +176,220 @@ const LocationTracker = ({
   };
 
   const stopTracking = async () => {
-    const locations = await AsyncStorage.getItem('locations');
+    console.log(`Stopping tracking for job ${data.id}`);
+    // Get locations for this specific job
+    const locationsKey = `locations_${data.id}`;
+    const locationsStr = await AsyncStorage.getItem(locationsKey);
+    
+    // Parse the locations data to ensure it's in the right format
+    let locationsData = [];
+    try {
+      if (locationsStr) {
+        locationsData = JSON.parse(locationsStr);
+        console.log(`Retrieved ${locationsData.length} location points for job ${data.id}`);
+      } else {
+        console.log(`No stored locations found for job ${data.id}, using current location`);
+        // If no stored locations, create at least one entry with current time
+        const currentDate = new Date().toISOString();
+        locationsData = [{
+          latitude: "0",
+          longitude: "0", 
+          date: currentDate
+        }];
+        
+        // Try to get the last known location if available
+        if (location && location.length > 0) {
+          locationsData = [location[location.length - 1]];
+        }
+      }
+    } catch (error) {
+      console.error(`Error parsing locations for job ${data.id}:`, error);
+      // Provide fallback data
+      const currentDate = new Date().toISOString();
+      locationsData = [{
+        latitude: "0",
+        longitude: "0", 
+        date: currentDate
+      }];
+    }
+    
     setStopped(true);
-    setIsJobStarted(false)
-
+    
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-      console.log('Tracking stopped');
-      Alert.alert('Stopped', 'Location tracking has been stopped.');
+      console.log(`Tracking stopped for job ${data.id}`);
     }
+    
     setShowTracker(false);
+    
+    // First update the Redux timer state to reflect the pause
+    dispatch(pauseTimer(data.id));
+    
+    // Then send the API call with the location data
     const payload = {
       orgId: orgId,
       jobId: data.id,
-      data: locations,
+      data: locationsData // Send the validated location data
     };
-
+    
+    console.log(`Sending pause payload for job ${data.id}:`, payload);
+    
+    // Sequence the API call after state change
     dispatch(hitJobPause(payload));
-
-    setLocation([]);
-    // getLocation();
   };
 
+  // Monitor job's running state, managing location tracking interval
   useEffect(() => {
-    if (isJobStarted) {
+    if (isJobStarted && !isPaused) {
+      console.log(`Job ${data.id} is started and not paused, starting tracking`);
       startTracking();
+    } else if (isJobStarted && isPaused) {
+      console.log(`Job ${data.id} is paused, stopping tracking`);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     }
 
-    // return () => {
-    //   stopTracking();
-    // };
-  }, [isJobStarted]);
+    return () => {
+      if (intervalRef.current) {
+        console.log(`Cleaning up interval for job ${data.id}`);
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isJobStarted, isPaused, data.id]);
 
   const onStartPress = () => {
+    console.log(`onStartPress for job ${data.id}`);
+    
+    if (handleStartStop) {
+      handleStartStop(); // Use the provided handler
+      return;
+    }
+    
+    // Fall back to original behavior if handler not provided
     setIsJobStarted(true);
     setShowTracker(true);
     setStopped(false);
     const currentDate = new Date().toISOString();
+    
+    // Use latest location data if available
+    let locationToSend = {
+      latitude: "0",
+      longitude: "0",
+      date: currentDate,
+    };
+    
+    if (location && location.length > 0) {
+      locationToSend = {
+        latitude: location[0]?.latitude.toString() || "0",
+        longitude: location[0]?.longitude.toString() || "0",
+        date: currentDate,
+      };
+    }
+    
     const payload = {
       orgId: orgId,
       jobId: data.id,
-      data: [
-        {
-          latitude: location[0].latitude.toString(),
-          longitude: location[0].longitude.toString(),
-          date: currentDate,
-        },
-      ],
+      data: [locationToSend],
     };
 
+    // Start the timer for this specific job
+    dispatch(startTimer(data.id));
     dispatch(hitJobStart(payload));
-    dispatch(increment());
   };
 
   useEffect(() => {
     if (
       responseApi != null &&
-      responseApi.hasOwnProperty('timer')
+      responseApi.hasOwnProperty('timer') &&
+      responseApi.jobId === data.id // Only process for this job
     ) {
       if (!isStopped) {
-      // setTimer(Math.floor(responseApi.timer));   
+        // setTimer(Math.floor(responseApi.timer));   
         setIsJobStarted(true);
         setShowTracker(true);
         startTracking();
       }
     }
-    dispatch(clearJobStatus());
+    // Only clear if this response is for our job
+    if (responseApi && responseApi.jobId === data.id) {
+      dispatch(clearJobStatus());
+    }
   }, [responseApi]);
+
+  // Add useEffect to log when isPaused changes
+  useEffect(() => {
+    console.log(`LocationTracker job ${data.id}: isPaused state changed to:`, isPaused);
+  }, [isPaused, data.id]);
+
+  // Handle button presses with better error handling
+  const handlePauseButtonPress = () => {
+    console.log(`Pause button pressed in LocationTracker for job ${data.id}, current isPaused:`, isPaused);
+    
+    // If job isn't started yet, use startStop handler first
+    if (!isJobStarted) {
+      console.log(`Job ${data.id} not started, starting it first`);
+      if (handleStartStop) {
+        handleStartStop();
+      } else {
+        onStartPress();
+      }
+      return;
+    }
+    
+    // Pause only if we're running
+    if (isJobStarted && !isPaused) {
+      console.log(`Calling handlePause to pause job ${data.id}`);
+      
+      // We can't set isPaused directly here since it's a prop
+      // Let the parent component handle state changes through the handlePause callback
+      if (handlePause) {
+        handlePause();
+      } else {
+        stopTracking();
+      }
+    } else {
+      console.log(`Job ${data.id} already paused, cannot pause again`);
+    }
+  };
+
+  const handleResumeButtonPress = () => {
+    console.log(`Resume button pressed in LocationTracker for job ${data.id}, current isPaused:`, isPaused);
+    
+    // Resume only if we're paused
+    if (isJobStarted && isPaused) {
+      console.log(`Calling handleResume to resume job ${data.id}`);
+      if (handleResume) {
+        handleResume();
+      } else {
+        // If no custom handler, resume with defaults
+        // Don't set isPaused directly since it's a prop
+        // But we can still update Redux state
+        dispatch(startTimer(data.id));
+        dispatch(resumeTimer(data.id));
+        
+        startTracking();
+      }
+    } else {
+      console.log(`Job ${data.id} not paused, cannot resume`);
+    }
+  };
+  
+  const handleStartJobPress = () => {
+    console.log(`Start Job button pressed in LocationTracker for job ${data.id}`);
+    if (handleStartStop) {
+      handleStartStop();
+    } else {
+      onStartPress();
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {isJobStarted || data.action_status == 1 || data.action_status==2? (
+      {isJobStarted || data.action_status == 1 || data.action_status == 2 ? (
         <View style={styles.containerInner}>
           <SwipeButton
             width={270}
@@ -246,29 +420,39 @@ const LocationTracker = ({
             }}
             onSwipeSuccess={handleStart}
           />
-          {data.action_status==1 ? (
+          {/* Force re-render of the correct icon using key */}
+          {!isPaused ? (
             <TouchableOpacity
+              key="pause-button"
               style={styles.pauseIcon}
-              onPress={() => stopTracking()}>
+              onPress={handlePauseButtonPress}>
               <PauseJobIcon />
+              <View style={{alignItems: 'center'}}>
+                {/* <Text style={styles.iconText}>Pause</Text> */}
+              </View>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
+              key="resume-button"
               style={styles.pauseIcon}
-              onPress={() => onStartPress()}>
+              onPress={handleResumeButtonPress}>
               <StartJobPlayIcon />
+              <View style={{alignItems: 'center'}}>
+                {/* <Text style={styles.iconText}>Play</Text> */}
+              </View>
             </TouchableOpacity>
           )}
           {/* <Tracker onStop={handleStop} /> */}
         </View>
       ) : (
-        <TouchableOpacity style={{paddingHorizontal: 32}}>
+        <TouchableOpacity 
+          style={{paddingHorizontal: 32}} 
+          onPress={handleStartJobPress}>
           <Text
             style={[
               styles.confirmButton,
               {paddingVertical: 14, borderRadius: 32},
-            ]}
-            onPress={() => onStartPress()}>
+            ]}>
             Start the Job
           </Text>
         </TouchableOpacity>
@@ -278,6 +462,9 @@ const LocationTracker = ({
 };
 
 const styles = StyleSheet.create({
+  container: {
+    // Add container styles if needed
+  },
   pauseIcon: {
     // borderWidth: 8,
     height: 50,
@@ -306,6 +493,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 20,
     overflow: 'hidden',
+  },
+  iconText: {
+    color: appColors.white,
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

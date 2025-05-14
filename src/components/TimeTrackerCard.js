@@ -4,35 +4,93 @@ import {appColors} from '../utils/appColors';
 import WhitePlayIcon from '../assets/svg/WhitePlayIcon';
 import JobStartedTimeIcon from '../assets/svg/JobStartedTimeIcon';
 import JobPauseIcon from '../assets/svg/JobPauseIcon';
+import PauseJobIcon from '../assets/svg/PauseJobIcon';
+import StartJobPlayIcon from '../assets/svg/StartJobPlayIcon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { increment } from '../redux/TimerSlice';
-import { useDispatch } from 'react-redux';
+import {
+  increment, 
+  startTimer, 
+  resumeTimer,
+  selectJobTimer
+} from '../redux/TimerSlice';
+import {useDispatch, useSelector} from 'react-redux';
 
 const TimeTrackerCard = ({
   data,
   isJobStarted,
   setIsJobStarted,
+  isPaused,
+  handlePause,
+  handleResume,
+  handleStartStop,
   showTracker,
   timer,
 }) => {
   // console.log('isJobStarted', isJobStarted)
 
   const dispatch = useDispatch();
-  // useEffect(() => {
-  //   setLocalTimer()
-  //  }, [timer]);
+  
+  // Get job-specific timer info from Redux
+  const jobTimer = useSelector(state => selectJobTimer(state, data.id));
+  const activeJobId = useSelector(state => state.timer.activeJobId);
+  
+  // Log props for debugging
+  useEffect(() => {
+    console.log(`TimeTrackerCard render for job ${data.id} - props:`, {
+      isJobStarted, 
+      isPaused, 
+      showTracker, 
+      timer,
+      jobTimerValue: jobTimer ? jobTimer.value : 'not available',
+      isActive: activeJobId === data.id
+    });
+  }, [isJobStarted, isPaused, showTracker, timer, jobTimer, activeJobId, data.id]);
 
-   const setLocalTimer = async () => {
-    console.log('timer', timer);
-    await AsyncStorage.setItem('timer', timer.toString());
-   }
+  // Add useEffect to log when isPaused changes
+  useEffect(() => {
+    console.log(`TimeTrackerCard job ${data.id}: isPaused state changed to:`, isPaused);
+  }, [isPaused, data.id]);
+
+  const setLocalTimer = async () => {
+    console.log(`Storing timer for job ${data.id}:`, timer);
+    await AsyncStorage.setItem(`timer_${data.id}`, timer.toString());
+  }
 
   const formatTime = seconds => {
-    
     const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
     const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
     const secs = String(seconds % 60).padStart(2, '0');
     return `${hrs}:${mins}:${secs}`;
+  };
+
+  const handlePauseButtonPress = () => {
+    console.log(`Pause button pressed in TimeTrackerCard for job ${data.id}`);
+    
+    // If job isn't started yet, start it first
+    if (!isJobStarted) {
+      console.log(`TimeTrackerCard: Job ${data.id} not started, starting it first`);
+      if (handleStartStop) {
+        handleStartStop();
+      }
+      return;
+    }
+    
+    if (handlePause) {
+      console.log(`Pausing job ${data.id}`);
+      handlePause();
+    }
+  };
+
+  const handleResumeButtonPress = () => {
+    console.log(`Resume button pressed in TimeTrackerCard for job ${data.id}`);
+    if (handleResume) {
+      console.log(`Resuming job ${data.id}`);
+      handleResume();
+    } else {
+      // If no handler was provided, try to resume directly
+      dispatch(startTimer(data.id)); // Make this the active job
+      dispatch(resumeTimer(data.id));
+    }
   };
 
   return (
@@ -42,9 +100,12 @@ const TimeTrackerCard = ({
       </View>
       <View style={styles.header}>
         <Text style={styles.jobId}>THE-JB-{data.number}</Text>
+        {/* <Text style={styles.jobStatus}>
+          {isJobStarted ? (isPaused ? "Paused" : "Active") : "Ready"}
+        </Text> */}
       </View>
 
-      <Text style={styles.title}>SMM | theAd Tempaltes ST</Text>
+      <Text style={styles.title}>SMM | theAd Templates ST</Text>
       <Text style={styles.timer}>{formatTime(timer)}</Text>
 
       <View style={styles.footer}>
@@ -95,20 +156,23 @@ const TimeTrackerCard = ({
             </Text>
           </View>
         </View>
-        {showTracker ? (
-          <View
+        {/* Force re-render with key */}
+        {!isPaused ? (
+          <TouchableOpacity
+            key={`in-progress-button-${data.id}`}
             style={styles.statusButton}
-            onPress={() => setIsJobStarted(false)}>
-            <WhitePlayIcon />
+            onPress={handlePauseButtonPress}>
+            <PauseJobIcon height={16} width={16}/>
             <Text style={styles.statusText}>In Progress</Text>
-          </View>
+          </TouchableOpacity>
         ) : (
-          <View
+          <TouchableOpacity
+            key={`paused-button-${data.id}`}
             style={styles.statusButton}
-            onPress={() => setIsJobStarted(true)}>
-            <JobPauseIcon />
+            onPress={handleResumeButtonPress}>
+            <WhitePlayIcon height={16} width={16}/>
             <Text style={styles.statusText}>On pause</Text>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
     </View>
@@ -183,6 +247,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 12,
     marginLeft: 6,
+  },
+  jobStatus: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '600',
+    backgroundColor: '#333333',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
 });
 

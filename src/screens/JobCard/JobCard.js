@@ -8,8 +8,10 @@ import {
   Alert,
   Modal,
   TextInput,
+  Platform,
+  ToastAndroid,
 } from 'react-native';
-import React, {use, useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {appColors} from '../../utils/appColors';
 import WhiteBackIcon from '../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
@@ -36,6 +38,23 @@ import TimeTrackerCard from '../../components/TimeTrackerCard';
 import moment from 'moment';
 import ChatIconJob from '../../assets/svg/ChatIconJob';
 import {increment} from '../../redux/TimerSlice';
+import {
+  hitJobStart,
+  hitJobPause,
+  hitJobStop,
+  clearJobStatus,
+} from '../../redux/JobStatusSlice';
+import Geolocation from 'react-native-geolocation-service';
+import {
+  startTimer,
+  pauseTimer,
+  resumeTimer,
+  stopTimer,
+  startBackgroundTimer,
+  loadTimerStateFromStorage,
+  selectJobTimer
+} from '../../redux/TimerSlice';
+
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
   const {data} = route.params;
@@ -43,15 +62,33 @@ const JobCard = ({navigation, route}) => {
   const [orgId, setOrgId] = useState('');
   const [isAccept, setAccept] = useState(false);
   const [isDecline, setDecline] = useState(false);
-  const [reason, setReason] = useState(false);
+  const [reason, setReason] = useState('');
   let text = data.long_description;
   const [isJobStarted, setIsJobStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [isExpand, setExpand] = useState(false);
-  const timer = useSelector(state => state.timer.value);
+  
+  // Get global timer state (primarily for the active job)
+  const globalTimer = useSelector(state => state.timer.value);
+  
+  // Get the job-specific timer for this job
+  const jobTimer = useSelector(state => selectJobTimer(state, data.id));
+  
+  // Use the job-specific timer value instead of the global one
+  const timer = jobTimer ? jobTimer.value : 0;
+  
+  // Track which job is active in the Redux store
+  const activeJobId = useSelector(state => state.timer.activeJobId);
+  
+  const intervalRef = useRef(null);
+  const [lastApiCallTime, setLastApiCallTime] = useState(0);
+  const [location, setLocation] = useState([]);
 
   const responseAccDec = useSelector(
     state => state.jobsAcceptDeclineReducer.data,
   );
+  
+  const jobStatusResponse = useSelector(state => state.jobsStatusReducer.data);
 
   const getOrgId = async () => {
     const orgId = await AsyncStorage.getItem('orgId');
@@ -76,39 +113,292 @@ const JobCard = ({navigation, route}) => {
     };
     dispatch(hitDeclineJobs(payload));
   };
+
   useEffect(() => {
+    console.log(`JobCard mounted for job ID: ${data.id}, action_status:`, data.action_status);
+    
     getOrgId();
-    // setTimer(0);
-  }, []);
-
-  useEffect(() => {
-    console.log('timer', timer);
-    if (data.action_status == 1) {
+    
+    // Force start the job immediately if action_status is 1
+    if (data.action_status === 1) {
+      console.log(`Setting job ${data.id} started from action_status=1`);
       setIsJobStarted(true);
-    } else {
-      setIsJobStarted(false);
+      setIsPaused(false);
+      
+      // Need to manually trigger the Redux state as well
+      setTimeout(() => {
+        console.log(`Dispatching startTimer for initial job start for job ${data.id}`);
+        dispatch(startTimer(data.id));
+        startBackgroundTimer(dispatch);
+        startLocationTracking();
+      }, 500);
     }
-    // return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    let interval
-    if (isJobStarted) {
-      interval = setInterval(() => {
-        dispatch(increment());
-      }, 1000);
-    } else {
-      if (isJobStarted == false) {
-        clearInterval(interval);
+    
+    // Check if this specific job is already running
+    loadTimerStateFromStorage(dispatch).then(({jobs, activeJobId}) => {
+      console.log(`Checking stored timer state for job ${data.id}`, {
+        hasJobData: jobs && jobs[data.id] ? true : false,
+        activeJobId
+      });
+      
+      if (jobs && jobs[data.id]) {
+        const jobState = jobs[data.id];
+        console.log(`Found stored state for job ${data.id}:`, jobState);
+        
+        // Set local state based on the job's stored state
+        setIsJobStarted(jobState.isRunning);
+        setIsPaused(jobState.isPaused);
+        
+        // If the job is running and not paused, start location tracking
+        if (jobState.isRunning && !jobState.isPaused) {
+          console.log(`Starting location tracking for job ${data.id} from loaded state`);
+          startLocationTracking();
+        }
       }
+    });
+    
+    // Make sure the background timer starts if needed
+    startBackgroundTimer(dispatch);
+    
+    // Clean up function
+    return () => {
+      console.log(`JobCard unmounting for job ID: ${data.id}`);
+      // Do not stop the background timer since it may be needed for other jobs!
+      // Just stop location tracking for this job
+      stopLocationTracking();
+    };
+  }, [data.id]);
+  
+  // Function to start location tracking
+  const startLocationTracking = () => {
+    console.log(`Starting location tracking for job ${data.id}`);
+    
+    // Get initial location
+    getCurrentLocation();
+    
+    // Set up regular location tracking
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        getCurrentLocation();
+      }, 30000); // Every 30 seconds
     }
-  }, [isJobStarted]);
-  // const getTimer = async () => {
-  //   const timer = await AsyncStorage.getItem('timer');
-  //   console.log('Timer', timer);
-  //   setTimer(timer.parseInt());
+  };
+  
+  // Create a better location tracking control function
+  const stopLocationTracking = () => {
+    console.log(`Stopping location tracking for job ${data.id}`);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      console.log('Location tracking interval cleared');
+    }
+  };
 
-  // }
+  // Fix the direct pause handler
+  const handleDirectPause = () => {
+    console.log(`Direct pause called for job ${data.id}, current state:`, { 
+      isJobStarted, 
+      isPaused, 
+      timer,
+      activeJobId
+    });
+    
+    // First check if we need to start the job
+    if (!isJobStarted) {
+      console.log('Job not started yet, starting it first');
+      handleStartStop();
+      return;
+    }
+    
+    // Only if we're in a running state
+    if (isJobStarted && !isPaused) {
+      console.log(`Pausing job ${data.id}`);
+      
+      // Update local state immediately to ensure UI responds
+      setIsPaused(true);
+      setShowTracker(false);
+      
+      // Explicitly stop location tracking
+      stopLocationTracking();
+      console.log('Location tracking stopped due to pause');
+      
+      // Update Redux timer state to paused
+      dispatch(pauseTimer(data.id));
+      
+      // Prepare and send API call with properly formatted data
+      console.log('Making pause API call');
+      
+      // Get the locations for this specific job
+      const locationsKey = `locations_${data.id}`;
+      AsyncStorage.getItem(locationsKey)
+        .then(locationsStr => {
+          let locationsData = [];
+          
+          try {
+            if (locationsStr) {
+              locationsData = JSON.parse(locationsStr);
+              console.log(`Found ${locationsData.length} location points for pause API call`);
+            } else {
+              console.log('No stored locations, using current location');
+              // Fallback to current location if available
+              if (location && location.length > 0) {
+                locationsData = location;
+              } else {
+                // Create a minimal valid location entry
+                const currentDate = new Date().toISOString();
+                locationsData = [{
+                  latitude: "0",
+                  longitude: "0",
+                  date: currentDate
+                }];
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing locations:', error);
+            // Fallback to a minimal valid location
+            const currentDate = new Date().toISOString();
+            locationsData = [{
+              latitude: "0",
+              longitude: "0",
+              date: currentDate
+            }];
+          }
+          
+          // Ensure the payload is correctly formatted
+          const payload = {
+            orgId,
+            jobId: data.id,
+            data: locationsData
+          };
+          
+          console.log(`Sending pause payload for job ${data.id}:`, payload);
+          dispatch(hitJobPause(payload));
+          console.log('Pause API call completed');
+        })
+        .catch(err => {
+          console.error('Error loading locations:', err);
+          // Even on error, send minimal data to avoid API errors
+          const currentDate = new Date().toISOString();
+          const fallbackData = [{
+            latitude: "0",
+            longitude: "0",
+            date: currentDate
+          }];
+          
+          dispatch(hitJobPause({
+            orgId,
+            jobId: data.id,
+            data: fallbackData
+          }));
+        });
+    } else {
+      console.log('Cannot pause: job not started or already paused', { isJobStarted, isPaused });
+    }
+  };
+
+  // Fix the direct resume handler
+  const handleDirectResume = () => {
+    console.log(`Direct resume called for job ${data.id}, current state:`, { 
+      isJobStarted, 
+      isPaused, 
+      timer,
+      activeJobId
+    });
+    
+    // Only if we're in a paused state
+    if (isJobStarted && isPaused) {
+      console.log(`Resuming job ${data.id}`);
+      
+      // Update local state
+      setIsPaused(false);
+      setShowTracker(true);
+      
+      // Update Redux timer state to resumed
+      dispatch(resumeTimer(data.id));
+      
+      // Make sure background timer is running and this job is active
+      dispatch(startTimer(data.id)); // Ensure this job becomes the active job
+      startBackgroundTimer(dispatch);
+      
+      // Explicitly restart location tracking
+      startLocationTracking();
+      console.log('Location tracking restarted for resumed job');
+      
+      // API call
+      console.log('Making resume API call');
+      getCurrentLocation();
+    } else {
+      console.log('Cannot resume: job not started or not paused', { isJobStarted, isPaused });
+    }
+  };
+
+  const handleStartStop = () => {
+    console.log(`handleStartStop called for job ${data.id}, current state:`, { 
+      isJobStarted, 
+      isPaused, 
+      timer,
+      activeJobId 
+    });
+    
+    if (!isJobStarted) {
+      console.log(`Starting job ${data.id}`);
+      
+      // Starting the job
+      setIsJobStarted(true);
+      setIsPaused(false);
+      setShowTracker(true);
+      
+      // Update Redux timer state to started
+      dispatch(startTimer(data.id));
+      
+      // Make sure background timer is running
+      startBackgroundTimer(dispatch);
+      
+      // Start location tracking
+      startLocationTracking();
+      
+      // Start job API
+      getCurrentLocation();
+      
+      // Update UI immediately, don't wait for state updates
+      console.log('Job started successfully');
+      return true;
+    } else if (isJobStarted && !isPaused) {
+      // If job is running, pause it
+      console.log('Job is running, pausing it');
+      handleDirectPause();
+      return true;
+    } else if (isJobStarted && isPaused) {
+      // If job is paused, resume it
+      console.log('Job is paused, resuming it');
+      handleDirectResume();
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Add this function to directly start the job (called from UI components)
+  const startJob = () => {
+    console.log(`startJob called directly for job ${data.id}`);
+    handleStartStop();
+  };
+
+  // Monitor job status response
+  useEffect(() => {
+    if (jobStatusResponse && jobStatusResponse.jobId === data.id) {
+      if (jobStatusResponse.hasOwnProperty('timer')) {
+        // If we got a timer from the API
+        if (!isPaused) {
+          setIsJobStarted(true);
+        }
+      }
+      
+      // Clear the response after processing
+      dispatch(clearJobStatus());
+    }
+  }, [jobStatusResponse, dispatch, data.id]);
+
   const handleCopy = () => {
     Clipboard.setString(text);
     if (Platform.OS === 'android') {
@@ -120,7 +410,7 @@ const JobCard = ({navigation, route}) => {
 
   useEffect(() => {
     console.log('Response ACC Dec', responseAccDec);
-    if (responseAccDec != null) {
+    if (responseAccDec != null && responseAccDec.jobId === data.id) {
       if (responseAccDec.status == 'Ok') {
         setAccept(false);
         // navigation.navigate('JobCardConfirmButton');
@@ -129,7 +419,77 @@ const JobCard = ({navigation, route}) => {
         Alert.alert('MeMate', 'Internal server error');
       }
     }
-  }, [responseAccDec]);
+  }, [responseAccDec, data.id]);
+
+  // Add useEffect to synchronize component state with Redux job-specific state
+  useEffect(() => {
+    if (jobTimer) {
+      const shouldUpdateRunning = jobTimer.isRunning !== isJobStarted;
+      const shouldUpdatePaused = jobTimer.isPaused !== isPaused;
+      
+      if (shouldUpdateRunning || shouldUpdatePaused) {
+        console.log(`Synchronizing job ${data.id} state with Redux timer state:`, {
+          reduxIsRunning: jobTimer.isRunning,
+          reduxIsPaused: jobTimer.isPaused,
+          componentIsRunning: isJobStarted,
+          componentIsPaused: isPaused
+        });
+        
+        setIsJobStarted(jobTimer.isRunning);
+        setIsPaused(jobTimer.isPaused);
+      }
+    }
+  }, [jobTimer, data.id]);
+
+  // Update to force proper rerendering of child components when state changes
+  useEffect(() => {
+    console.log(`JobCard ${data.id} isPaused state changed to:`, isPaused);
+    
+    // Force a refresh of components that depend on this state
+    if (isPaused) {
+      console.log(`Job ${data.id} is now paused, stopping location tracking`);
+      stopLocationTracking();
+    } else if (isJobStarted) {
+      console.log(`Job ${data.id} is now running, starting location tracking`);
+      startLocationTracking();
+    }
+  }, [isPaused, isJobStarted, data.id]);
+
+  const getCurrentLocation = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        const currentDate = new Date().toISOString();
+        const locationData = {
+          latitude: latitude.toString(),
+          longitude: longitude.toString(),
+          date: currentDate,
+        };
+        
+        // Update local state
+        setLocation(prev => [...(prev || []), locationData]);
+        
+        // Send to API
+        const payload = {
+          orgId,
+          jobId: data.id,
+          data: [locationData],
+        };
+        
+        if (isJobStarted && !isPaused) {
+          dispatch(hitJobStart(payload));
+        }
+      },
+      error => {
+        console.error('Location error:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000,
+      },
+    );
+  };
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -159,6 +519,10 @@ const JobCard = ({navigation, route}) => {
           <LocationTracker
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}
+            isPaused={isPaused}
+            handlePause={handleDirectPause}
+            handleResume={handleDirectResume}
+            handleStartStop={handleStartStop}
             data={data}
             orgId={orgId}
             showTracker={showTracker}
@@ -173,6 +537,10 @@ const JobCard = ({navigation, route}) => {
             data={data}
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}
+            isPaused={isPaused}
+            handlePause={handleDirectPause}
+            handleResume={handleDirectResume}
+            handleStartStop={startJob}
             showTracker={showTracker}
             timer={timer}
           />
