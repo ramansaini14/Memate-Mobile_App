@@ -16,6 +16,7 @@ export const verifyEmailCode = "api/v1/m/verify/email/code/"
 // https://dev.memate.com.au/api/v1/m/user/pin/
 export const createPin = "api/v1/m/user/pin/"
 export const verifyPhone = "api/v1/m/verify/phone/"
+// https://dev.memate.com.au/api/v1/m/verify/phone/code/
 export const verifyPhoneCode = "api/v1/m/verify/phone/code/"
 // https://dev.memate.com.au/api/v1/references/countries/
 export const getCountries = "api/v1/references/countries/"

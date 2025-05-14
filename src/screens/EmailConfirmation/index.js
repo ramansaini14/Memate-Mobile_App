@@ -81,7 +81,7 @@ const EmailConfirmation = ({navigation, route}) => {
 
   const onSubmitClick = () => {
     if (otp.length < 6) {
-      alert('Please enter valid otp');
+      Alert.alert('Please enter valid otp');
     } else {
       if(from==0){
         const payload = {

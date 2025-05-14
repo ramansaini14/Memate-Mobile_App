@@ -11,7 +11,8 @@ const VerifyPhoneNumber = ({ navigation,route }) => {
   const {phoneNumber} = route.params;
 
   const dispatch = useDispatch()
-  const responseVerifyCode = useSelector((state)=>state.verifyPhoneCodeReducer)
+  const {statusCode, error, isLoading,data } = useSelector(state => state.verifyPhoneCodeReducer);
+  // const responseVerifyCode = useSelector(state => state.verifyPhoneCodeReducer.data);
 
   const [otp,setOtp] = useState("")
 
@@ -21,15 +22,15 @@ const VerifyPhoneNumber = ({ navigation,route }) => {
       code:otp
     }
     dispatch(hitVerifyPhoneCode(payload))
-    navigation.goBack()
+    // navigation.goBack()
   }
 
   useEffect(()=>{
-    console.log("responseVerifyCode ===> ",responseVerifyCode)
-    if(responseVerifyCode!=null){
+    console.log("responseVerifyCode ===> ",statusCode)
+    if(statusCode!=null){
       navigation.goBack()
     }
-  },[responseVerifyCode])
+  },[statusCode])
 
   return (
 

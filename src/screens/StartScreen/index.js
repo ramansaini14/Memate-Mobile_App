@@ -24,6 +24,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
       console.log("First Screen")
      setTokenVal()
     }, []);
+
+    const goToCreate = async () =>{
+      await AsyncStorage.setItem("isNew",'true')
+      navigation.navigate('SignInWithEmail',{from:2})
+    }
   
     
   return (
@@ -42,7 +47,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
             Login
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={()=> navigation.navigate('SignInWithEmail',{from:2})}>
+        <TouchableOpacity onPress={()=> goToCreate()}>
           <Text style={styles.textStyle}>Create Account</Text>
         </TouchableOpacity>
       </View>

@@ -7,6 +7,7 @@ import BackIcon from '../../assets/svg/BackIcon';
 import {useDispatch, useSelector} from 'react-redux';
 import {hitAppTerms} from '../../redux/GetAppTermsSlice';
 import {clearAcceptDeclineTerms, hitAcceptDeclineTerms} from '../../redux/AcceptDeclineTermSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TermsAndConditions = ({navigation, route}) => {
   const {from, id} = route.params;
@@ -35,7 +36,7 @@ const TermsAndConditions = ({navigation, route}) => {
     }
   };
 
-  const onAcceptClick = () => {
+  const onAcceptClick = async() => {
     if (from == 'org') {
       const payload = {
         accept: 'accept',
@@ -43,6 +44,7 @@ const TermsAndConditions = ({navigation, route}) => {
       };
       dispatch(hitAcceptDeclineTerms(payload));
     } else {
+      await AsyncStorage.setItem("isAppTerm",'true')
       navigation.navigate('RequireDetails');
     }
   };

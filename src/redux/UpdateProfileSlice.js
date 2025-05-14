@@ -21,9 +21,7 @@ export const hitUpdateProfile = createAsyncThunk(
 
     const formData = new FormData();
 
-    
-
-
+  
     formData.append('photo', {
       uri: payload.image.path,
       name: payload.image.filename,
@@ -78,7 +76,10 @@ export const hitUpdateProfile = createAsyncThunk(
       console.log("URl ====> ",url)
       const response = await axios.put(url, formData, config);
       console.log('Upload file Response ===>', response.data);
-      return response.data;
+      return {
+        data: response.data,
+        status: response.status,
+      };
     } catch (error) {
       console.log('Error Details:', error.response?.data || error.message);
       throw error;
@@ -91,26 +92,31 @@ const UpdateProfileSlice = createSlice({
   initialState: {
     data: null,
     loading: 'idle',
+    status:null,
     error: null,
   },
   reducers: {
     clearUpdateProfile: state => {
       state.data = null;
+      state.statusCode = null;
     },
   },
   extraReducers: builder => {
     builder
       .addCase(hitUpdateProfile.pending, state => {
         state.loading = 'pending';
+        state.statusCode = null;
       })
       .addCase(hitUpdateProfile.fulfilled, (state, action) => {
         state.loading = 'idle';
         state.data = action.payload;
         state.error = null;
+        state.statusCode = action.payload.status;
       })
       .addCase(hitUpdateProfile.rejected, (state, action) => {
         console.log('Upload Image Error ===> ', action.payload);
         state.loading = 'idle';
+        state.statusCode = action.payload?.status;
         state.error = action.error.message;
       });
   },

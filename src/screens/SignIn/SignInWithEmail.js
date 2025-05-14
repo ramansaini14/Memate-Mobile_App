@@ -100,7 +100,7 @@ const SignInWithEmail = ({ navigation,route }) => {
           keyboardType='default'
         />
         <TouchableOpacity style={styles.buttonStyle} onPress={() => { onLoginClick(); }}>
-          <Text style={{ color: appColors.black, fontWeight: '700',fontSize:16 }}> {from==1?"Sign In":"Sign Up"}</Text>
+          <Text style={{ color: appColors.black, fontWeight: '700',fontSize:16 }}> {from==0?"Sign In":"Sign Up"}</Text>
         </TouchableOpacity>
       </View>
        {from!=2&&<TouchableOpacity

@@ -4,7 +4,7 @@ import verifyEmailReducer from "./VerifyEmailSlice";
 import verifyEmailCodeReducer from "./VerifyEmailCodeSlice";
 import createPinReducer from "./CreatePinSlice";
 import verifyPhoneReducer from "./VerifyPhoneSlice";
-import verifyPhoneCodeReducer from "./VerifyEmailCodeSlice";
+import verifyPhoneCodeReducer from "./VerifyPhoneCodeSlice";
 import getCountriesReducer from "./GetCountriesSlice";
 import getStateReducer from "./GetStateSlice";
 import getCityReducer from "./GetCitiesSlice";

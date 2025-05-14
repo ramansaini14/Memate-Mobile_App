@@ -8,6 +8,8 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  Modal,
+  Button,
 } from 'react-native';
 import {appColors} from '../../../utils/appColors';
 import PhoneInput from 'react-native-phone-input';
@@ -26,6 +28,7 @@ import {clearVerifyPhoneCode} from '../../../redux/VerifyPhoneCodeSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useIsFocused } from '@react-navigation/native';
 
 const RequiredDetails = ({navigation}) => {
   const dispatch = useDispatch();
@@ -34,7 +37,7 @@ const RequiredDetails = ({navigation}) => {
   );
 
   const phoneRef = useRef(null);
-  const responseVerifyCode = useSelector(state => state.verifyPhoneCodeReducer);
+  const {statusCode, error, isLoading,data } = useSelector(state => state.verifyPhoneCodeReducer);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
@@ -51,6 +54,10 @@ const RequiredDetails = ({navigation}) => {
   const [selectedOption, setSelectedOption] = useState('yes');
   const [date, setDate] = useState(new Date());
   const [show, setShow] = useState(false);
+  const isFouced = useIsFocused()
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
@@ -58,29 +65,34 @@ const RequiredDetails = ({navigation}) => {
     setDate(currentDate);
   };
 
-
   const options = [
     {id: 'yes', label: 'Yes'},
     {id: 'no', label: 'No'},
   ];
 
   const onSelectCountry = country => {
-    console.log("country ===> ",country)
+    console.log('country ===> ', country);
     setCountryCode(country.cca2);
     setCountryPickerVisible(false);
   };
 
   const onClickVerify = () => {
+    if(phoneNumber!=""){
     const payload = {
       phone: phoneNumber,
     };
     console.log('Payload ===>', payload);
     dispatch(hitVerifyPhone(payload));
+  }
+  else{
+    Alert.alert("Please Enter Phone number!")
+  }
   };
 
   const getEmail = async () => {
     const email = await AsyncStorage.getItem('email');
     setEmail(email);
+    await AsyncStorage.setItem("isRequired",'true')
   };
 
   useEffect(() => {
@@ -88,45 +100,53 @@ const RequiredDetails = ({navigation}) => {
   }, []);
 
   useEffect(() => {
+
     if (responseVerifyPhone != null) {
-      dispatch(clearVerifyPhone());
+      console.log('responseVerifyPhone ===> ', responseVerifyPhone);
       navigation.navigate('VerifyPhoneNumber', {phoneNumber: phoneNumber});
+      dispatch(clearVerifyPhone());
+     
     }
   }, [responseVerifyPhone]);
 
   useEffect(() => {
-    console.log('responseVerifyCode ===> ', responseVerifyCode);
-    if (responseVerifyCode != null) {
+    console.log('responseVerifyCode ===> ', statusCode);
+
+      if(statusCode==200){
       setVarifiedPhn(true);
       dispatch(clearVerifyPhoneCode());
-    }
-  }, [responseVerifyCode]);
+      }
+    
+  }, [statusCode]);
 
   const [selected, setSelected] = useState('');
   const [viewCal, setViewCal] = useState(false);
   const currentDate = new Date().toISOString().split('T')[0];
 
-  const goToNextScreen = () =>{
+  const goToNextScreen = () => {
 
-    // console.log("Phone number ===> ",)
-
-    if(lastName=='' || firstName=='' || phoneNumber=='' || dob == '' || abn=='' || selectedDate){
-      Alert.alert("All fields are required!")
-    }else{
-
-    navigation.navigate('ProfileAddress', {
-      detailData: {
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        countryCode:countryCode=="IN"?91:countryCode,
-        phoneNumber: phoneNumber.substring(countryCode.length+1),
-        dob: selectedDate,
-        abn: abn,
-      },
-    })
-  }
-  }
+    if (
+      lastName == '' ||
+      firstName == '' ||
+      phoneNumber == '' ||
+      abn == '' ||
+      selectedDate==''
+    ) {
+      Alert.alert('All fields are required!');
+    } else {
+      navigation.navigate('ProfileAddress', {
+        detailData: {
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          countryCode: countryCode == 'IN' ? 91 : countryCode,
+          phoneNumber: phoneNumber.substring(countryCode.length + 1),
+          dob: selectedDate,
+          abn: abn,
+        },
+      });
+    }
+  };
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -202,14 +222,17 @@ const RequiredDetails = ({navigation}) => {
                 textStyle={{color: 'white'}}
               /> */}
             <PhoneInput
-            ref={phoneRef}
+              ref={phoneRef}
               style={{padding: 16, backgroundColor: appColors.inputBackground}}
               initialCountry={countryCode.toLowerCase()} // Convert to lowercase
               value={phoneNumber}
               onChangePhoneNumber={setPhoneNumber}
               textStyle={{color: 'white'}}
-              onSelectCountry={(iso2) => {
-                console.log("phoneRef.current.getCountryCode() ===> ",phoneRef.current.getCountryCode())
+              onSelectCountry={iso2 => {
+                console.log(
+                  'phoneRef.current.getCountryCode() ===> ',
+                  phoneRef.current.getCountryCode(),
+                );
                 const code = phoneRef.current.getCountryCode();
                 setCountryCode(code);
               }}
@@ -269,7 +292,7 @@ const RequiredDetails = ({navigation}) => {
             />
             <TouchableOpacity
               style={{marginRight: 16}}
-              onPress={() => setModalVisible(true)}>
+              onPress={() => setShowDatePicker(true)}>
               <WhiteCalender />
             </TouchableOpacity>
           </View>
@@ -322,7 +345,7 @@ const RequiredDetails = ({navigation}) => {
           </View>
           <TouchableOpacity
             style={styles.buttonStyle}
-            onPress={() =>goToNextScreen()}>
+            onPress={() => goToNextScreen()}>
             <Text
               style={{
                 color: appColors.black,
@@ -338,24 +361,60 @@ const RequiredDetails = ({navigation}) => {
             <NextArrow />
           </TouchableOpacity>
         </View>
-        <Modal
-  isVisible={isDatePickerVisible}
-  onBackdropPress={hideDatePicker}
-  style={{ justifyContent: 'flex-end', margin: 0 }}
->
-  <View style={{ backgroundColor: 'white', padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-    <Text style={{ fontSize: 18, marginBottom: 10 }}>Select a Date</Text>
-    <DateTimePicker
-      value={selectedDate}
-      mode="date"
-      display="default"
-      onChange={handleDateChange}
-    />
-    <TouchableOpacity onPress={hideDatePicker} style={[styles.buttonStyle, { marginTop: 20 }]}>
-      <Text style={{ fontWeight: '700' }}>Confirm</Text>
-    </TouchableOpacity>
-  </View>
-</Modal>
+        {showDatePicker  && (
+            <Modal transparent={true} animationType="slide">
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000088' }}>
+                <View style={{ backgroundColor: 'white', padding: 16 }}>
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        console.log("Selected Date ====> ",selectedDate)
+                        setTempDate(selectedDate); // Store temporarily until OK is pressed
+                      }
+                    }}
+                  />
+                  <Button
+                    title="OK"
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      if (tempDate) {
+                        const formattedDate = tempDate.toISOString().split('T')[0];
+                        setSelectedDate(formattedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
+          )} 
+        {/* <Modal
+          isVisible={isDatePickerVisible}
+          onBackdropPress={hideDatePicker}
+          style={{justifyContent: 'flex-end', margin: 0}}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 20,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+            }}>
+            <Text style={{fontSize: 18, marginBottom: 10}}>Select a Date</Text>
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+            />
+            <TouchableOpacity
+              onPress={hideDatePicker}
+              style={[styles.buttonStyle, {marginTop: 20}]}>
+              <Text style={{fontWeight: '700'}}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal> */}
       </ScrollView>
     </SafeAreaView>
   );

@@ -5,6 +5,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
+  PermissionsAndroid,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {appColors} from '../../../utils/appColors';
@@ -12,90 +15,118 @@ import BackIcon from '../../../assets/svg/BackIcon';
 import ProfilePictureIcon from '../../../assets/svg/ProfilePictureIcon';
 import NextArrow from '../../../assets/svg/NextArrow';
 import ImagePicker from 'react-native-image-crop-picker';
-import { useDispatch } from 'react-redux';
-import { hitUpdateProfile } from '../../../redux/UpdateProfileSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {hitUpdateProfile} from '../../../redux/UpdateProfileSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfilePicture = ({navigation, route}) => {
   const {profileData} = route.params;
   const [image, setImage] = useState(null);
+  const dispatch = useDispatch();
 
-  console.log('ProfileData ===> ', profileData);
+  const {statusCode,data} = useSelector((state)=>state.updateProfileReducer)
 
-  const dispatch = useDispatch()
+  const requestPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ]);
+        return Object.values(granted).every(val => val === 'granted');
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
 
-  function pickImage() {
+  const pickImage = async () => {
+    const hasPermission = await requestPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Please grant permission to continue');
+      return;
+    }
+
     ImagePicker.openPicker({
       width: 300,
       height: 300,
       cropping: true,
       cropperToolbarTitle: 'Crop your profile picture',
       cropperCircleOverlay: true,
-      aspectRatio: 1,
-      // hideBottomControls: true,
-    }).then(img => {
-      setImage(img);
-      // setVisible(true);
-    });
-  }
+      compressImageQuality: 0.8,
+      mediaType: 'photo',
+    })
+      .then(img => {
+        setImage(img);
+      })
+      .catch(err => {
+        if (err.code !== 'E_PICKER_CANCELLED') {
+          Alert.alert('Error', 'Failed to pick image');
+          console.error('Image picker error: ', err);
+        }
+      });
+  };
 
-  // useEffect(()=>{
-  //   console.log("Image ===> ",image)
-  // },[image])
-
-  const onNextClick = () =>{
-    const payload = {
-      image : image,
-      profileData : profileData
+  const onNextClick = () => {
+    if (!image) {
+      Alert.alert('Required', 'Please select an image');
+      return;
     }
 
-    dispatch(hitUpdateProfile(payload))
+    const payload = {
+      image,
+      profileData,
+    };
 
+    dispatch(hitUpdateProfile(payload));
+  };
+
+  const clearAysnc = async () =>{
+    await AsyncStorage.removeItem("isPinCreate")
+    await AsyncStorage.removeItem("isRequired")
+    await AsyncStorage.removeItem("isAppTerm")
+    await AsyncStorage.removeItem("isNew")
+    navigation.navigate('ChooseOrganization');
   }
+
+  useEffect(()=>{
+    if(statusCode==200){
+      clearAysnc()
+    }
+  },[statusCode])
 
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerView}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          {image == null ? <BackIcon /> : <Image source={{uri: image}} />}
+          <BackIcon />
         </TouchableOpacity>
         <Text style={styles.headerText}>Profile - Address</Text>
       </View>
+
       <View style={styles.mainViewStyle}>
-        <Text
-          style={{
-            fontSize: 20,
-            fontFamily: 'sf-pro-text-semibold',
-            color: appColors.white,
-          }}>
-          Profile Picture
-        </Text>
+        <Text style={styles.title}>Profile Picture</Text>
+
         <TouchableOpacity
-          style={{alignItems: 'center', marginVertical: 64,width: 120, height: 120,alignSelf:'center'}}
+          style={styles.imageWrapper}
           onPress={pickImage}>
-          {image == null ? (
-            <ProfilePictureIcon />
-          ) : (
+          {image ? (
             <Image
               source={{uri: image.path}}
-              style={{width: 120, height: 120, borderRadius: 60}}
+              style={styles.profileImage}
             />
+          ) : (
+            <ProfilePictureIcon />
           )}
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.buttonStyle}
-          onPress={() => onNextClick()}>
-          <Text
-            style={{
-              color: appColors.black,
-              fontWeight: '600',
-              fontSize: 16,
-              padding: 16,
-              fontFamily: 'SF-Pro-Display-Bold',
-              textAlign: 'center',
-              flex: 1,
-            }}>
-            Next
-          </Text>
+          onPress={onNextClick}>
+          <Text style={styles.buttonText}>Next</Text>
           <NextArrow />
         </TouchableOpacity>
       </View>
@@ -128,13 +159,41 @@ const styles = StyleSheet.create({
     marginHorizontal: 32,
     marginVertical: 24,
   },
+  title: {
+    fontSize: 20,
+    fontFamily: 'sf-pro-text-semibold',
+    color: appColors.white,
+    textAlign: 'center',
+  },
+  imageWrapper: {
+    alignItems: 'center',
+    marginVertical: 64,
+    width: 120,
+    height: 120,
+    alignSelf: 'center',
+    borderRadius: 60,
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
   buttonStyle: {
-    color: appColors.black,
     backgroundColor: appColors.white,
     borderRadius: 24,
-    alignItems: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 16,
+  },
+  buttonText: {
+    color: appColors.black,
+    fontWeight: '600',
+    fontSize: 16,
+    padding: 16,
+    fontFamily: 'SF-Pro-Display-Bold',
+    flex: 1,
+    textAlign: 'center',
   },
 });

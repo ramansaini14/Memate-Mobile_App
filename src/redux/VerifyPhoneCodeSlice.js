@@ -4,55 +4,69 @@ import axios from 'axios';
 import {ApiBaseUrl, verifyPhoneCode} from '../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const hitVerifyPhoneCode = createAsyncThunk('hitVerifyPhoneCode', async payload => {
+export const hitVerifyPhoneCode = createAsyncThunk('hitVerifyPhoneCode', async (payload, { rejectWithValue }) => {
   try {
-    const token = await AsyncStorage.getItem("token")
+    const token = await AsyncStorage.getItem("token");
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: "Bearer "+token
+        Authorization: "Bearer " + token,
       },
     };
-    console.log('Payload ===> ', payload);
-    const url = ApiBaseUrl+verifyPhoneCode
+
+  
+    const url = ApiBaseUrl + verifyPhoneCode;
+    console.log("url ===> ",url)
     const response = await axios.post(url, payload, config);
-    console.log('Response Verify Phone ===> ', response.data);
-    return response.data;
+
+    console.log("Response ===> ",response.data, " status ===> ",response.status)
+    return {
+      data: response.data,
+      status: response.status,
+    };
   } catch (error) {
-    console.log('Error  ===> ', error.response.data);
-    throw error.response.data;
+    // send status code and message on failure
+    return rejectWithValue({
+      status: error.response?.status,
+      message: error.response?.data || 'Something went wrong',
+    });
   }
 });
 
+
 const VerifyPhoneCodeSlice = createSlice({
   name: 'verifyPhoneCodeReducer',
-
   initialState: {
     isLoading: false,
     data: null,
+    statusCode: null,
+    error: null,
   },
   reducers: {
     clearVerifyPhoneCode: state => {
-      // Reset the data property to an empty array
       state.data = null;
       state.isAuthenticated = false;
+      state.statusCode = null;
+      state.error = null;
     },
   },
   extraReducers: builder => {
     builder
       .addCase(hitVerifyPhoneCode.pending, state => {
-        console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.statusCode = null;
+        state.error = null;
       })
       .addCase(hitVerifyPhoneCode.fulfilled, (state, action) => {
-        console.log('Response  ===> ', state);
         state.isLoading = false;
-        state.data = action.payload;
+        state.data = action.payload.data;
+        state.statusCode = action.payload.status;
       })
       .addCase(hitVerifyPhoneCode.rejected, (state, action) => {
-        console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.isLoading = false;
+        state.statusCode = action.payload?.status;
+        state.error = action.payload?.message;
       });
   },
 });

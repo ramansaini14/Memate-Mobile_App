@@ -25,8 +25,11 @@ const Menu = ({ navigation }) => {
 
     const clearToken = async () => {
       await AsyncStorage.clear();
-      navigation.navigate('SignInWithEmail');
-    };
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'StartScreen'}]
+  })}
+
   
   return (
     <SafeAreaView style={styles.containerStyle}>
