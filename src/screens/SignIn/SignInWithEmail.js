@@ -44,7 +44,7 @@ const SignInWithEmail = ({ navigation,route }) => {
 
     if(isValidEmail){
       if(from==0){
-        navigation.navigate("EmailConfirmation",{email:email,from:from})
+        navigation.navigate("LoginPin",{email:email,from:from})
       }else{
         const payload = {
           email:email
@@ -70,8 +70,12 @@ const SignInWithEmail = ({ navigation,route }) => {
     if (responseVerifyEmail != null) {
       // navigation('/ChooseOrganization');
         // Alert.alert("MeMate",responseVerifyEmail.message)
+        if(responseVerifyEmail.is_active){
+          Alert.alert('MeMate', 'Email already existed.');
+        }else{
        saveEmail()
         navigation.navigate("EmailConfirmation",{email:email,from:from})
+        }
         dispatch(clearVerifyEmailSlice())
     } else if (responseVerifyEmail != null) {
       // alert('Invalid credentials!');
@@ -98,9 +102,10 @@ const SignInWithEmail = ({ navigation,route }) => {
           placeholderTextColor={appColors.placeholderColor}
           onChangeText={e => { handleEmailChange(e); }}
           keyboardType='default'
+          autoCapitalize="none"
         />
         <TouchableOpacity style={styles.buttonStyle} onPress={() => { onLoginClick(); }}>
-          <Text style={{ color: appColors.black, fontWeight: '700',fontSize:16 }}> {from==0?"Sign In":"Sign Up"}</Text>
+          <Text style={{ color: appColors.black, fontWeight: '700',fontSize:16 }}> {from==0?"Next":"Sign Up"}</Text>
         </TouchableOpacity>
       </View>
        {from!=2&&<TouchableOpacity

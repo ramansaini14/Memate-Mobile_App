@@ -123,7 +123,8 @@ const HomeScreen = ({navigation}) => {
 
           <TouchableOpacity
             style={{marginHorizontal: 8}}
-            onPress={() => navigation.navigate('Calendar')}>
+            // onPress={() => navigation.navigate('Calendar')}
+            >
             <CalenderIcon />
           </TouchableOpacity>
 

@@ -241,7 +241,7 @@ const JobCard = ({navigation, route}) => {
             marginBottom: 10,
             marginLeft: 12,
           }}>
-          THE-JB-{data.number}
+          {data.number}
         </Text>
 
         <Text style={styles.headStyle}>{data.short_description}</Text>

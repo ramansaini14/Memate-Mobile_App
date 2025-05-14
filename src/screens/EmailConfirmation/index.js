@@ -18,7 +18,7 @@ import {
 } from '../../redux/VerifyEmailCodeSlice';
 import {clearVerifyEmailSlice} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { clearLoginData, loginUser } from '../../redux/loginSlice';
+import {clearLoginData, loginUser} from '../../redux/loginSlice';
 
 const EmailConfirmation = ({navigation, route}) => {
   const {email, from} = route.params;
@@ -29,50 +29,36 @@ const EmailConfirmation = ({navigation, route}) => {
     state => state.verifyEmailCodeReducer.data,
   );
 
-  const responseLogin = useSelector(
-    state => state.loginReducer.data,
-  );
+  const responseLogin = useSelector(state => state.loginReducer.data);
 
   const [otp, setOtp] = useState('');
 
   useEffect(() => {
     if (responseVerifyCode != null) {
-      if (responseVerifyCode.data != null) {
+      // if (responseVerifyCode.data != null) {
+        navigation.navigate('CreatePin');
         saveToken(responseVerifyCode.access);
+        // navigation.navigate('ChooseOrganization');
+
         dispatch(clearVerifyEmailSlice());
         dispatch(clearVerifyEmailCodeSlice());
-        navigation.navigate('ChooseOrganization');
-        dispatch(clearVerifyEmailCodeSlice())
-      } else {
-        if (from == 2) {
-          // if(responseVerifyCode.data!=null){
-          navigation.navigate('CreatePin');
-          saveToken(responseVerifyCode.access);
-          // navigation.navigate('ChooseOrganization');
-         
-          dispatch(clearVerifyEmailSlice());
-          dispatch(clearVerifyEmailCodeSlice());
-          dispatch(clearVerifyEmailCodeSlice())
-          // }else{
-          //   Alert.alert('MeMate', 'Internal server error');
-          // }
-        } else {
-          Alert.alert('MeMate', 'Your Profile is not completed yet!');
-        }
-      }
+        dispatch(clearVerifyEmailCodeSlice());
+      // } else {
+      //   Alert.alert('MeMate', 'Email already existed.');
+      // }
     }
   }, [responseVerifyCode]);
 
-  useEffect(()=>{
-    if(responseLogin!=null){
-      saveToken(responseLogin.access);
-      navigation.navigate('ChooseOrganization');
-      dispatch(clearVerifyEmailSlice());
-      dispatch(clearVerifyEmailCodeSlice());
-      dispatch(clearVerifyEmailCodeSlice())
-      dispatch(clearLoginData())
-    }
-  },[responseLogin])
+  // useEffect(() => {
+  //   if (responseLogin != null) {
+  //     saveToken(responseLogin.access);
+  //     navigation.navigate('ChooseOrganization');
+  //     dispatch(clearVerifyEmailSlice());
+  //     dispatch(clearVerifyEmailCodeSlice());
+  //     dispatch(clearVerifyEmailCodeSlice());
+  //     dispatch(clearLoginData());
+  //   }
+  // }, [responseLogin]);
 
   const saveToken = async token => {
     console.log('Token ===> ', token);
@@ -83,14 +69,14 @@ const EmailConfirmation = ({navigation, route}) => {
     if (otp.length < 6) {
       Alert.alert('Please enter valid otp');
     } else {
-      if(from==0){
+      if (from == 0) {
         const payload = {
-          device_id:"Abc",
+          device_id: 'Abc',
           email: email,
           password: otp,
         };
         dispatch(loginUser(payload));
-      }else{
+      } else {
         const payload = {
           email: email,
           code: otp,
@@ -151,7 +137,12 @@ const EmailConfirmation = ({navigation, route}) => {
             }}>
             Resend code in{' '}
             <Text
-              style={{color: appColors.white, padding: 16, fontWeight: '600', fontSize: 16}}>
+              style={{
+                color: appColors.white,
+                padding: 16,
+                fontWeight: '600',
+                fontSize: 16,
+              }}>
               59:00
             </Text>
           </Text>

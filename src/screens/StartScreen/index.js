@@ -29,6 +29,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
       await AsyncStorage.setItem("isNew",'true')
       navigation.navigate('SignInWithEmail',{from:2})
     }
+
+    const goToLogin = async() => {
+      await AsyncStorage.setItem("isNew",'false')
+      navigation.navigate('SignInWithEmail',{from:0})
+    }
   
     
   return (
@@ -40,7 +45,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
         </View>
         <TouchableOpacity
           style={styles.buttonStyle}
-          onPress={() => navigation.navigate('SignInWithEmail',{from:0})}
+          onPress={() => goToLogin()}
           // onPress={() => navigation.navigate('ImageCropper')}
           >
           <Text style={{ color: appColors.black, fontWeight: '700' , fontSize: 16 }}>

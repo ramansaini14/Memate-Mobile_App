@@ -49,6 +49,7 @@ import ImageCropper from './src/screens/ImageCropper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {appTerms} from './src/utils/Constants';
 import SplashScreen from './src/screens/SplashScreen';
+import LoginPin from './src/screens/LoginPin';
 
 const Stack = createNativeStackNavigator();
 
@@ -71,6 +72,7 @@ const App = () => {
               <Stack.Screen name="SplashScreen" component={SplashScreen} />
               <Stack.Screen name="StartScreen" component={StartScreen} />
               <Stack.Screen name="SignIn" component={SignIn} />
+              <Stack.Screen name="LoginPin" component={LoginPin} />
               <Stack.Screen
                 name="SignInWithEmail"
                 component={SignInWithEmail}
