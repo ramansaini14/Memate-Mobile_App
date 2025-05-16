@@ -100,9 +100,9 @@ const TimeTrackerCard = ({
       </View>
       <View style={styles.header}>
         <Text style={styles.jobId}>THE-JB-{data.number}</Text>
-        {/* <Text style={styles.jobStatus}>
+        <Text style={styles.jobStatus}>
           {isJobStarted ? (isPaused ? "Paused" : "Active") : "Ready"}
-        </Text> */}
+        </Text>
       </View>
 
       <Text style={styles.title}>SMM | theAd Templates ST</Text>
@@ -157,21 +157,32 @@ const TimeTrackerCard = ({
           </View>
         </View>
         {/* Force re-render with key */}
-        {!isPaused ? (
+        {!isJobStarted ? (
+          // Job not started yet, show play button to start
+          <TouchableOpacity
+            key={`start-button-${data.id}`}
+            style={styles.statusButton}
+            onPress={handleStartStop}>
+            <WhitePlayIcon height={16} width={16}/>
+            <Text style={styles.statusText}>Start Job</Text>
+          </TouchableOpacity>
+        ) : isPaused ? (
+          // Job is paused, show play button to resume
+          <TouchableOpacity
+            key={`paused-button-${data.id}`}
+            style={styles.statusButton}
+            onPress={handleResumeButtonPress}>
+            <WhitePlayIcon height={16} width={16}/>
+            <Text style={styles.statusText}>Resume Job</Text>
+          </TouchableOpacity>
+        ) : (
+          // Job is running, show pause button
           <TouchableOpacity
             key={`in-progress-button-${data.id}`}
             style={styles.statusButton}
             onPress={handlePauseButtonPress}>
             <PauseJobIcon height={16} width={16}/>
             <Text style={styles.statusText}>In Progress</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            key={`paused-button-${data.id}`}
-            style={styles.statusButton}
-            onPress={handleResumeButtonPress}>
-            <WhitePlayIcon height={16} width={16}/>
-            <Text style={styles.statusText}>On pause</Text>
           </TouchableOpacity>
         )}
       </View>

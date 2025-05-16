@@ -410,8 +410,8 @@ const JobCard = ({navigation, route}) => {
 
   useEffect(() => {
     console.log('Response ACC Dec', responseAccDec);
-    if (responseAccDec != null && responseAccDec.jobId === data.id) {
-      if (responseAccDec.status == 'Ok') {
+    if (responseAccDec != null) {
+      if (responseAccDec.status == 'OK') {
         setAccept(false);
         // navigation.navigate('JobCardConfirmButton');
       } else {
@@ -515,7 +515,7 @@ const JobCard = ({navigation, route}) => {
         </View>
       </View>
       <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        {data.action_status == 1 || data.action_status == 2 ? (
+        {data.action_status==null || data.action_status == 1 || data.action_status == 2 ? (
           <LocationTracker
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}

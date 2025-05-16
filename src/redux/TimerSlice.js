@@ -62,7 +62,7 @@ const TimerSlice = createSlice({
         safeAsyncStorage.setItem(`timer_${state.activeJobId}`, state.jobs[state.activeJobId].value.toString());
         safeAsyncStorage.setItem('timerJobs', JSON.stringify(state.jobs));
         
-        console.log(`Timer incremented for job ${state.activeJobId}:`, state.jobs[state.activeJobId].value);
+        // console.log(`Timer incremented for job ${state.activeJobId}:`, state.jobs[state.activeJobId].value);
       } else {
         // Check if we have any running jobs that aren't paused
         const runningJobs = Object.entries(state.jobs).filter(([jobId, jobState]) => 
@@ -92,7 +92,7 @@ const TimerSlice = createSlice({
           // Persist all jobs
           safeAsyncStorage.setItem('timerJobs', JSON.stringify(state.jobs));
         } else {
-          console.log('Timer not incremented - no active running jobs found');
+          // console.log('Timer not incremented - no active running jobs found');
         }
       }
     },

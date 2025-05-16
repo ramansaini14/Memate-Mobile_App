@@ -421,17 +421,8 @@ const LocationTracker = ({
             onSwipeSuccess={handleStart}
           />
           {/* Force re-render of the correct icon using key */}
-          {!isPaused ? (
-            <TouchableOpacity
-              key="pause-button"
-              style={styles.pauseIcon}
-              onPress={handlePauseButtonPress}>
-              <PauseJobIcon />
-              <View style={{alignItems: 'center'}}>
-                {/* <Text style={styles.iconText}>Pause</Text> */}
-              </View>
-            </TouchableOpacity>
-          ) : (
+          {isPaused ? (
+            // Job is paused - show play button
             <TouchableOpacity
               key="resume-button"
               style={styles.pauseIcon}
@@ -439,6 +430,17 @@ const LocationTracker = ({
               <StartJobPlayIcon />
               <View style={{alignItems: 'center'}}>
                 {/* <Text style={styles.iconText}>Play</Text> */}
+              </View>
+            </TouchableOpacity>
+          ) : (
+            // Job is running - show pause button
+            <TouchableOpacity
+              key="pause-button"
+              style={styles.pauseIcon}
+              onPress={handlePauseButtonPress}>
+              <PauseJobIcon />
+              <View style={{alignItems: 'center'}}>
+                {/* <Text style={styles.iconText}>Pause</Text> */}
               </View>
             </TouchableOpacity>
           )}

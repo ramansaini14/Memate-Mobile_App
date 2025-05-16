@@ -12,6 +12,7 @@ export const hitVerifyEmail = createAsyncThunk('hitVerifyEmail', async payload =
     };
     console.log('Payload ===> ', payload);
     const url = ApiBaseUrl+verifyEmail
+    console.log("Url ===> ",url)
     const response = await axios.post(url, payload, config);
     console.log('Response Login ===> ', response.data);
     return response.data;

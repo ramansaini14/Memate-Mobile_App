@@ -70,7 +70,7 @@ const SignInWithEmail = ({ navigation,route }) => {
     if (responseVerifyEmail != null) {
       // navigation('/ChooseOrganization');
         // Alert.alert("MeMate",responseVerifyEmail.message)
-        if(responseVerifyEmail.is_active){
+        if(responseVerifyEmail.is_agree){
           Alert.alert('MeMate', 'Email already existed.');
         }else{
        saveEmail()
