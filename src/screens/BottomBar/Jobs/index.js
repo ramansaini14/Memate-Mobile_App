@@ -278,7 +278,7 @@ const JobsScreen = ({navigation}) => {
                           fontSize: 11,
                           fontWeight: '600',
                         }}>
-                        {responseJobs[index].time_type_text}
+                        {responseJobs!=null&&responseJobs[index].time_type_text}
                       </Text>
                       <View
                         style={{

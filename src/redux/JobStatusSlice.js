@@ -71,6 +71,7 @@ export const hitJobStop = createAsyncThunk('hitJobStop', async payload => {
       console.log('url ===> ', url);
       const param =  payload.data
       const response = await axios.post(url, param, config);
+      console.log('response Finish Job ===> ', response.data);
       return response.data;
     } catch (error) {
       console.log('Error  ===> ', error.response.data);

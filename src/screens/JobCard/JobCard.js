@@ -10,6 +10,7 @@ import {
   TextInput,
   Platform,
   ToastAndroid,
+  PermissionsAndroid,
 } from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
 import {appColors} from '../../utils/appColors';
@@ -52,8 +53,12 @@ import {
   stopTimer,
   startBackgroundTimer,
   loadTimerStateFromStorage,
-  selectJobTimer
+  selectJobTimer,
 } from '../../redux/TimerSlice';
+import DoneTickButton from '../../assets/svg/DoneTickButton';
+import AddImageIcon from '../../assets/svg/AddImageIcon';
+import CameraLibraryModal from '../../components/CameraLibraryModal';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
@@ -67,19 +72,19 @@ const JobCard = ({navigation, route}) => {
   const [isJobStarted, setIsJobStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isExpand, setExpand] = useState(false);
-  
+
   // Get global timer state (primarily for the active job)
   const globalTimer = useSelector(state => state.timer.value);
-  
+
   // Get the job-specific timer for this job
   const jobTimer = useSelector(state => selectJobTimer(state, data.id));
-  
+
   // Use the job-specific timer value instead of the global one
   const timer = jobTimer ? jobTimer.value : 0;
-  
+
   // Track which job is active in the Redux store
   const activeJobId = useSelector(state => state.timer.activeJobId);
-  
+
   const intervalRef = useRef(null);
   const [lastApiCallTime, setLastApiCallTime] = useState(0);
   const [location, setLocation] = useState([]);
@@ -87,7 +92,7 @@ const JobCard = ({navigation, route}) => {
   const responseAccDec = useSelector(
     state => state.jobsAcceptDeclineReducer.data,
   );
-  
+
   const jobStatusResponse = useSelector(state => state.jobsStatusReducer.data);
 
   const getOrgId = async () => {
@@ -115,51 +120,58 @@ const JobCard = ({navigation, route}) => {
   };
 
   useEffect(() => {
-    console.log(`JobCard mounted for job ID: ${data.id}, action_status:`, data.action_status);
-    
+    console.log(
+      `JobCard mounted for job ID: ${data.id}, action_status:`,
+      data.action_status,
+    );
+
     getOrgId();
-    
+
     // Force start the job immediately if action_status is 1
     if (data.action_status === 1) {
       console.log(`Setting job ${data.id} started from action_status=1`);
       setIsJobStarted(true);
       setIsPaused(false);
-      
+
       // Need to manually trigger the Redux state as well
       setTimeout(() => {
-        console.log(`Dispatching startTimer for initial job start for job ${data.id}`);
+        console.log(
+          `Dispatching startTimer for initial job start for job ${data.id}`,
+        );
         dispatch(startTimer(data.id));
         startBackgroundTimer(dispatch);
         startLocationTracking();
       }, 500);
     }
-    
+
     // Check if this specific job is already running
     loadTimerStateFromStorage(dispatch).then(({jobs, activeJobId}) => {
       console.log(`Checking stored timer state for job ${data.id}`, {
         hasJobData: jobs && jobs[data.id] ? true : false,
-        activeJobId
+        activeJobId,
       });
-      
+
       if (jobs && jobs[data.id]) {
         const jobState = jobs[data.id];
         console.log(`Found stored state for job ${data.id}:`, jobState);
-        
+
         // Set local state based on the job's stored state
         setIsJobStarted(jobState.isRunning);
         setIsPaused(jobState.isPaused);
-        
+
         // If the job is running and not paused, start location tracking
         if (jobState.isRunning && !jobState.isPaused) {
-          console.log(`Starting location tracking for job ${data.id} from loaded state`);
+          console.log(
+            `Starting location tracking for job ${data.id} from loaded state`,
+          );
           startLocationTracking();
         }
       }
     });
-    
+
     // Make sure the background timer starts if needed
     startBackgroundTimer(dispatch);
-    
+
     // Clean up function
     return () => {
       console.log(`JobCard unmounting for job ID: ${data.id}`);
@@ -168,14 +180,14 @@ const JobCard = ({navigation, route}) => {
       stopLocationTracking();
     };
   }, [data.id]);
-  
+
   // Function to start location tracking
   const startLocationTracking = () => {
     console.log(`Starting location tracking for job ${data.id}`);
-    
+
     // Get initial location
     getCurrentLocation();
-    
+
     // Set up regular location tracking
     if (!intervalRef.current) {
       intervalRef.current = setInterval(() => {
@@ -183,7 +195,7 @@ const JobCard = ({navigation, route}) => {
       }, 30000); // Every 30 seconds
     }
   };
-  
+
   // Create a better location tracking control function
   const stopLocationTracking = () => {
     console.log(`Stopping location tracking for job ${data.id}`);
@@ -196,48 +208,50 @@ const JobCard = ({navigation, route}) => {
 
   // Fix the direct pause handler
   const handleDirectPause = () => {
-    console.log(`Direct pause called for job ${data.id}, current state:`, { 
-      isJobStarted, 
-      isPaused, 
+    console.log(`Direct pause called for job ${data.id}, current state:`, {
+      isJobStarted,
+      isPaused,
       timer,
-      activeJobId
+      activeJobId,
     });
-    
+
     // First check if we need to start the job
     if (!isJobStarted) {
       console.log('Job not started yet, starting it first');
       handleStartStop();
       return;
     }
-    
+
     // Only if we're in a running state
     if (isJobStarted && !isPaused) {
       console.log(`Pausing job ${data.id}`);
-      
+
       // Update local state immediately to ensure UI responds
       setIsPaused(true);
       setShowTracker(false);
-      
+
       // Explicitly stop location tracking
       stopLocationTracking();
       console.log('Location tracking stopped due to pause');
-      
+
       // Update Redux timer state to paused
       dispatch(pauseTimer(data.id));
-      
+
       // Prepare and send API call with properly formatted data
       console.log('Making pause API call');
-      
+
       // Get the locations for this specific job
       const locationsKey = `locations_${data.id}`;
       AsyncStorage.getItem(locationsKey)
         .then(locationsStr => {
           let locationsData = [];
-          
+
           try {
             if (locationsStr) {
               locationsData = JSON.parse(locationsStr);
-              console.log(`Found ${locationsData.length} location points for pause API call`);
+              console.log(
+                `Found ${locationsData.length} location points for pause API call`,
+              );
             } else {
               console.log('No stored locations, using current location');
               // Fallback to current location if available
@@ -246,31 +260,35 @@ const JobCard = ({navigation, route}) => {
               } else {
                 // Create a minimal valid location entry
                 const currentDate = new Date().toISOString();
-                locationsData = [{
-                  latitude: "0",
-                  longitude: "0",
-                  date: currentDate
-                }];
+                locationsData = [
+                  {
+                    latitude: '0',
+                    longitude: '0',
+                    date: currentDate,
+                  },
+                ];
               }
             }
           } catch (error) {
             console.error('Error parsing locations:', error);
             // Fallback to a minimal valid location
             const currentDate = new Date().toISOString();
-            locationsData = [{
-              latitude: "0",
-              longitude: "0",
-              date: currentDate
-            }];
+            locationsData = [
+              {
+                latitude: '0',
+                longitude: '0',
+                date: currentDate,
+              },
+            ];
           }
-          
+
           // Ensure the payload is correctly formatted
           const payload = {
             orgId,
             jobId: data.id,
-            data: locationsData
+            data: locationsData,
           };
-          
+
           console.log(`Sending pause payload for job ${data.id}:`, payload);
           dispatch(hitJobPause(payload));
           console.log('Pause API call completed');
@@ -279,87 +297,174 @@ const JobCard = ({navigation, route}) => {
           console.error('Error loading locations:', err);
           // Even on error, send minimal data to avoid API errors
           const currentDate = new Date().toISOString();
-          const fallbackData = [{
-            latitude: "0",
-            longitude: "0",
-            date: currentDate
-          }];
-          
-          dispatch(hitJobPause({
-            orgId,
-            jobId: data.id,
-            data: fallbackData
-          }));
+          const fallbackData = [
+            {
+              latitude: '0',
+              longitude: '0',
+              date: currentDate,
+            },
+          ];
+
+          dispatch(
+            hitJobPause({
+              orgId,
+              jobId: data.id,
+              data: fallbackData,
+            }),
+          );
         });
     } else {
-      console.log('Cannot pause: job not started or already paused', { isJobStarted, isPaused });
+      console.log('Cannot pause: job not started or already paused', {
+        isJobStarted,
+        isPaused,
+      });
+    }
+  };
+
+  const onCompleteJob = async () => {
+    console.log(`Completing job ${data.id}`);
+
+    // First, stop the timer in Redux
+    dispatch(stopTimer(data.id));
+
+    // Update local state
+    setIsJobStarted(false);
+    setIsPaused(false);
+    setShowTracker(false);
+
+    // Stop location tracking
+    stopLocationTracking();
+
+    // Get the locations for this specific job
+    const locationsKey = `locations_${data.id}`;
+    try {
+      const locationsStr = await AsyncStorage.getItem(locationsKey);
+      let locationsData = [];
+
+      if (locationsStr) {
+        locationsData = JSON.parse(locationsStr);
+        console.log(
+          `Found ${locationsData.length} location points for job completion`,
+        );
+      } else {
+        console.log('No stored locations, using current location');
+        // Fallback to current location if available
+        if (location && location.length > 0) {
+          locationsData = location;
+        } else {
+          // Create a minimal valid location entry
+          const currentDate = new Date().toISOString();
+          locationsData = [
+            {
+              latitude: '0',
+              longitude: '0',
+              date: currentDate,
+            },
+          ];
+        }
+      }
+
+      // Prepare and send API call
+      const payload = {
+        orgId,
+        jobId: data.id,
+        data: locationsData,
+      };
+
+      console.log(`Sending job completion payload for job ${data.id}`);
+      dispatch(hitJobStop(payload));
+
+      // Clear the stored locations
+      await AsyncStorage.removeItem(locationsKey);
+    } catch (err) {
+      console.error('Error processing job completion:', err);
+      // Even on error, send minimal data to complete the job
+      const currentDate = new Date().toISOString();
+      const fallbackData = [
+        {
+          latitude: '0',
+          longitude: '0',
+          date: currentDate,
+        },
+      ];
+
+      dispatch(
+        hitJobStop({
+          orgId,
+          jobId: data.id,
+          data: fallbackData,
+        }),
+      );
     }
   };
 
   // Fix the direct resume handler
   const handleDirectResume = () => {
-    console.log(`Direct resume called for job ${data.id}, current state:`, { 
-      isJobStarted, 
-      isPaused, 
+    console.log(`Direct resume called for job ${data.id}, current state:`, {
+      isJobStarted,
+      isPaused,
       timer,
-      activeJobId
+      activeJobId,
     });
-    
+
     // Only if we're in a paused state
     if (isJobStarted && isPaused) {
       console.log(`Resuming job ${data.id}`);
-      
+
       // Update local state
       setIsPaused(false);
       setShowTracker(true);
-      
+
       // Update Redux timer state to resumed
       dispatch(resumeTimer(data.id));
-      
+
       // Make sure background timer is running and this job is active
       dispatch(startTimer(data.id)); // Ensure this job becomes the active job
       startBackgroundTimer(dispatch);
-      
+
       // Explicitly restart location tracking
       startLocationTracking();
       console.log('Location tracking restarted for resumed job');
-      
+
       // API call
       console.log('Making resume API call');
       getCurrentLocation();
     } else {
-      console.log('Cannot resume: job not started or not paused', { isJobStarted, isPaused });
+      console.log('Cannot resume: job not started or not paused', {
+        isJobStarted,
+        isPaused,
+      });
     }
   };
 
   const handleStartStop = () => {
-    console.log(`handleStartStop called for job ${data.id}, current state:`, { 
-      isJobStarted, 
-      isPaused, 
+    console.log(`handleStartStop called for job ${data.id}, current state:`, {
+      isJobStarted,
+      isPaused,
       timer,
-      activeJobId 
+      activeJobId,
     });
-    
+
     if (!isJobStarted) {
       console.log(`Starting job ${data.id}`);
-      
+
       // Starting the job
       setIsJobStarted(true);
       setIsPaused(false);
       setShowTracker(true);
-      
+
       // Update Redux timer state to started
       dispatch(startTimer(data.id));
-      
+
       // Make sure background timer is running
       startBackgroundTimer(dispatch);
-      
+
       // Start location tracking
       startLocationTracking();
-      
+
       // Start job API
       getCurrentLocation();
-      
+
       // Update UI immediately, don't wait for state updates
       console.log('Job started successfully');
       return true;
@@ -374,7 +479,7 @@ const JobCard = ({navigation, route}) => {
       handleDirectResume();
       return true;
     }
-    
+
     return false;
   };
 
@@ -393,7 +498,7 @@ const JobCard = ({navigation, route}) => {
           setIsJobStarted(true);
         }
       }
-      
+
       // Clear the response after processing
       dispatch(clearJobStatus());
     }
@@ -426,15 +531,18 @@ const JobCard = ({navigation, route}) => {
     if (jobTimer) {
       const shouldUpdateRunning = jobTimer.isRunning !== isJobStarted;
       const shouldUpdatePaused = jobTimer.isPaused !== isPaused;
-      
+
       if (shouldUpdateRunning || shouldUpdatePaused) {
-        console.log(`Synchronizing job ${data.id} state with Redux timer state:`, {
-          reduxIsRunning: jobTimer.isRunning,
-          reduxIsPaused: jobTimer.isPaused,
-          componentIsRunning: isJobStarted,
-          componentIsPaused: isPaused
-        });
-        
+        console.log(
+          `Synchronizing job ${data.id} state with Redux timer state:`,
+          {
+            reduxIsRunning: jobTimer.isRunning,
+            reduxIsPaused: jobTimer.isPaused,
+            componentIsRunning: isJobStarted,
+            componentIsPaused: isPaused,
+          },
+        );
+
         setIsJobStarted(jobTimer.isRunning);
         setIsPaused(jobTimer.isPaused);
       }
@@ -444,7 +552,7 @@ const JobCard = ({navigation, route}) => {
   // Update to force proper rerendering of child components when state changes
   useEffect(() => {
     console.log(`JobCard ${data.id} isPaused state changed to:`, isPaused);
-    
+
     // Force a refresh of components that depend on this state
     if (isPaused) {
       console.log(`Job ${data.id} is now paused, stopping location tracking`);
@@ -465,17 +573,17 @@ const JobCard = ({navigation, route}) => {
           longitude: longitude.toString(),
           date: currentDate,
         };
-        
+
         // Update local state
         setLocation(prev => [...(prev || []), locationData]);
-        
+
         // Send to API
         const payload = {
           orgId,
           jobId: data.id,
           data: [locationData],
         };
-        
+
         if (isJobStarted && !isPaused) {
           dispatch(hitJobStart(payload));
         }
@@ -489,6 +597,80 @@ const JobCard = ({navigation, route}) => {
         maximumAge: 10000,
       },
     );
+  };
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const options = {
+    mediaType: 'photo',
+    cameraType: 'back',
+    quality: 1,
+  };
+
+  const handleSelect = type => {
+    setModalVisible(false);
+    if (type == 'camera') {
+      onCameraPress();
+      console.log('Open Camera');
+    } else if (type == 'library') {
+      onGalleryClick();
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'App needs camera permission',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const onCameraPress = async () => {
+    console.log('Camera Pressed');
+    try {
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) return;
+
+      const result = await launchCamera(options);
+      if (result.didCancel) {
+        console.log('User cancelled camera');
+      } else if (result.errorCode) {
+        console.log('Camera Error: ', result.errorMessage);
+      } else {
+        console.log('Camera Image: ', result.assets[0]);
+      }
+    } catch (err) {
+      console.log('Camera launch error', err);
+    }
+  };
+
+  const onGalleryClick = async () => {
+    console.log('Open Gallery');
+    try {
+      const result = await launchImageLibrary(options);
+      if (result.didCancel) {
+        console.log('User cancelled gallery');
+      } else if (result.errorCode) {
+        console.log('Gallery Error: ', result.errorMessage);
+      } else {
+        console.log('Gallery Image: ', result.assets[0]);
+      }
+    } catch (err) {
+      console.log('Gallery launch error', err);
+    }
   };
 
   return (
@@ -515,7 +697,9 @@ const JobCard = ({navigation, route}) => {
         </View>
       </View>
       <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        {data.action_status==null || data.action_status == 1 || data.action_status == 2 ? (
+        {data.status == 'a' ||
+        data.action_status == 1 ||
+        data.action_status == 2 ? (
           <LocationTracker
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}
@@ -528,9 +712,15 @@ const JobCard = ({navigation, route}) => {
             showTracker={showTracker}
             setShowTracker={setShowTracker}
             timer={timer}
+            onCompleteJob={onCompleteJob}
           />
         ) : (
-          ''
+          data.action_status != null && (
+            <TouchableOpacity style={styles.doneButton}>
+              <DoneTickButton />
+              <Text style={styles.doneButtonText}>Done</Text>
+            </TouchableOpacity>
+          )
         )}
         {isJobStarted || data.action_status == 1 || data.action_status == 2 ? (
           <TimeTrackerCard
@@ -712,18 +902,17 @@ const JobCard = ({navigation, route}) => {
           <View>
             <Text style={styles.timePaymentStyle}>Time</Text>
             <Text style={styles.cardHoursStyle}>
-              {data.duration}
-              {data.type_text === 'Hours' ? 'h' : ''}
+              {data.duration}h{/* {data.type_text === 'Hours' ? 'h' : ''} */}
             </Text>
           </View>
           <View>
             <Text style={styles.timePaymentStyle}>Payment</Text>
             <Text style={styles.cardHoursStyle}>${data.cost}</Text>
           </View>
-          <View>
+          {/* <View>
             <Text style={styles.timePaymentStyle}>Variations</Text>
             <Text style={styles.cardHoursStyle}>$50.00st</Text>
-          </View>
+          </View> */}
         </View>
 
         <View style={styles.descriptionCardStyle}>
@@ -803,9 +992,6 @@ const JobCard = ({navigation, route}) => {
           }}>
           {data.address}
         </Text>
-        <View style={{position: 'absolute', right: 10, bottom: 144}}>
-          <MapIcon />
-        </View>
         <View style={{flexDirection: 'row'}}>
           <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>
             Documents Attached{' '}
@@ -813,16 +999,18 @@ const JobCard = ({navigation, route}) => {
           <View
             style={{
               backgroundColor: appColors.placeholderColor,
+              // paddingHorizontal: 5,
+              borderRadius: 50,
+              // marginLeft: 2,
+              justifyContent: 'center',
+              alignItems: 'center',
               paddingHorizontal: 5,
               borderRadius: 50,
-              marginLeft: 2,
             }}>
             <Text
               style={{
                 color: appColors.white,
                 fontSize: 12,
-                justifyContent: 'center',
-                alignItems: 'center',
               }}>
               1
             </Text>
@@ -852,9 +1040,29 @@ const JobCard = ({navigation, route}) => {
           <Text style={{fontSize: 20, fontWeight: '600', marginTop: 20}}>
             Images
           </Text>
+          <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+            Photos before
+          </Text>
+          <TouchableOpacity
+            style={styles.imageViewStyle}
+            onPress={() => setModalVisible(!modalVisible)}>
+            <AddImageIcon />
+          </TouchableOpacity>
+          <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+            Photos of the Process
+          </Text>
+          <TouchableOpacity style={styles.imageViewStyle}>
+            <AddImageIcon />
+          </TouchableOpacity>
+          <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+            Photo after
+          </Text>
+          <TouchableOpacity style={[styles.imageViewStyle, {marginBottom: 16}]}>
+            <AddImageIcon />
+          </TouchableOpacity>
         </View>
       </ScrollView>
-      <View style={{alignItems: 'flex-end', marginBottom: 20}}>
+      {/* <View style={{alignItems: 'flex-end', marginBottom: 20}}>
         <Text
           style={{
             marginTop: 4,
@@ -867,8 +1075,8 @@ const JobCard = ({navigation, route}) => {
           }}>
           History Log
         </Text>
-      </View>
-      {data.status_text !== 'Accepted' ? (
+      </View> */}
+      {data.status_text !== 'Accepted' && data.action_status != 3 ? (
         <View
           style={{
             flexDirection: 'row',
@@ -1119,6 +1327,11 @@ const JobCard = ({navigation, route}) => {
           </TouchableOpacity>
         </View>
       </Modal>
+      <CameraLibraryModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSelect={handleSelect}
+      />
     </SafeAreaView>
   );
 };
@@ -1170,8 +1383,9 @@ const styles = StyleSheet.create({
     paddingVertical: 22,
     borderRadius: 28,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     marginBottom: 20,
+    gap: 40,
   },
   timePaymentStyle: {
     color: appColors.grey,
@@ -1204,6 +1418,26 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
+  doneButton: {
+    flexDirection: 'row',
+    backgroundColor: appColors.lightGreen,
+    color: appColors.black,
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
+    padding: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 32,
+    gap: 4,
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
   ChatButton: {
     color: appColors.white,
     fontSize: 16,
@@ -1230,6 +1464,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 50,
+    marginTop: 16,
+  },
+  imageViewStyle: {
     marginTop: 16,
   },
 });

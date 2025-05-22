@@ -23,6 +23,7 @@ export const getCountries = "api/v1/references/countries/"
 // https://dev.memate.com.au/api/v1/references/states/{country}/
 export const getStates = "api/v1/references/states/"
 export const getCity = "api/v1/references/cities/"
+export const attachmentFileUrl = "api/v1/m/jobs/attachments/url/"
 
 // https://dev.memate.com.au/api/v1/m/user/profile/update/
 export const updateProfile = "api/v1/m/user/profile/update/"

@@ -44,7 +44,8 @@ const LocationTracker = ({
   orgId,
   showTracker,
   setShowTracker,
-  timer
+  timer,
+  onCompleteJob
 }) => {
   const dispatch = useDispatch();
   const [isStopped, setStopped] = useState(false);
@@ -418,7 +419,7 @@ const LocationTracker = ({
               flex: 1,
               justifyContent: 'center',
             }}
-            onSwipeSuccess={handleStart}
+            onSwipeSuccess={()=>{onCompleteJob(); handleStart()}}
           />
           {/* Force re-render of the correct icon using key */}
           {isPaused ? (
