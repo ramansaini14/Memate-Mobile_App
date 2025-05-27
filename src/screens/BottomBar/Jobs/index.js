@@ -92,9 +92,9 @@ const JobsScreen = ({navigation}) => {
     });
     // setSelectedFilter(index)
   };
-  useEffect(()=>{
-    setInActive(!active)
-  },[isWhitDot])
+  useEffect(() => {
+    setInActive(!active);
+  }, [isWhitDot]);
   // console.log(item)
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -157,7 +157,7 @@ const JobsScreen = ({navigation}) => {
                   <Text
                     style={{
                       color:
-                      isWhitDot == index ? appColors.white : appColors.black,
+                        isWhitDot == index ? appColors.white : appColors.black,
                       paddingRight: 10,
                       fontSize: 24,
                       fontWeight: '500',
@@ -171,7 +171,7 @@ const JobsScreen = ({navigation}) => {
                       style={{
                         flex: 1,
                         alignItems: 'flex-end',
-                      padding:16
+                        padding: 16,
                       }}>
                       <WhiteDot height={6} width={6} />
                     </View>
@@ -180,7 +180,7 @@ const JobsScreen = ({navigation}) => {
                       style={{
                         flex: 1,
                         alignItems: 'flex-end',
-                        padding:16
+                        padding: 16,
                       }}>
                       <PinkDot height={6} width={6} />
                     </View>
@@ -194,7 +194,8 @@ const JobsScreen = ({navigation}) => {
                     fontFamily: 'sf-pro-text-semibold',
                     fontWeight: 600,
 
-                    color: isWhitDot == index ? appColors.white : appColors.black,
+                    color:
+                      isWhitDot == index ? appColors.white : appColors.black,
                     // width: "70%"
                     paddingHorizontal: 8,
                   }}>
@@ -278,7 +279,8 @@ const JobsScreen = ({navigation}) => {
                           fontSize: 11,
                           fontWeight: '600',
                         }}>
-                        {responseJobs[index].time_type_text}
+                        {responseJobs != null &&
+                          responseJobs[index].time_type_text}
                       </Text>
                       <View
                         style={{
