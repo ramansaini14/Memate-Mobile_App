@@ -100,9 +100,9 @@ const TimeTrackerCard = ({
       </View>
       <View style={styles.header}>
         <Text style={styles.jobId}>THE-JB-{data.number}</Text>
-        <Text style={styles.jobStatus}>
+        {/* <Text style={styles.jobStatus}>
           {isJobStarted ? (isPaused ? "Paused" : "Active") : "Ready"}
-        </Text>
+        </Text> */}
       </View>
 
       <Text style={styles.title}>SMM | theAd Templates ST</Text>

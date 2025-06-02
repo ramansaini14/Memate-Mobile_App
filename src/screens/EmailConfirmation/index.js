@@ -36,13 +36,13 @@ const EmailConfirmation = ({navigation, route}) => {
   useEffect(() => {
     if (responseVerifyCode != null) {
       // if (responseVerifyCode.data != null) {
-        navigation.navigate('CreatePin');
-        saveToken(responseVerifyCode.access);
-        // navigation.navigate('ChooseOrganization');
+      navigation.navigate('CreatePin');
+      saveToken(responseVerifyCode.access);
+      // navigation.navigate('ChooseOrganization');
 
-        dispatch(clearVerifyEmailSlice());
-        dispatch(clearVerifyEmailCodeSlice());
-        dispatch(clearVerifyEmailCodeSlice());
+      dispatch(clearVerifyEmailSlice());
+      dispatch(clearVerifyEmailCodeSlice());
+      dispatch(clearVerifyEmailCodeSlice());
       // } else {
       //   Alert.alert('MeMate', 'Email already existed.');
       // }

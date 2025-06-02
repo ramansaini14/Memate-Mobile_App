@@ -19,6 +19,7 @@ import timerReducer from "./TimerSlice";
 import allTaskReducer from "./AllTaskSlice";
 import readTaskReducer from "./ReadTasksSlice";
 import completeTaskReducer from "./CompleteTaskSlice";
+import attachmentFileUrlReducer from "./AttachmentFileUrlSlice";
 
 
 const store = configureStore({
@@ -43,6 +44,7 @@ const store = configureStore({
         allTaskReducer: allTaskReducer,
         readTaskReducer: readTaskReducer,
         completeTaskReducer: completeTaskReducer,
+        attachmentFileUrlReducer:attachmentFileUrlReducer
     },
 });
 

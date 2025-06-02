@@ -20,6 +20,10 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera because we need to take photos of the process</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library because we need to get photos of the process from your library</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
