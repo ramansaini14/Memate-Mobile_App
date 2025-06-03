@@ -1,33 +1,36 @@
 // src/redux/slices/authSlice.js
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
-import {ApiBaseUrl, getOrganizationApi, jobs} from '../utils/Constants';
+import {ApiBaseUrl, jobs} from '../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const getJobs = createAsyncThunk(
-  'getJobs',
-  async payload => {
-    try {
-      const token = await AsyncStorage.getItem('token');
+export const getJobs = createAsyncThunk('getJobs', async payload => {
+  try {
+    const token = await AsyncStorage.getItem('token');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+    };
 
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token,
-        },
-      };
-     
-      const url = ApiBaseUrl+jobs+payload.id+"/"
+    const url =
+      ApiBaseUrl +
+      jobs +
+      payload.id +
+      (payload.status == '0' ? '/' : `/?statuses=${payload.status}`);
+    // +      `/?limit=10&offset=${payload.offset}&statuses=${payload.status}`;
 
-      const response = await axios.get(url, config);
-      console.log('Response Jobs Data ===> ', response.data);
-      return response.data;
-    } catch (error) {
-      console.log('Error ===> ', error);
-      throw error.response.data;
-    }
-  },
-);
+    console.log('URL JOBs ====> ', url);
+
+    const response = await axios.get(url, config);
+    console.log('Response Jobs Data ===> ', response.data);
+    return response.data;
+  } catch (error) {
+    console.log('Error ===> ', error);
+    throw error.response.data;
+  }
+});
 
 const GetJobsSlice = createSlice({
   name: 'getJobsReducer',

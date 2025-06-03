@@ -49,7 +49,7 @@ const MainStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{headerShown: false}}
-      initialRouteName='SplashScreen'>
+      initialRouteName="SplashScreen">
       <Stack.Screen name="SplashScreen" component={SplashScreen} />
       <Stack.Screen name="StartScreen" component={StartScreen} />
       <Stack.Screen name="SignIn" component={SignIn} />
@@ -61,7 +61,10 @@ const MainStack = () => {
       <Stack.Screen name="RequireDetails" component={RequireDetails} />
       <Stack.Screen name="VerifyPhoneNumber" component={VerifyPhoneNumber} />
       <Stack.Screen name="ProfileAddress" component={ProfileAddress} />
-      <Stack.Screen name="ProfileAgencyContact" component={ProfileAgencyContact} />
+      <Stack.Screen
+        name="ProfileAgencyContact"
+        component={ProfileAgencyContact}
+      />
       <Stack.Screen name="ProfilePicture" component={ProfilePicture} />
       <Stack.Screen name="ChooseOrganization" component={ChooseOrganization} />
       <Stack.Screen name="BottomBar" component={BottomBar} />
@@ -81,7 +84,10 @@ const MainStack = () => {
       <Stack.Screen name="Conditions" component={Conditions} />
       <Stack.Screen name="JobCard" component={JobCard} />
       <Stack.Screen name="Calendar" component={Calendar} />
-      <Stack.Screen name="JobCardConfirmButton" component={JobCardConfirmButton} />
+      <Stack.Screen
+        name="JobCardConfirmButton"
+        component={JobCardConfirmButton}
+      />
       <Stack.Screen name="JobCardSwipeJob" component={JobCardSwipeJob} />
       <Stack.Screen name="JobSwipeDone" component={JobSwipeDone} />
       <Stack.Screen name="CompleteJob" component={CompleteJob} />
@@ -96,4 +102,4 @@ const MainStack = () => {
   );
 };
 
-export default MainStack; 
+export default MainStack;

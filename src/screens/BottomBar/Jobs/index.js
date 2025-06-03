@@ -38,15 +38,27 @@ const JobsScreen = ({navigation}) => {
 
   const isFocused = useIsFocused();
 
-  const filterData = [
-    {name: 'All Jobs', count: 23},
-    {name: 'Not confirmed', count: 23},
-    {name: 'Confirmed', count: 0},
-    {name: 'In Progress', count: 0},
-    {name: 'On Pause', count: 0},
-    {name: 'Waiting for Approval', count: 0},
-    {name: 'Required edition work', count: 0},
-  ];
+  const [filterData, setFilterData] = useState([
+    {status: '0', name: 'All Jobs', count: 0},
+    {status: '1', name: 'Open', count: 0},
+    {status: '2', name: 'Assign', count: 0},
+    {status: '3', name: 'Require Confirmation', count: 0},
+    {status: '4', name: 'Confirmed', count: 0},
+    {status: '5', name: 'Completed', count: 0},
+    {status: '6', name: 'Manager Declined', count: 0},
+    {status: 'a', name: 'Accepted', count: 0},
+  ]);
+
+  const statusMap = {
+    1: 'Open',
+    2: 'Assign',
+    3: 'Require Confirmation',
+    4: 'Confirmed',
+    5: 'Completed',
+    6: 'Manager Declined',
+    a: 'Accepted',
+    d: 'Declined', // Note: Declined does not exist in your `filterData` array
+  };
 
   const dispatch = useDispatch();
   const responseJobs = useSelector(state => state.getJobsReducer.data);
@@ -57,6 +69,8 @@ const JobsScreen = ({navigation}) => {
       // console.log('Ord Id ===> ', orgId);
       const payload = {
         id: orgId,
+        offset: 0,
+        status: filterData[isWhitDot].status,
       };
 
       dispatch(getJobs(payload));
@@ -67,12 +81,32 @@ const JobsScreen = ({navigation}) => {
     if (isFocused) {
       getJob();
     }
-  }, [isFocused]);
+  }, [isFocused, isWhitDot]);
 
   useEffect(() => {
-    // console.log('responseJobs ===>', responseJobs);
-    if (responseJobs != null) {
-      setJobsData(responseJobs);
+    if (responseJobs != null && responseJobs.status == 'OK') {
+      console.log('responseJobs ===>', responseJobs);
+      setJobsData(responseJobs.results);
+      const updatedData = filterData.map(item => ({...item, count: 0}));
+
+      responseJobs.summary.forEach(item => {
+        const statusName = statusMap[item.status];
+        const filterItem = updatedData.find(fd => fd.name === statusName);
+        if (filterItem) {
+          filterItem.count = item.total;
+        }
+      });
+
+      const totalJobs = updatedData
+        .filter(item => item.name !== 'All Jobs')
+        .reduce((sum, item) => sum + item.count, 0);
+
+      const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
+      if (allJobsItem) {
+        allJobsItem.count = totalJobs;
+      }
+
+      setFilterData(updatedData);
     }
   }, [responseJobs]);
 
@@ -253,6 +287,7 @@ const JobsScreen = ({navigation}) => {
           </TouchableOpacity>
         </View>
         <View style={{marginBottom: 80}}>
+          {console.log('Job Data ====> ', jobsData)}
           {jobsData != null &&
             jobsData.map((item, index) => (
               <TouchableOpacity
@@ -279,8 +314,7 @@ const JobsScreen = ({navigation}) => {
                           fontSize: 11,
                           fontWeight: '600',
                         }}>
-                        {responseJobs != null &&
-                          responseJobs[index].time_type_text}
+                        {item.time_type_text}
                       </Text>
                       <View
                         style={{
@@ -298,7 +332,7 @@ const JobsScreen = ({navigation}) => {
                             fontFamily: 'SF-Pro-Text-Semibold',
                             fontWeight: '600',
                           }}>
-                          {responseJobs[index].type_text}
+                          {item.type_text}
                         </Text>
                       </View>
                     </View>

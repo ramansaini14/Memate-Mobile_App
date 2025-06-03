@@ -124,7 +124,7 @@ const HomeScreen = ({navigation}) => {
           <TouchableOpacity
             style={{marginHorizontal: 8}}
             // onPress={() => navigation.navigate('Calendar')}
-            >
+          >
             <CalenderIcon />
           </TouchableOpacity>
 
@@ -288,32 +288,31 @@ const HomeScreen = ({navigation}) => {
           )}
           keyExtractor={item => item.id}
         />
-          <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
+        <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
 
-          <FlatList
-            key={1}
-            data={JobsData}
-            horizontal
-            style={{paddingHorizontal: 16}}
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            renderItem={({item}) => (
-              <View style={{width: 320}}>
-                <TaskComponent />
-              </View>
-            )}
-            keyExtractor={item => item.id}
-          />
-          <OrganizationListModal
-            visible={orgVisible}
-            onClose={onClose}
-            organizations={orgData}
-            onItemSelect={onItemSelect}
-            navigation={navigation}
-            selectedOrg={selectedOrg}
-            setOrgVisible={setOrgVisible}
-          />
-      
+        <FlatList
+          key={1}
+          data={JobsData}
+          horizontal
+          style={{paddingHorizontal: 16}}
+          nestedScrollEnabled
+          showsHorizontalScrollIndicator={false}
+          renderItem={({item}) => (
+            <View style={{width: 320}}>
+              <TaskComponent />
+            </View>
+          )}
+          keyExtractor={item => item.id}
+        />
+        <OrganizationListModal
+          visible={orgVisible}
+          onClose={onClose}
+          organizations={orgData}
+          onItemSelect={onItemSelect}
+          navigation={navigation}
+          selectedOrg={selectedOrg}
+          setOrgVisible={setOrgVisible}
+        />
       </ScrollView>
     </SafeAreaView>
   );
