@@ -294,7 +294,7 @@ const HomeScreen = ({navigation}) => {
           key={1}
           data={JobsData}
           horizontal
-          style={{paddingHorizontal: 16}}
+          style={{paddingHorizontal: 16, paddingBottom: 16}}
           nestedScrollEnabled
           showsHorizontalScrollIndicator={false}
           renderItem={({item}) => (
@@ -322,9 +322,11 @@ export default HomeScreen;
 
 const styles = StyleSheet.create({
   containerStyle: {
-    flex: 1,
+    // flex: 1,
+    height: '100%',
     backgroundColor: appColors.white,
     justifyContent: 'center',
+    paddingBottom: 70,
   },
   headerStyle: {
     flexDirection: 'row',

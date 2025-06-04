@@ -27,6 +27,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  clearJobsAcceptDecline,
   hitAcceptJobs,
   hitDeclineJobs,
 } from '../../redux/JobsAcceptDeclineSlice';
@@ -63,21 +64,23 @@ import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
   const {data} = route.params;
+  const [jobData, setJobData] = useState(data);
   const dispatch = useDispatch();
   const [orgId, setOrgId] = useState('');
   const [isAccept, setAccept] = useState(false);
   const [isDecline, setDecline] = useState(false);
   const [reason, setReason] = useState('');
-  let text = data.long_description;
+  let text = jobData.long_description;
   const [isJobStarted, setIsJobStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [isExpand, setExpand] = useState(false);
 
   // Get global timer state (primarily for the active job)
   const globalTimer = useSelector(state => state.timer.value);
 
   // Get the job-specific timer for this job
-  const jobTimer = useSelector(state => selectJobTimer(state, data.id));
+  const jobTimer = useSelector(state => selectJobTimer(state, jobData.id));
 
   // Use the job-specific timer value instead of the global one
   const timer = jobTimer ? jobTimer.value : 0;
@@ -103,7 +106,7 @@ const JobCard = ({navigation, route}) => {
   const onAccept = () => {
     const payload = {
       orgId: orgId,
-      jobId: data.id,
+      jobId: jobData.id,
     };
     console.log('Payload Accept ===> ', payload);
     dispatch(hitAcceptJobs(payload));
@@ -113,7 +116,7 @@ const JobCard = ({navigation, route}) => {
     setDecline(false);
     const payload = {
       orgId: orgId,
-      jobId: data.id,
+      jobId: jobData.id,
       message: reason,
     };
     dispatch(hitDeclineJobs(payload));
@@ -121,24 +124,24 @@ const JobCard = ({navigation, route}) => {
 
   useEffect(() => {
     console.log(
-      `JobCard mounted for job ID: ${data.id}, action_status:`,
-      data.action_status,
+      `JobCard mounted for job ID: ${jobData.id}, action_status:`,
+      jobData.action_status,
     );
 
     getOrgId();
 
     // Force start the job immediately if action_status is 1
-    if (data.action_status === 1) {
-      console.log(`Setting job ${data.id} started from action_status=1`);
+    if (jobData.action_status === 1) {
+      console.log(`Setting job ${jobData.id} started from action_status=1`);
       setIsJobStarted(true);
       setIsPaused(false);
 
       // Need to manually trigger the Redux state as well
       setTimeout(() => {
         console.log(
-          `Dispatching startTimer for initial job start for job ${data.id}`,
+          `Dispatching startTimer for initial job start for job ${jobData.id}`,
         );
-        dispatch(startTimer(data.id));
+        dispatch(startTimer(jobData.id));
         startBackgroundTimer(dispatch);
         startLocationTracking();
       }, 500);
@@ -146,14 +149,14 @@ const JobCard = ({navigation, route}) => {
 
     // Check if this specific job is already running
     loadTimerStateFromStorage(dispatch).then(({jobs, activeJobId}) => {
-      console.log(`Checking stored timer state for job ${data.id}`, {
-        hasJobData: jobs && jobs[data.id] ? true : false,
+      console.log(`Checking stored timer state for job ${jobData.id}`, {
+        hasJobData: jobs && jobs[jobData.id] ? true : false,
         activeJobId,
       });
 
-      if (jobs && jobs[data.id]) {
-        const jobState = jobs[data.id];
-        console.log(`Found stored state for job ${data.id}:`, jobState);
+      if (jobs && jobs[jobData.id]) {
+        const jobState = jobs[jobData.id];
+        console.log(`Found stored state for job ${jobData.id}:`, jobState);
 
         // Set local state based on the job's stored state
         setIsJobStarted(jobState.isRunning);
@@ -162,7 +165,7 @@ const JobCard = ({navigation, route}) => {
         // If the job is running and not paused, start location tracking
         if (jobState.isRunning && !jobState.isPaused) {
           console.log(
-            `Starting location tracking for job ${data.id} from loaded state`,
+            `Starting location tracking for job ${jobData.id} from loaded state`,
           );
           startLocationTracking();
         }
@@ -174,16 +177,16 @@ const JobCard = ({navigation, route}) => {
 
     // Clean up function
     return () => {
-      console.log(`JobCard unmounting for job ID: ${data.id}`);
+      console.log(`JobCard unmounting for job ID: ${jobData.id}`);
       // Do not stop the background timer since it may be needed for other jobs!
       // Just stop location tracking for this job
       stopLocationTracking();
     };
-  }, [data.id]);
+  }, [jobData.id]);
 
   // Function to start location tracking
   const startLocationTracking = () => {
-    console.log(`Starting location tracking for job ${data.id}`);
+    console.log(`Starting location tracking for job ${jobData.id}`);
 
     // Get initial location
     getCurrentLocation();
@@ -198,7 +201,7 @@ const JobCard = ({navigation, route}) => {
 
   // Create a better location tracking control function
   const stopLocationTracking = () => {
-    console.log(`Stopping location tracking for job ${data.id}`);
+    console.log(`Stopping location tracking for job ${jobData.id}`);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
@@ -208,7 +211,7 @@ const JobCard = ({navigation, route}) => {
 
   // Fix the direct pause handler
   const handleDirectPause = () => {
-    console.log(`Direct pause called for job ${data.id}, current state:`, {
+    console.log(`Direct pause called for job ${jobData.id}, current state:`, {
       isJobStarted,
       isPaused,
       timer,
@@ -224,7 +227,7 @@ const JobCard = ({navigation, route}) => {
 
     // Only if we're in a running state
     if (isJobStarted && !isPaused) {
-      console.log(`Pausing job ${data.id}`);
+      console.log(`Pausing job ${jobData.id}`);
 
       // Update local state immediately to ensure UI responds
       setIsPaused(true);
@@ -235,13 +238,13 @@ const JobCard = ({navigation, route}) => {
       console.log('Location tracking stopped due to pause');
 
       // Update Redux timer state to paused
-      dispatch(pauseTimer(data.id));
+      dispatch(pauseTimer(jobData.id));
 
       // Prepare and send API call with properly formatted data
       console.log('Making pause API call');
 
       // Get the locations for this specific job
-      const locationsKey = `locations_${data.id}`;
+      const locationsKey = `locations_${jobData.id}`;
       AsyncStorage.getItem(locationsKey)
         .then(locationsStr => {
           let locationsData = [];
@@ -285,11 +288,11 @@ const JobCard = ({navigation, route}) => {
           // Ensure the payload is correctly formatted
           const payload = {
             orgId,
-            jobId: data.id,
+            jobId: jobData.id,
             data: locationsData,
           };
 
-          console.log(`Sending pause payload for job ${data.id}:`, payload);
+          console.log(`Sending pause payload for job ${jobData.id}:`, payload);
           dispatch(hitJobPause(payload));
           console.log('Pause API call completed');
         })
@@ -308,7 +311,7 @@ const JobCard = ({navigation, route}) => {
           dispatch(
             hitJobPause({
               orgId,
-              jobId: data.id,
+              jobId: jobData.id,
               data: fallbackData,
             }),
           );
@@ -322,21 +325,30 @@ const JobCard = ({navigation, route}) => {
   };
 
   const onCompleteJob = async () => {
-    console.log(`Completing job ${data.id}`);
+    console.log(`Completing job ${jobData.id}`);
 
     // First, stop the timer in Redux
-    dispatch(stopTimer(data.id));
+    dispatch(stopTimer(jobData.id));
 
     // Update local state
     setIsJobStarted(false);
     setIsPaused(false);
     setShowTracker(false);
+    setIsCompleted(true);
+    setJobData(prevData => ({
+      ...prevData,
+      status: '3',
+      status_text: 'Require confirmation',
+      action_status: 3,
+      action_status_text: 'Finished',
+      // new id value
+    }));
 
     // Stop location tracking
     stopLocationTracking();
 
     // Get the locations for this specific job
-    const locationsKey = `locations_${data.id}`;
+    const locationsKey = `locations_${jobData.id}`;
     try {
       const locationsStr = await AsyncStorage.getItem(locationsKey);
       let locationsData = [];
@@ -367,11 +379,11 @@ const JobCard = ({navigation, route}) => {
       // Prepare and send API call
       const payload = {
         orgId,
-        jobId: data.id,
+        jobId: jobData.id,
         data: locationsData,
       };
 
-      console.log(`Sending job completion payload for job ${data.id}`);
+      console.log(`Sending job completion payload for job ${jobData.id}`);
       dispatch(hitJobStop(payload));
 
       // Clear the stored locations
@@ -391,7 +403,7 @@ const JobCard = ({navigation, route}) => {
       dispatch(
         hitJobStop({
           orgId,
-          jobId: data.id,
+          jobId: jobData.id,
           data: fallbackData,
         }),
       );
@@ -400,7 +412,7 @@ const JobCard = ({navigation, route}) => {
 
   // Fix the direct resume handler
   const handleDirectResume = () => {
-    console.log(`Direct resume called for job ${data.id}, current state:`, {
+    console.log(`Direct resume called for job ${jobData.id}, current state:`, {
       isJobStarted,
       isPaused,
       timer,
@@ -409,17 +421,17 @@ const JobCard = ({navigation, route}) => {
 
     // Only if we're in a paused state
     if (isJobStarted && isPaused) {
-      console.log(`Resuming job ${data.id}`);
+      console.log(`Resuming job ${jobData.id}`);
 
       // Update local state
       setIsPaused(false);
       setShowTracker(true);
 
       // Update Redux timer state to resumed
-      dispatch(resumeTimer(data.id));
+      dispatch(resumeTimer(jobData.id));
 
       // Make sure background timer is running and this job is active
-      dispatch(startTimer(data.id)); // Ensure this job becomes the active job
+      dispatch(startTimer(jobData.id)); // Ensure this job becomes the active job
       startBackgroundTimer(dispatch);
 
       // Explicitly restart location tracking
@@ -438,15 +450,18 @@ const JobCard = ({navigation, route}) => {
   };
 
   const handleStartStop = () => {
-    console.log(`handleStartStop called for job ${data.id}, current state:`, {
-      isJobStarted,
-      isPaused,
-      timer,
-      activeJobId,
-    });
+    console.log(
+      `handleStartStop called for job ${jobData.id}, current state:`,
+      {
+        isJobStarted,
+        isPaused,
+        timer,
+        activeJobId,
+      },
+    );
 
     if (!isJobStarted) {
-      console.log(`Starting job ${data.id}`);
+      console.log(`Starting job ${jobData.id}`);
 
       // Starting the job
       setIsJobStarted(true);
@@ -454,7 +469,7 @@ const JobCard = ({navigation, route}) => {
       setShowTracker(true);
 
       // Update Redux timer state to started
-      dispatch(startTimer(data.id));
+      dispatch(startTimer(jobData.id));
 
       // Make sure background timer is running
       startBackgroundTimer(dispatch);
@@ -485,13 +500,13 @@ const JobCard = ({navigation, route}) => {
 
   // Add this function to directly start the job (called from UI components)
   const startJob = () => {
-    console.log(`startJob called directly for job ${data.id}`);
+    console.log(`startJob called directly for job ${jobData.id}`);
     handleStartStop();
   };
 
   // Monitor job status response
   useEffect(() => {
-    if (jobStatusResponse && jobStatusResponse.jobId === data.id) {
+    if (jobStatusResponse && jobStatusResponse.jobId === jobData.id) {
       if (jobStatusResponse.hasOwnProperty('timer')) {
         // If we got a timer from the API
         if (!isPaused) {
@@ -502,7 +517,7 @@ const JobCard = ({navigation, route}) => {
       // Clear the response after processing
       dispatch(clearJobStatus());
     }
-  }, [jobStatusResponse, dispatch, data.id]);
+  }, [jobStatusResponse, dispatch, jobData.id]);
 
   const handleCopy = () => {
     Clipboard.setString(text);
@@ -518,13 +533,23 @@ const JobCard = ({navigation, route}) => {
     if (responseAccDec != null) {
       if (responseAccDec.status == 'OK') {
         setAccept(false);
+        setJobData(prevData => ({
+          ...prevData,
+          status: 'a',
+          status_text: 'Accepted',
+          // new id value
+        }));
+        // jobData.status = 'a';
+        // jobData.status_text = 'Accepted';
+        // setJobData(jobData);
         // navigation.navigate('JobCardConfirmButton');
+        dispatch(clearJobsAcceptDecline());
       } else {
         setAccept(false);
         Alert.alert('MeMate', 'Internal server error');
       }
     }
-  }, [responseAccDec, data.id]);
+  }, [responseAccDec, jobData.id]);
 
   // Add useEffect to synchronize component state with Redux job-specific state
   useEffect(() => {
@@ -534,7 +559,7 @@ const JobCard = ({navigation, route}) => {
 
       if (shouldUpdateRunning || shouldUpdatePaused) {
         console.log(
-          `Synchronizing job ${data.id} state with Redux timer state:`,
+          `Synchronizing job ${jobData.id} state with Redux timer state:`,
           {
             reduxIsRunning: jobTimer.isRunning,
             reduxIsPaused: jobTimer.isPaused,
@@ -547,21 +572,25 @@ const JobCard = ({navigation, route}) => {
         setIsPaused(jobTimer.isPaused);
       }
     }
-  }, [jobTimer, data.id]);
+  }, [jobTimer, jobData.id]);
 
   // Update to force proper rerendering of child components when state changes
   useEffect(() => {
-    console.log(`JobCard ${data.id} isPaused state changed to:`, isPaused);
+    console.log(`JobCard ${jobData.id} isPaused state changed to:`, isPaused);
 
     // Force a refresh of components that depend on this state
     if (isPaused) {
-      console.log(`Job ${data.id} is now paused, stopping location tracking`);
+      console.log(
+        `Job ${jobData.id} is now paused, stopping location tracking`,
+      );
       stopLocationTracking();
     } else if (isJobStarted) {
-      console.log(`Job ${data.id} is now running, starting location tracking`);
+      console.log(
+        `Job ${jobData.id} is now running, starting location tracking`,
+      );
       startLocationTracking();
     }
-  }, [isPaused, isJobStarted, data.id]);
+  }, [isPaused, isJobStarted, jobData.id]);
 
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
@@ -580,7 +609,7 @@ const JobCard = ({navigation, route}) => {
         // Send to API
         const payload = {
           orgId,
-          jobId: data.id,
+          jobId: jobData.id,
           data: [locationData],
         };
 
@@ -697,9 +726,9 @@ const JobCard = ({navigation, route}) => {
         </View>
       </View>
       <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        {data.status == 'a' ||
-        data.action_status == 1 ||
-        data.action_status == 2 ? (
+        {jobData.status == 'a' ||
+        jobData.action_status == 1 ||
+        jobData.action_status == 2 ? (
           <LocationTracker
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}
@@ -707,24 +736,27 @@ const JobCard = ({navigation, route}) => {
             handlePause={handleDirectPause}
             handleResume={handleDirectResume}
             handleStartStop={handleStartStop}
-            data={data}
+            data={jobData}
             orgId={orgId}
             showTracker={showTracker}
             setShowTracker={setShowTracker}
             timer={timer}
             onCompleteJob={onCompleteJob}
+            isCompleted={isCompleted}
           />
         ) : (
-          data.action_status != null && (
-            <TouchableOpacity style={styles.doneButton}>
+          jobData.action_status != null && (
+            <View style={styles.doneButton}>
               <DoneTickButton />
               <Text style={styles.doneButtonText}>Done</Text>
-            </TouchableOpacity>
+            </View>
           )
         )}
-        {isJobStarted || data.action_status == 1 || data.action_status == 2 ? (
+        {isJobStarted ||
+        jobData.action_status == 1 ||
+        jobData.action_status == 2 ? (
           <TimeTrackerCard
-            data={data}
+            data={jobData}
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}
             isPaused={isPaused}
@@ -755,7 +787,7 @@ const JobCard = ({navigation, route}) => {
                   fontWeight: '600',
                   fontSize: 11,
                 }}>
-                {data.time_type_text}
+                {jobData.time_type_text}
               </Text>
               <View
                 style={{
@@ -776,7 +808,7 @@ const JobCard = ({navigation, route}) => {
                     fontWeight: '600',
                     fontSize: 11,
                   }}>
-                  {data.type_text}
+                  {jobData.type_text}
                 </Text>
               </View>
             </View>
@@ -785,7 +817,7 @@ const JobCard = ({navigation, route}) => {
                 flexDirection: 'row',
               }}>
               <SettingIcon width={20} height={20} />
-              <Text style={styles.headerTextStyle}>{data.status_text}</Text>
+              <Text style={styles.headerTextStyle}>{jobData.status_text}</Text>
             </View>
           </View>
         )}
@@ -799,10 +831,10 @@ const JobCard = ({navigation, route}) => {
             marginBottom: 10,
             marginLeft: 12,
           }}>
-          {data.number}
+          {jobData.number}
         </Text>
 
-        <Text style={styles.headStyle}>{data.short_description}</Text>
+        <Text style={styles.headStyle}>{jobData.short_description}</Text>
 
         <View
           style={{
@@ -838,7 +870,7 @@ const JobCard = ({navigation, route}) => {
                   fontSize: 13,
                   //   marginLeft: 12,
                 }}>
-                {new Date(data.start_date * 1000)
+                {new Date(jobData.start_date * 1000)
                   .toLocaleDateString('en-GB')
                   .replace(/\//g, '.')}{' '}
                 {'  '}
@@ -848,7 +880,7 @@ const JobCard = ({navigation, route}) => {
                     fontSize: 13,
                     fontFamily: 'sf-pro-text-semibold',
                   }}>
-                  {moment.unix(data.start_date).format('HH:mm')}
+                  {moment.unix(jobData.start_date).format('HH:mm')}
                 </Text>
               </Text>
             </View>
@@ -881,7 +913,7 @@ const JobCard = ({navigation, route}) => {
                   fontWeight: '600',
                   fontSize: 13,
                 }}>
-                {new Date(data.end_date * 1000)
+                {new Date(jobData.end_date * 1000)
                   .toLocaleDateString('en-GB')
                   .replace(/\//g, '.')}{' '}
                 {'  '}
@@ -891,7 +923,7 @@ const JobCard = ({navigation, route}) => {
                     fontSize: 13,
                     fontFamily: 'sf-pro-text-semibold',
                   }}>
-                  {moment.unix(data.end_date).format('HH:mm')}
+                  {moment.unix(jobData.end_date).format('HH:mm')}
                 </Text>
               </Text>
             </View>
@@ -902,12 +934,12 @@ const JobCard = ({navigation, route}) => {
           <View>
             <Text style={styles.timePaymentStyle}>Time</Text>
             <Text style={styles.cardHoursStyle}>
-              {data.duration}h{/* {data.type_text === 'Hours' ? 'h' : ''} */}
+              {jobData.duration}h{/* {data.type_text === 'Hours' ? 'h' : ''} */}
             </Text>
           </View>
           <View>
             <Text style={styles.timePaymentStyle}>Payment</Text>
-            <Text style={styles.cardHoursStyle}>${data.cost}</Text>
+            <Text style={styles.cardHoursStyle}>${jobData.cost}</Text>
           </View>
           {/* <View>
             <Text style={styles.timePaymentStyle}>Variations</Text>
@@ -934,7 +966,7 @@ const JobCard = ({navigation, route}) => {
               overflow: isExpand ? 'hidden' : 'visible',
               height: isExpand ? 'auto' : '80',
             }}>
-            {data.long_description}
+            {jobData.long_description}
           </Text>
           <View
             style={{
@@ -990,7 +1022,7 @@ const JobCard = ({navigation, route}) => {
             fontFamily: 'sf_medium',
             fontWeight: 400,
           }}>
-          {data.address}
+          {jobData.address}
         </Text>
         <View style={{flexDirection: 'row'}}>
           <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>
@@ -1076,7 +1108,7 @@ const JobCard = ({navigation, route}) => {
           History Log
         </Text>
       </View> */}
-      {data.status_text !== 'Accepted' && data.action_status != 3 ? (
+      {jobData.status_text !== 'Accepted' && jobData.action_status != 3 ? (
         <View
           style={{
             flexDirection: 'row',

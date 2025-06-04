@@ -110,18 +110,22 @@ const BottomBar = ({navigation}) => {
             ));
           }
         },
+        tabBarPosition: 'bottom',
         tabBarActiveTintColor: 'black',
         tabBarInactiveTintColor: 'gray',
         tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
+          borderWidth: 1,
+          borderColor: 'red',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: 16,
-          elevation: 0,
+          // paddingVertical: 16,
+          // elevation: 0,
           backgroundColor: '#fff',
           borderColor: '#fff',
-          height: '12%',
+          // borderRadius: 40,
+          height: 76,
           // ...styles.shadow,
         },
       })}>
@@ -161,7 +165,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 5},
     shadowOpacity: 0.25,
     shadowRadius: 3.5,
-    elevation: 5,
+    // elevation: 5,
   },
   tabIconStyle: {
     height: 40,
