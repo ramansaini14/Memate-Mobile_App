@@ -27,6 +27,7 @@ import {getJobs} from '../../../redux/GetJobsSlice';
 import {useIsFocused} from '@react-navigation/native';
 import JobFilterModal from '../../../components/JobFilterModal';
 import moment from 'moment';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 
 const JobsScreen = ({navigation}) => {
   const [active, setInActive] = useState(0);
@@ -35,6 +36,8 @@ const JobsScreen = ({navigation}) => {
   const [isFiltersVisible, setFilterVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState([]);
   const [jobsData, setJobsData] = useState(null);
+
+  const [loading, setLoading] = useState(true);
 
   const isFocused = useIsFocused();
 
@@ -79,6 +82,7 @@ const JobsScreen = ({navigation}) => {
 
   useEffect(() => {
     if (isFocused) {
+      setLoading(true);
       getJob();
     }
   }, [isFocused, isWhitDot]);
@@ -86,6 +90,7 @@ const JobsScreen = ({navigation}) => {
   useEffect(() => {
     if (responseJobs != null && responseJobs.status == 'OK') {
       console.log('responseJobs ===>', responseJobs);
+      setLoading(false);
       setJobsData(responseJobs.results);
       const updatedData = filterData.map(item => ({...item, count: 0}));
 
@@ -288,185 +293,95 @@ const JobsScreen = ({navigation}) => {
         </View>
         <View style={{marginBottom: 80}}>
           {console.log('Job Data ====> ', jobsData)}
-          {jobsData != null &&
-            jobsData.map((item, index) => (
-              <TouchableOpacity
-                style={styles.shiftCard}
-                onPress={() => navigation.navigate('JobCard', {data: item})}>
-                <View style={styles.viewStyle}>
-                  <View style={styles.headerViewStyle}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        backgroundColor: appColors.lightGreen,
-                        alignItems: 'center',
-                        borderRadius: 16,
-                        borderRadius: 16,
-                        marginTop: 8,
-                      }}>
-                      <Text
+          {loading
+            ? Array.from({length: 5}).map((_, index) => (
+                <ShimmerPlaceholder
+                  key={index}
+                  LinearGradient={LinearGradient}
+                  style={{
+                    height: 100,
+                    width: '100%',
+                    borderRadius: 24,
+                    marginVertical: 10,
+                    backgroundColor: appColors.offWhite,
+                  }}
+                  shimmerStyle={{borderRadius: 24}}
+                  shimmerColors={['#f0f0f0', '#e0e0e0', '#f0f0f0']}
+                  location={[0.3, 0.5, 0.7]}
+                  isInteraction={false}
+                  duration={1000}
+                  autoRun
+                  // Diagonal direction
+                  shimmerDirection="diagonal"
+                  LinearGradientProps={{
+                    start: {x: 0, y: 1},
+                    end: {x: 1, y: 0},
+                  }}
+                />
+              ))
+            : jobsData != null &&
+              jobsData.map((item, index) => (
+                <TouchableOpacity
+                  style={styles.shiftCard}
+                  onPress={() => navigation.navigate('JobCard', {data: item})}>
+                  <View style={styles.viewStyle}>
+                    <View style={styles.headerViewStyle}>
+                      <View
                         style={{
-                          paddingLeft: 8,
-                          paddingVertical: 3,
-                          color: appColors.black,
-                          fontFamily: 'SF-Pro-Text-Semibold',
+                          flexDirection: 'row',
+                          backgroundColor: appColors.lightGreen,
+                          alignItems: 'center',
                           borderRadius: 16,
-                          fontSize: 11,
-                          fontWeight: '600',
-                        }}>
-                        {item.time_type_text}
-                      </Text>
-                      <View
-                        style={{
-                          backgroundColor: appColors.white,
-                          marginLeft: 4,
-                          marginRight: 1,
-                          borderTopRightRadius: 8,
-                          borderBottomRightRadius: 8,
-                          paddingVertical: 2,
-                          paddingHorizontal: 6,
-                        }}>
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            fontWeight: '600',
-                          }}>
-                          {item.type_text}
-                        </Text>
-                      </View>
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                      }}>
-                      <View style={{marginRight: 4}}>
-                        <ClockIcon />
-                      </View>
-                      <Text style={styles.headerTextStyle}>
-                        {item.duration}h
-                      </Text>
-                      <Text style={[styles.headerTextStyle, {marginLeft: 8}]}>
-                        ${item.cost}
-                      </Text>
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      height: 1,
-                      backgroundColor: appColors.lightGrey,
-                      marginHorizontal: 16,
-                    }}
-                  />
-                  <View style={{padding: 16}}>
-                    <Text
-                      style={{
-                        color: appColors.black,
-                        fontSize: 10,
-                        fontFamily: 'SF-Pro-Text-Semibold',
-                        fontWeight: '600',
-                      }}>
-                      THE-JB-{item.number}
-                    </Text>
-                    <Text style={[styles.headerTextStyle, {marginTop: 8}]}>
-                      {item.short_description}
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        marginTop: 8,
-                        alignItems: 'center',
-                      }}>
-                      <MapMarkerIcon />
-                      <Text
-                        style={{
-                          color: appColors.placeholderColor,
-                          fontFamily: 'SF-Pro-Text-Semibold',
-                          fontWeight: '600',
-                          fontSize: 11,
-                        }}>
-                        {item.address}
-                      </Text>
-                    </View>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                      <View
-                        style={{
-                          borderRadius: 12,
-                          backgroundColor: appColors.white,
+                          borderRadius: 16,
                           marginTop: 8,
-                          flexDirection: 'row',
                         }}>
                         <Text
                           style={{
-                            paddingVertical: 4,
-                            paddingHorizontal: 8,
+                            paddingLeft: 8,
+                            paddingVertical: 3,
                             color: appColors.black,
-                            fontWeight: '600',
                             fontFamily: 'SF-Pro-Text-Semibold',
+                            borderRadius: 16,
                             fontSize: 11,
+                            fontWeight: '600',
                           }}>
-                          {moment
-                            .unix(parseInt(item.start_date, 10))
-                            .format('DD.MM.YYYY')}
+                          {item.time_type_text}
                         </Text>
-                        <Text
+                        <View
                           style={{
-                            paddingVertical: 4,
-                            paddingRight: 8,
-                            color: appColors.placeholderColor,
-                            fontWeight: '600',
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            fontSize: 11,
+                            backgroundColor: appColors.white,
+                            marginLeft: 4,
+                            marginRight: 1,
+                            borderTopRightRadius: 8,
+                            borderBottomRightRadius: 8,
+                            paddingVertical: 2,
+                            paddingHorizontal: 6,
                           }}>
-                          {moment
-                            .unix(parseInt(item.end_date, 10))
-                            .format('HH:mm')}
-                        </Text>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontFamily: 'SF-Pro-Text-Semibold',
+                              fontWeight: '600',
+                            }}>
+                            {item.type_text}
+                          </Text>
+                        </View>
                       </View>
                       <View
                         style={{
-                          width: 10,
-                          backgroundColor: appColors.placeholderColor,
-                          height: 1,
-                          marginHorizontal: 5,
-                          marginTop: 8,
-                        }}
-                      />
-                      <View
-                        style={{
-                          borderRadius: 12,
-                          backgroundColor: appColors.white,
-                          marginTop: 8,
+                          flex: 1,
                           flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
                         }}>
-                        <Text
-                          style={{
-                            paddingVertical: 4,
-                            paddingHorizontal: 8,
-                            color: appColors.black,
-                            fontWeight: '600',
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            fontSize: 12,
-                          }}>
-                          {moment
-                            .unix(parseInt(item.end_date, 10))
-                            .format('DD.MM.YYYY')}
+                        <View style={{marginRight: 4}}>
+                          <ClockIcon />
+                        </View>
+                        <Text style={styles.headerTextStyle}>
+                          {item.duration}h
                         </Text>
-                        <Text
-                          style={{
-                            paddingVertical: 4,
-                            paddingRight: 8,
-                            color: appColors.placeholderColor,
-                            fontWeight: '600',
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            fontSize: 11,
-                          }}>
-                          {moment
-                            .unix(parseInt(item.start_date, 10))
-                            .format('HH:mm')}
+                        <Text style={[styles.headerTextStyle, {marginLeft: 8}]}>
+                          ${item.cost}
                         </Text>
                       </View>
                     </View>
@@ -474,31 +389,148 @@ const JobsScreen = ({navigation}) => {
                       style={{
                         height: 1,
                         backgroundColor: appColors.lightGrey,
-                        marginTop: 16,
+                        marginHorizontal: 16,
                       }}
                     />
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        marginTop: 16,
-                        alignItems: 'center',
-                      }}>
-                      <StatusIcon />
+                    <View style={{padding: 16}}>
                       <Text
                         style={{
-                          marginLeft: 8,
                           color: appColors.black,
+                          fontSize: 10,
                           fontFamily: 'SF-Pro-Text-Semibold',
-                          fontSize: 12,
                           fontWeight: '600',
                         }}>
-                        {item.status_text}
+                        THE-JB-{item.number}
                       </Text>
+                      <Text style={[styles.headerTextStyle, {marginTop: 8}]}>
+                        {item.short_description}
+                      </Text>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          marginTop: 8,
+                          alignItems: 'center',
+                        }}>
+                        <MapMarkerIcon />
+                        <Text
+                          style={{
+                            color: appColors.placeholderColor,
+                            fontFamily: 'SF-Pro-Text-Semibold',
+                            fontWeight: '600',
+                            fontSize: 11,
+                          }}>
+                          {item.address}
+                        </Text>
+                      </View>
+                      <View
+                        style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <View
+                          style={{
+                            borderRadius: 12,
+                            backgroundColor: appColors.white,
+                            marginTop: 8,
+                            flexDirection: 'row',
+                          }}>
+                          <Text
+                            style={{
+                              paddingVertical: 4,
+                              paddingHorizontal: 8,
+                              color: appColors.black,
+                              fontWeight: '600',
+                              fontFamily: 'SF-Pro-Text-Semibold',
+                              fontSize: 11,
+                            }}>
+                            {moment
+                              .unix(parseInt(item.start_date, 10))
+                              .format('DD.MM.YYYY')}
+                          </Text>
+                          <Text
+                            style={{
+                              paddingVertical: 4,
+                              paddingRight: 8,
+                              color: appColors.placeholderColor,
+                              fontWeight: '600',
+                              fontFamily: 'SF-Pro-Text-Semibold',
+                              fontSize: 11,
+                            }}>
+                            {moment
+                              .unix(parseInt(item.end_date, 10))
+                              .format('HH:mm')}
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            width: 10,
+                            backgroundColor: appColors.placeholderColor,
+                            height: 1,
+                            marginHorizontal: 5,
+                            marginTop: 8,
+                          }}
+                        />
+                        <View
+                          style={{
+                            borderRadius: 12,
+                            backgroundColor: appColors.white,
+                            marginTop: 8,
+                            flexDirection: 'row',
+                          }}>
+                          <Text
+                            style={{
+                              paddingVertical: 4,
+                              paddingHorizontal: 8,
+                              color: appColors.black,
+                              fontWeight: '600',
+                              fontFamily: 'SF-Pro-Text-Semibold',
+                              fontSize: 12,
+                            }}>
+                            {moment
+                              .unix(parseInt(item.end_date, 10))
+                              .format('DD.MM.YYYY')}
+                          </Text>
+                          <Text
+                            style={{
+                              paddingVertical: 4,
+                              paddingRight: 8,
+                              color: appColors.placeholderColor,
+                              fontWeight: '600',
+                              fontFamily: 'SF-Pro-Text-Semibold',
+                              fontSize: 11,
+                            }}>
+                            {moment
+                              .unix(parseInt(item.start_date, 10))
+                              .format('HH:mm')}
+                          </Text>
+                        </View>
+                      </View>
+                      <View
+                        style={{
+                          height: 1,
+                          backgroundColor: appColors.lightGrey,
+                          marginTop: 16,
+                        }}
+                      />
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          marginTop: 16,
+                          alignItems: 'center',
+                        }}>
+                        <StatusIcon />
+                        <Text
+                          style={{
+                            marginLeft: 8,
+                            color: appColors.black,
+                            fontFamily: 'SF-Pro-Text-Semibold',
+                            fontSize: 12,
+                            fontWeight: '600',
+                          }}>
+                          {item.status_text}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            ))}
+                </TouchableOpacity>
+              ))}
         </View>
 
         <JobFilterModal
@@ -519,7 +551,7 @@ const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
     backgroundColor: appColors.white,
-    paddingHorizontal: 16,
+    padding: 16,
   },
   headerStyle: {
     flexDirection: 'row',

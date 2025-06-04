@@ -1113,7 +1113,7 @@ const JobCard = ({navigation, route}) => {
           style={{
             flexDirection: 'row',
             gap: 10,
-            marginBottom: 10,
+            marginTop: 10,
             paddingTop: 16,
           }}>
           <Text style={styles.declineButton} onPress={() => setDecline(true)}>
@@ -1129,7 +1129,7 @@ const JobCard = ({navigation, route}) => {
           style={{
             flexDirection: 'row',
             gap: 10,
-            marginBottom: 10,
+            marginTop: 10,
             paddingTop: 16,
             backgroundColor: appColors.black,
             padding: 12,
@@ -1374,7 +1374,7 @@ const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
     backgroundColor: appColors.white,
-    paddingHorizontal: 16,
+    padding: 16,
   },
   headerStyle: {
     flexDirection: 'row',
