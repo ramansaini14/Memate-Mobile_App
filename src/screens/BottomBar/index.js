@@ -148,7 +148,9 @@ const BottomBar = ({navigation}) => {
               START
             </Text>
           ),
-          tabBarButton: props => <CustomTabBarButton {...props} />,
+          tabBarButton: props => (
+            <CustomTabBarButton {...props} focused={props.focused} />
+          ),
         }}
       />
       <Tab.Screen name="Tasks" component={TasksScreen} />
