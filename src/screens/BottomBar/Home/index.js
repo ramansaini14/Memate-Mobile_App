@@ -31,16 +31,20 @@ import HomeGreenTickSvg from '../../../assets/svg/HomeGreenTickSvg';
 import HomeTickIcon from '../../../assets/svg/HomeTickIcon';
 import RightArrowHome from '../../../assets/svg/RightArrowHome';
 import CherryRightArrow from '../../../assets/svg/CherryRightArrow';
+import {reportRead} from '../../../redux/ReportReadSlice';
 
 // const { height, width } = Dimensions.get("window");
 
-const HomeScreen = ({navigation}) => {
+const HomeScreen = ({navigation, route}) => {
   const [active, setInActive] = useState(0);
+  const {orgId} = route.params;
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
+  const reportReadData = useSelector(state => state.reportReadReducer.data);
   const dispatch = useDispatch();
   const [orgData, setOrgData] = useState(null);
   const [selectedOrg, setSelectedOrg] = useState(null);
+  const isFocused = useIsFocused();
 
   const [orgVisible, setOrgVisible] = useState(false);
 
@@ -79,8 +83,14 @@ const HomeScreen = ({navigation}) => {
   ]);
 
   useEffect(() => {
-    dispatch(getOrganization());
-  }, []);
+    if (isFocused) {
+      dispatch(getOrganization());
+      const payload = {
+        id: orgId,
+      };
+      dispatch(reportRead(payload));
+    }
+  }, [isFocused]);
 
   useEffect(() => {
     // clearToken()
@@ -92,7 +102,7 @@ const HomeScreen = ({navigation}) => {
   }, [responseOrg]);
 
   return (
-    <SafeAreaView style={[styles.containerStyle, {marginBottom: 100}]}>
+    <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
         {/* <DummyUserIcon /> */}
         {selectedOrg != null && (
@@ -149,10 +159,16 @@ const HomeScreen = ({navigation}) => {
                   </View>
                 </View>
                 <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
-                  $400.00
+                  {reportReadData != null
+                    ? '$' + reportReadData.income.done
+                    : '$0.00'}
                 </Text>
                 <Text style={styles.lightTextStyle}>Potential</Text>
-                <Text style={styles.bigTextStyle2}>$0.00</Text>
+                <Text style={styles.bigTextStyle2}>
+                  {reportReadData != null
+                    ? '$' + reportReadData.income.potentianl
+                    : '$0.00'}
+                </Text>
               </View>
               <View style={[styles.cardBox, {marginLeft: 8}]}>
                 <View style={styles.row_}>
@@ -165,9 +181,17 @@ const HomeScreen = ({navigation}) => {
                   </View>
                 </View>
 
-                <Text style={[styles.bigTextStyle, {fontSize: 22}]}>23</Text>
+                <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
+                  {reportReadData != null
+                    ? '$' + reportReadData.finished.done
+                    : '$0.00'}
+                </Text>
                 <Text style={styles.lightTextStyle}>Accepted</Text>
-                <Text style={styles.bigTextStyle2}>16</Text>
+                <Text style={styles.bigTextStyle2}>
+                  {reportReadData != null
+                    ? '$' + reportReadData.finished.accepted
+                    : '$0.00'}
+                </Text>
               </View>
             </View>
 
@@ -322,11 +346,11 @@ export default HomeScreen;
 
 const styles = StyleSheet.create({
   containerStyle: {
-    // flex: 1,
-    height: '100%',
+    flex: 1,
     backgroundColor: appColors.white,
     justifyContent: 'center',
-    paddingBottom: 70,
+    paddingVertical: 16,
+    marginBottom: 64,
   },
   headerStyle: {
     flexDirection: 'row',

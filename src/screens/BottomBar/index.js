@@ -55,7 +55,9 @@ const CustomTabBarButton = ({children, onPress}) => (
   </TouchableOpacity>
 );
 
-const BottomBar = ({navigation}) => {
+const BottomBar = ({navigation, route}) => {
+  const {orgId} = route.params;
+
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -129,7 +131,11 @@ const BottomBar = ({navigation}) => {
           // ...styles.shadow,
         },
       })}>
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        initialParams={{orgId: orgId}}
+      />
       <Tab.Screen name="Work" component={JobsScreen} />
       <Tab.Screen
         name="Plus"

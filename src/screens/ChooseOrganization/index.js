@@ -1,50 +1,57 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { appColors } from '../../utils/appColors';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {appColors} from '../../utils/appColors';
 import OrganizationComponent from '../../components/OrganizationComponent';
 import RateStar from '../../assets/svg/RateStar';
-import { useDispatch, useSelector } from 'react-redux';
-import { getOrganization, getOrganizationClear } from '../../redux/getOrganizationSlice';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {useDispatch, useSelector} from 'react-redux';
+import {
+  getOrganization,
+  getOrganizationClear,
+} from '../../redux/getOrganizationSlice';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ChooseOrganization = ({ navigation }) => {
-
+const ChooseOrganization = ({navigation}) => {
   const dispatch = useDispatch();
 
-  const responseOrg = useSelector((state)=>state.getOrganizationReducer.data)
-  const [orgData,setOrgData] = useState(null)
+  const responseOrg = useSelector(state => state.getOrganizationReducer.data);
+  const [orgData, setOrgData] = useState(null);
 
-  const onNextClick = async (itemData) => {
+  const onNextClick = async itemData => {
+    console.log('ORG ID ===> ', JSON.stringify(itemData.id));
 
-    console.log("ORG ID ===> ",JSON.stringify(itemData.id))
+    await AsyncStorage.setItem('orgId', JSON.stringify(itemData.id));
 
-    await AsyncStorage.setItem("orgId", JSON.stringify(itemData.id));
-
-    if(itemData.terms)
-      navigation.navigate('BottomBar');
+    if (itemData.terms) navigation.navigate('BottomBar', {orgId: itemData.id});
     else
-      navigation.navigate('TermsAndConditions',{from:'org',id:itemData.id})
+      navigation.navigate('TermsAndConditions', {from: 'org', id: itemData.id});
   };
 
   useEffect(() => {
     dispatch(getOrganization());
   }, []);
 
-  useEffect(()=>{
-    if(responseOrg!=null){
-      setOrgData(responseOrg)
+  useEffect(() => {
+    if (responseOrg != null) {
+      setOrgData(responseOrg);
       // dispatch(getOrganizationClear())
     }
-  },[responseOrg])
+  }, [responseOrg]);
 
   return (
     <SafeAreaView style={styles.containerStyle}>
-      <Text style={[styles.textStyle, {marginBottom: 20} ]}>Choose Organization</Text>
-      {orgData!=null && orgData.map((item)=>
-        <OrganizationComponent onNextClick={onNextClick} itemData={item} from={1}/>
-      )}
-      <View style={{ justifyContent: 'flex-end', flex: 1 }}>
+      <Text style={[styles.textStyle, {marginBottom: 20}]}>
+        Choose Organization
+      </Text>
+      {orgData != null &&
+        orgData.map(item => (
+          <OrganizationComponent
+            onNextClick={onNextClick}
+            itemData={item}
+            from={1}
+          />
+        ))}
+      <View style={{justifyContent: 'flex-end', flex: 1}}>
         <TouchableOpacity
           onPress={() => navigation.navigate('BottomBar')}
           style={{
@@ -59,7 +66,12 @@ const ChooseOrganization = ({ navigation }) => {
           <RateStar />
           <Text style={styles.rateTextStyle}>Rate MeMate</Text>
         </TouchableOpacity>
-        <Text style={styles.termsStyle} onPress={() => navigation.navigate('Conditions')}> Terms and Conditions </Text>
+        <Text
+          style={styles.termsStyle}
+          onPress={() => navigation.navigate('Conditions')}>
+          {' '}
+          Terms and Conditions{' '}
+        </Text>
       </View>
     </SafeAreaView>
   );
