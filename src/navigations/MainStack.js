@@ -42,6 +42,7 @@ import TermsAndConditions from '../screens/TermsAndConditions';
 import ImageCropper from '../screens/ImageCropper';
 import SplashScreen from '../screens/SplashScreen';
 import LoginPin from '../screens/LoginPin';
+import ResultReport from '../screens/ResultReport';
 
 const Stack = createNativeStackNavigator();
 
@@ -98,6 +99,7 @@ const MainStack = () => {
       <Stack.Screen name="CompleteTask" component={CompleteTask} />
       <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} />
       <Stack.Screen name="ImageCropper" component={ImageCropper} />
+      <Stack.Screen name="ResultReport" component={ResultReport} />
     </Stack.Navigator>
   );
 };

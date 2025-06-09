@@ -1,18 +1,13 @@
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {appColors} from '../../utils/appColors';
-import {
-  briefcase,
-  briefcaseFill,
-  chat,
-  chatFill,
-  checklist,
-  checklistFill,
-  Home,
-  HomeFill,
-  plus,
-} from '../../utils/Images';
 import HomeScreen from './Home';
 import JobsScreen from './Jobs';
 import TasksScreen from './Tasks';
@@ -27,6 +22,8 @@ import TaskIcon from '../../assets/svg/TasksIcon';
 import TaskIn from '../../assets/svg/TaskIn';
 import ChatIcon from '../../assets/svg/ChatIcon';
 import ChatIn from '../../assets/svg/ChatIn';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import MainLogo from '../../assets/svg/MainLogo';
 
 const Tab = createBottomTabNavigator();
 
@@ -45,8 +42,6 @@ const CustomTabBarButton = ({children, onPress}) => (
         borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 0,
-        paddingVertical: 0,
         backgroundColor: appColors.black,
         marginTop: 8,
       }}>
@@ -56,18 +51,33 @@ const CustomTabBarButton = ({children, onPress}) => (
 );
 
 const BottomBar = ({navigation, route}) => {
-  const {orgId} = route.params;
+  const [orgId, setOrgId] = useState(null);
+
+  const getOrgId = async () => {
+    const id = await AsyncStorage.getItem('orgId');
+    setOrgId(id);
+  };
+
+  useEffect(() => {
+    getOrgId();
+  }, []); // 👈 Added empty dependency array so it runs only once
+
+  // Show a loading screen while orgId is being fetched
+  // if (!orgId) {
+  //   return (
+  //     <SafeAreaView style={styles.container}>
+  //       <MainLogo width={200} height={120} />
+  //     </SafeAreaView>
+  //   );
+  // }
 
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
         headerShown: false,
-        initialRouteName: 'BottomBar',
-        tabBarIcon: ({focused, color, size}) => {
-          let iconName;
-
+        tabBarIcon: ({focused}) => {
           if (route.name === 'Home') {
-            return (iconName = focused ? (
+            return focused ? (
               <View style={styles.tabIconStyle}>
                 <HomeActive />
                 <PinkDot />
@@ -76,9 +86,9 @@ const BottomBar = ({navigation, route}) => {
               <View style={styles.tabIconStyle}>
                 <HomeIcon />
               </View>
-            ));
+            );
           } else if (route.name === 'Work') {
-            return (iconName = focused ? (
+            return focused ? (
               <View style={styles.tabIconStyle}>
                 <JobsIcon />
                 <PinkDot />
@@ -87,9 +97,9 @@ const BottomBar = ({navigation, route}) => {
               <View style={styles.tabIconStyle}>
                 <JobInactive />
               </View>
-            ));
+            );
           } else if (route.name === 'Tasks') {
-            return (iconName = focused ? (
+            return focused ? (
               <View style={styles.tabIconStyle}>
                 <TaskIcon />
                 <PinkDot />
@@ -98,9 +108,9 @@ const BottomBar = ({navigation, route}) => {
               <View style={styles.tabIconStyle}>
                 <TaskIn />
               </View>
-            ));
+            );
           } else if (route.name === 'Messages') {
-            return (iconName = focused ? (
+            return focused ? (
               <View style={styles.tabIconStyle}>
                 <ChatIcon />
                 <PinkDot />
@@ -109,26 +119,18 @@ const BottomBar = ({navigation, route}) => {
               <View style={styles.tabIconStyle}>
                 <ChatIn />
               </View>
-            ));
+            );
           }
         },
-        tabBarPosition: 'bottom',
         tabBarActiveTintColor: 'black',
         tabBarInactiveTintColor: 'gray',
         tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
-          borderWidth: 1,
-          borderColor: 'red',
           alignItems: 'center',
           justifyContent: 'center',
-          // paddingVertical: 16,
-          // elevation: 0,
           backgroundColor: '#fff',
-          borderColor: '#fff',
-          // borderRadius: 40,
           height: 76,
-          // ...styles.shadow,
         },
       })}>
       <Tab.Screen
@@ -141,8 +143,7 @@ const BottomBar = ({navigation, route}) => {
         name="Plus"
         component={AddScreen}
         options={{
-          tabBarIcon: ({focused, size}) => (
-            // <Image source={plus} style={{ width: size, height: size }} />
+          tabBarIcon: () => (
             <Text
               style={{
                 color: appColors.white,
@@ -168,12 +169,17 @@ const BottomBar = ({navigation, route}) => {
 export default BottomBar;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: appColors.black,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   shadow: {
     shadowColor: appColors.black,
     shadowOffset: {width: 0, height: 5},
     shadowOpacity: 0.25,
     shadowRadius: 3.5,
-    // elevation: 5,
   },
   tabIconStyle: {
     height: 40,

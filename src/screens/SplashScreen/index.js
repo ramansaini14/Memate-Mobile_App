@@ -64,10 +64,17 @@ const SplashScreen = ({navigation}) => {
         } else if (isNew && isRequired) {
           navigation.navigate('RequireDetails');
         } else {
-          navigation.navigate('BottomBar');
+          navigation.reset({
+            index: 0,
+            routes: [{name: 'BottomBar'}],
+          });
+          // navigation.reset('BottomBar');
         }
       } else {
-        navigation.navigate('BottomBar');
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'BottomBar'}],
+        });
       }
     }
   }),

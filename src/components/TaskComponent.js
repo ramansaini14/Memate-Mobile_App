@@ -98,7 +98,9 @@ const TaskComponent = ({navigation}) => {
                 fontSize: 10,
               }}>
               09.04.2024 {'  '}
-              <Text style={{color: appColors.placeholderColor, fontSize: 10,}}>09:32</Text>
+              <Text style={{color: appColors.placeholderColor, fontSize: 10}}>
+                09:32
+              </Text>
             </Text>
             <View
               style={{
@@ -121,7 +123,9 @@ const TaskComponent = ({navigation}) => {
                 fontSize: 10,
               }}>
               09.04.2024 {'  '}
-              <Text style={{color: appColors.placeholderColor, fontSize: 10,}}>09:32</Text>
+              <Text style={{color: appColors.placeholderColor, fontSize: 10}}>
+                09:32
+              </Text>
             </Text>
           </View>
           <View
@@ -162,8 +166,7 @@ const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
     backgroundColor: appColors.white,
-    width: '96%',
-    maxWidth: '96%',
+    width: '100%',
   },
   titleStyle: {
     color: appColors.black,

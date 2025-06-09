@@ -32,15 +32,22 @@ import HomeTickIcon from '../../../assets/svg/HomeTickIcon';
 import RightArrowHome from '../../../assets/svg/RightArrowHome';
 import CherryRightArrow from '../../../assets/svg/CherryRightArrow';
 import {reportRead} from '../../../redux/ReportReadSlice';
+import PdfIcon from '../../../assets/svg/PdfIcon';
+import DownloadPdfIcon from '../../../assets/svg/DownloadPdfIcon';
+import CalendarStrip from '../../../components/CalendarStrip';
 
 // const { height, width } = Dimensions.get("window");
 
 const HomeScreen = ({navigation, route}) => {
   const [active, setInActive] = useState(0);
-  const {orgId} = route.params;
+  const [orgId, setOrgId] = useState('');
+  const [isResultReport, setIsResultReport] = useState(false);
+
+  const [approvedJobs, setApprovedJobs] = useState(null);
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const reportReadData = useSelector(state => state.reportReadReducer.data);
+  const [pdfFileName, setPdfFileName] = useState('');
   const dispatch = useDispatch();
   const [orgData, setOrgData] = useState(null);
   const [selectedOrg, setSelectedOrg] = useState(null);
@@ -82,13 +89,23 @@ const HomeScreen = ({navigation, route}) => {
     },
   ]);
 
+  const getReportData = async () => {
+    const id = await AsyncStorage.getItem('orgId');
+    setTimeout(() => {
+      setOrgId(id);
+      if (isResultReport) {
+        const payload = {
+          id: id,
+        };
+        dispatch(reportRead(payload));
+      }
+    }, 1200);
+  };
+
   useEffect(() => {
     if (isFocused) {
       dispatch(getOrganization());
-      const payload = {
-        id: orgId,
-      };
-      dispatch(reportRead(payload));
+      getReportData();
     }
   }, [isFocused]);
 
@@ -144,200 +161,299 @@ const HomeScreen = ({navigation, route}) => {
         </View>
       </View>
       {/* <Header navigation={navigation} /> */}
-      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        <View style={{paddingHorizontal: 16}}>
-          <View style={styles.resultViewStyle}>
-            <View style={[styles.row_, {justifyContent: 'space-between'}]}>
-              <View style={[styles.cardBox, {marginRight: 8}]}>
-                <View style={styles.row_}>
-                  <View>
-                    <Text style={styles.lightTextStyle2}>Income</Text>
-                    <Text style={styles.smallTextStyle}>this Week</Text>
+      {isResultReport ? (
+        <ScrollView
+          style={{flex: 1}}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled>
+          <View style={{paddingHorizontal: 16}}>
+            <View style={styles.resultViewStyle}>
+              <View style={[styles.row_, {justifyContent: 'space-between'}]}>
+                <View style={[styles.cardBox, {marginRight: 8}]}>
+                  <View style={styles.row_}>
+                    <View>
+                      <Text style={styles.lightTextStyle2}>Income</Text>
+                      <Text style={styles.smallTextStyle}>this Week</Text>
+                    </View>
+                    <View style={{flex: 1, alignItems: 'flex-end'}}>
+                      <HomeGreenTickSvg />
+                    </View>
                   </View>
-                  <View style={{flex: 1, alignItems: 'flex-end'}}>
-                    <HomeGreenTickSvg />
-                  </View>
+                  <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.income.done
+                      : '$0.00'}
+                  </Text>
+                  <Text style={styles.lightTextStyle}>Potential</Text>
+                  <Text style={styles.bigTextStyle2}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.income.potentianl
+                      : '$0.00'}
+                  </Text>
                 </View>
-                <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
-                  {reportReadData != null
-                    ? '$' + reportReadData.income.done
-                    : '$0.00'}
-                </Text>
-                <Text style={styles.lightTextStyle}>Potential</Text>
-                <Text style={styles.bigTextStyle2}>
-                  {reportReadData != null
-                    ? '$' + reportReadData.income.potentianl
-                    : '$0.00'}
-                </Text>
-              </View>
-              <View style={[styles.cardBox, {marginLeft: 8}]}>
-                <View style={styles.row_}>
-                  <View>
-                    <Text style={styles.lightTextStyle2}>Finished</Text>
-                    <Text style={styles.smallTextStyle}>this Week</Text>
+                <View style={[styles.cardBox, {marginLeft: 8}]}>
+                  <View style={styles.row_}>
+                    <View>
+                      <Text style={styles.lightTextStyle2}>Finished</Text>
+                      <Text style={styles.smallTextStyle}>this Week</Text>
+                    </View>
+                    <View style={{flex: 1, alignItems: 'flex-end'}}>
+                      <HomeTickIcon />
+                    </View>
                   </View>
-                  <View style={{flex: 1, alignItems: 'flex-end'}}>
-                    <HomeTickIcon />
-                  </View>
+
+                  <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.finished.done
+                      : '$0.00'}
+                  </Text>
+                  <Text style={styles.lightTextStyle}>Accepted</Text>
+                  <Text style={styles.bigTextStyle2}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.finished.accepted
+                      : '$0.00'}
+                  </Text>
                 </View>
+              </View>
 
-                <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
-                  {reportReadData != null
-                    ? '$' + reportReadData.finished.done
-                    : '$0.00'}
-                </Text>
-                <Text style={styles.lightTextStyle}>Accepted</Text>
-                <Text style={styles.bigTextStyle2}>
-                  {reportReadData != null
-                    ? '$' + reportReadData.finished.accepted
-                    : '$0.00'}
-                </Text>
-              </View>
+              <TouchableOpacity
+                style={styles.blackBar}
+                onPress={() =>
+                  navigation.navigate('ResultReport', {orgId: orgId})
+                }>
+                <ReportIcon />
+                <View style={{marginHorizontal: 16}}>
+                  <Text style={styles.rateTextStyle}>Results Report</Text>
+                  <Text style={styles.smallTextStyle2}>see previous weeks</Text>
+                </View>
+                <View style={{alignItems: 'flex-end', flex: 1}}>
+                  <RightArrowWhite />
+                </View>
+              </TouchableOpacity>
             </View>
-
-            <View style={styles.blackBar}>
-              <ReportIcon />
-              <View style={{marginHorizontal: 16}}>
-                <Text style={styles.rateTextStyle}>Results Report</Text>
-                <Text style={styles.smallTextStyle2}>see previous weeks</Text>
-              </View>
-              <View style={{alignItems: 'flex-end', flex: 1}}>
-                <RightArrowWhite />
-              </View>
-            </View>
-          </View>
-          <View style={styles.tabStyle}>
-            <Text
-              style={[
-                styles.tabButton,
-                active === 0 && {
-                  backgroundColor: appColors.black,
-                  color: appColors.white,
-                  fontSize: 16,
-                  height: 44,
-                  borderRadius: 30,
-                  paddingVertical: 12,
-                },
-              ]}
-              onPress={() => setInActive(0)}>
-              Jobs
-            </Text>
-            <Text
-              style={[
-                styles.tabButton,
-                active === 1 && {
-                  backgroundColor: appColors.black,
-                  color: appColors.white,
-                  fontSize: 16,
-                  height: 44,
-                  borderRadius: 30,
-                  paddingVertical: 12,
-                },
-              ]}
-              onPress={() => setInActive(1)}>
-              Tasks
-            </Text>
-          </View>
-        </View>
-        <FlatList
-          data={JobsData}
-          horizontal
-          style={{paddingHorizontal: 16}}
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          renderItem={({item, index}) => (
-            <View style={styles.jobCard} key={index}>
-              <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
-                {item?.number}
-              </Text>
-              <Text style={[styles.bigTextStyle, {fontWeight: '500'}]}>
-                {item?.name}
+            <View style={styles.tabStyle}>
+              <Text
+                style={[
+                  styles.tabButton,
+                  active === 0 && {
+                    backgroundColor: appColors.black,
+                    color: appColors.white,
+                    fontSize: 16,
+                    height: 44,
+                    borderRadius: 30,
+                    paddingVertical: 12,
+                  },
+                ]}
+                onPress={() => setInActive(0)}>
+                Jobs
               </Text>
               <Text
                 style={[
-                  styles.lightTextStyle,
-                  {fontSize: 12},
-                  {marginBottom: 4},
-                ]}>
-                {'View Jobs '} <RightArrowHome />
+                  styles.tabButton,
+                  active === 1 && {
+                    backgroundColor: appColors.black,
+                    color: appColors.white,
+                    fontSize: 16,
+                    height: 44,
+                    borderRadius: 30,
+                    paddingVertical: 12,
+                  },
+                ]}
+                onPress={() => setInActive(1)}>
+                Tasks
               </Text>
             </View>
-          )}
-          keyExtractor={item => item.id}
-        />
-        <View style={{alignItems: 'flex-end', marginTop: 16}}>
-          <View
-            style={{
-              flexDirection: 'row',
-              backgroundColor: appColors.black,
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'row',
-              paddingVertical: 12,
-              paddingHorizontal: 18,
-              borderRadius: 50,
-              marginRight: 8,
-            }}>
-            <Text
+          </View>
+          <FlatList
+            data={JobsData}
+            horizontal
+            style={{paddingHorizontal: 16}}
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            renderItem={({item, index}) => (
+              <View style={styles.jobCard} key={index}>
+                <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
+                  {item?.number}
+                </Text>
+                <Text style={[styles.bigTextStyle, {fontWeight: '500'}]}>
+                  {item?.name}
+                </Text>
+                <Text
+                  style={[
+                    styles.lightTextStyle,
+                    {fontSize: 12},
+                    {marginBottom: 4},
+                  ]}>
+                  {'View Jobs '} <RightArrowHome />
+                </Text>
+              </View>
+            )}
+            keyExtractor={item => item.id}
+          />
+          <View style={{alignItems: 'flex-end', marginTop: 16}}>
+            <View
               style={{
-                color: appColors.white,
-                textAlign: 'center',
-                fontWeight: '700',
-                width: '18%',
-                height: '100%',
-                paddingTop: 2,
-                paddingBottom: 2,
-                paddingRight: 3,
-                fontSize: 14,
+                flexDirection: 'row',
+                backgroundColor: appColors.black,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'row',
+                paddingVertical: 12,
+                paddingHorizontal: 18,
+                borderRadius: 50,
+                marginRight: 8,
               }}>
-              View All
-            </Text>
-            <View style={{paddingLeft: 6}}>
-              <CherryRightArrow />
+              <Text
+                style={{
+                  color: appColors.white,
+                  textAlign: 'center',
+                  fontWeight: '700',
+                  width: '18%',
+                  height: '100%',
+                  paddingTop: 2,
+                  paddingBottom: 2,
+                  paddingRight: 3,
+                  fontSize: 14,
+                }}>
+                View All
+              </Text>
+              <View style={{paddingLeft: 6}}>
+                <CherryRightArrow />
+              </View>
             </View>
           </View>
-        </View>
-        <Text style={styles.titleStyle}>Jobs in Progress</Text>
-        <FlatList
-          key={0}
-          data={JobsData}
-          horizontal
-          style={{paddingHorizontal: 16}}
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          renderItem={({item}) => (
-            <View style={{width: 320}}>
-              <TaskComponent />
-            </View>
-          )}
-          keyExtractor={item => item.id}
-        />
-        <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
+          <Text style={styles.titleStyle}>Jobs in Progress</Text>
+          <FlatList
+            key={0}
+            data={JobsData}
+            horizontal
+            style={{paddingHorizontal: 16}}
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            renderItem={({item}) => (
+              <View style={{width: 320}}>
+                <TaskComponent />
+              </View>
+            )}
+            keyExtractor={item => item.id}
+          />
+          <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
 
-        <FlatList
-          key={1}
-          data={JobsData}
-          horizontal
-          style={{paddingHorizontal: 16, paddingBottom: 16}}
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          renderItem={({item}) => (
-            <View style={{width: 320}}>
-              <TaskComponent />
+          <FlatList
+            key={1}
+            data={JobsData}
+            horizontal
+            style={{paddingHorizontal: 16, paddingBottom: 16}}
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            renderItem={({item}) => (
+              <View style={{width: 320}}>
+                <TaskComponent />
+              </View>
+            )}
+            keyExtractor={item => item.id}
+          />
+          <OrganizationListModal
+            visible={orgVisible}
+            onClose={onClose}
+            organizations={orgData}
+            onItemSelect={onItemSelect}
+            navigation={navigation}
+            selectedOrg={selectedOrg}
+            setOrgVisible={setOrgVisible}
+          />
+        </ScrollView>
+      ) : (
+        <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+          <View style={{}}>
+            {orgId != '' && (
+              <CalendarStrip
+                setApprovedJobs={setApprovedJobs}
+                orgId={orgId}
+                setPdfFileName={setPdfFileName}
+              />
+            )}
+            <View style={styles.resultViewStyle}>
+              <View style={[styles.row_, {justifyContent: 'space-between'}]}>
+                <View style={[styles.cardBox, {marginRight: 8}]}>
+                  <View style={styles.row_}>
+                    <View>
+                      <Text style={styles.lightTextStyle2}>Income</Text>
+                      <Text style={styles.smallTextStyle}>this Week</Text>
+                    </View>
+                    <View style={{flex: 1, alignItems: 'flex-end'}}>
+                      <HomeGreenTickSvg />
+                    </View>
+                  </View>
+                  <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.income.done
+                      : '$0.00'}
+                  </Text>
+                  <Text style={styles.lightTextStyle}>Potential</Text>
+                  <Text style={styles.bigTextStyle2}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.income.potentianl
+                      : '$0.00'}
+                  </Text>
+                </View>
+                <View style={[styles.cardBox, {marginLeft: 8}]}>
+                  <View style={styles.row_}>
+                    <View>
+                      <Text style={styles.lightTextStyle2}>Finished</Text>
+                      <Text style={styles.smallTextStyle}>this Week</Text>
+                    </View>
+                    <View style={{flex: 1, alignItems: 'flex-end'}}>
+                      <HomeTickIcon />
+                    </View>
+                  </View>
+
+                  <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.finished.done
+                      : '$0.00'}
+                  </Text>
+                  <Text style={styles.lightTextStyle}>Accepted</Text>
+                  <Text style={styles.bigTextStyle2}>
+                    {reportReadData != null
+                      ? '$' + reportReadData.finished.accepted
+                      : '$0.00'}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.whiteBar}
+                onPress={() =>
+                  navigation.navigate('ResultReport', {orgId: orgId})
+                }>
+                <PdfIcon />
+                <View style={{marginHorizontal: 8}}>
+                  <Text style={styles.invoiceText}>{pdfFileName}</Text>
+                </View>
+                <View style={{alignItems: 'flex-end', flex: 1}}>
+                  <DownloadPdfIcon />
+                </View>
+              </TouchableOpacity>
             </View>
-          )}
-          keyExtractor={item => item.id}
-        />
-        <OrganizationListModal
-          visible={orgVisible}
-          onClose={onClose}
-          organizations={orgData}
-          onItemSelect={onItemSelect}
-          navigation={navigation}
-          selectedOrg={selectedOrg}
-          setOrgVisible={setOrgVisible}
-        />
-      </ScrollView>
+          </View>
+
+          <Text style={styles.approveTextStyle}>Approved Jobs</Text>
+          <FlatList
+            key={0}
+            data={approvedJobs}
+            style={{paddingHorizontal: 16}}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({item}) => (
+              <View style={{flex: 1, paddingBottom: 16}}>
+                <TaskComponent />
+              </View>
+            )}
+            keyExtractor={item => item.id}
+          />
+          {/* <Text style={styles.titleStyle}>Upcoming Deadlines</Text> */}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -388,8 +504,8 @@ const styles = StyleSheet.create({
   resultViewStyle: {
     backgroundColor: appColors.offWhite,
     borderRadius: 30,
-    width: '100%',
     padding: 16,
+    marginHorizontal: 16,
   },
   lightTextStyle: {
     color: appColors.placeholderColor,
@@ -428,6 +544,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  invoiceText: {
+    color: appColors.black,
+    fontFamily: 'SF-Pro',
+    fontWeight: '600',
+    fontSize: 16,
+  },
   tabStyle: {
     borderColor: appColors.lightGrey,
     borderWidth: 1,
@@ -447,6 +569,14 @@ const styles = StyleSheet.create({
     fontFamily: 'SF-Pro',
     marginTop: 12,
     marginLeft: 16,
+  },
+  approveTextStyle: {
+    color: appColors.black,
+    fontSize: 26,
+    fontWeight: '600',
+    fontFamily: 'SF-Pro',
+    marginTop: 16,
+    marginLeft: 24,
   },
   tabButton: {
     paddingVertical: 14,
@@ -487,6 +617,16 @@ const styles = StyleSheet.create({
   },
   blackBar: {
     backgroundColor: appColors.black,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  whiteBar: {
+    backgroundColor: appColors.white,
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
