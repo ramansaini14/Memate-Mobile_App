@@ -60,6 +60,7 @@ import DoneTickButton from '../../assets/svg/DoneTickButton';
 import AddImageIcon from '../../assets/svg/AddImageIcon';
 import CameraLibraryModal from '../../components/CameraLibraryModal';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import {hitAttachmentFileUrl} from '../../redux/AttachmentFileUrlSlice';
 
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
@@ -680,6 +681,12 @@ const JobCard = ({navigation, route}) => {
         console.log('Camera Error: ', result.errorMessage);
       } else {
         console.log('Camera Image: ', result.assets[0]);
+        const payload = {
+          orgId: orgId,
+          jobId: jobData.id,
+          filename: result.assets[0].fileName,
+        };
+        dispatch(hitAttachmentFileUrl(payload));
       }
     } catch (err) {
       console.log('Camera launch error', err);

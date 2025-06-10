@@ -6,11 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Async thunk for fetching data
 export const hitAttachmentFileUrl = createAsyncThunk(
   'hitAttachmentFileUrl',
-  async ( payload) => {
-
-  
+  async payload => {
     const token = await AsyncStorage.getItem('token');
-    
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -18,13 +16,19 @@ export const hitAttachmentFileUrl = createAsyncThunk(
       },
     };
 
-    const params={
-      filename:payload.filename,
-    }
+    const params = {
+      filename: payload.filename,
+    };
 
     try {
-      const url = ApiBaseUrl + attachmentFileUrl+payload.orgId+"/"+payload.jobId+"/";
-      console.log("URl ====> ",url)
+      const url =
+        ApiBaseUrl +
+        attachmentFileUrl +
+        payload.orgId +
+        '/' +
+        payload.jobId +
+        '/';
+      console.log('URl ====> ', url);
       const response = await axios.post(url, params, config);
       console.log('Upload file Response ===>', response.data);
       return {
@@ -43,7 +47,7 @@ const AttachmentFileUrlSlice = createSlice({
   initialState: {
     data: null,
     loading: 'idle',
-    status:null,
+    status: null,
     error: null,
   },
   reducers: {

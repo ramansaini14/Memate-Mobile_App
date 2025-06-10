@@ -22,8 +22,9 @@ export const reportRead = createAsyncThunk('reportRead', async payload => {
           '/' +
           payload.dateFrom +
           '/' +
-          payload.dateTo
-        : ApiBaseUrl + report_read + payload.id;
+          payload.dateTo +
+          '/'
+        : ApiBaseUrl + report_read + payload.id + '/';
     // +      `/?limit=10&offset=${payload.offset}&statuses=${payload.status}`;
 
     console.log('URL Report Read ====> ', url);
