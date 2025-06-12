@@ -49,6 +49,7 @@ export const completeTask = 'api/v1/m/tasks/';
 
 //Home Api's
 export const report_read = 'api/v1/m/dashboard/report/';
+export const profile = 'api/v1/m/user/profile/';
 
 export const getToken = async () => {
   const token = await AsyncStorage.getItem('token');

@@ -35,18 +35,20 @@ import {reportRead} from '../../../redux/ReportReadSlice';
 import PdfIcon from '../../../assets/svg/PdfIcon';
 import DownloadPdfIcon from '../../../assets/svg/DownloadPdfIcon';
 import CalendarStrip from '../../../components/CalendarStrip';
+import {getJobs} from '../../../redux/GetJobsSlice';
 
 // const { height, width } = Dimensions.get("window");
 
 const HomeScreen = ({navigation, route}) => {
   const [active, setInActive] = useState(0);
   const [orgId, setOrgId] = useState('');
-  const [isResultReport, setIsResultReport] = useState(false);
+  const [isResultReport, setIsResultReport] = useState(true);
 
   const [approvedJobs, setApprovedJobs] = useState(null);
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const reportReadData = useSelector(state => state.reportReadReducer.data);
+  const responseJobs = useSelector(state => state.getJobsReducer.data);
   const [pdfFileName, setPdfFileName] = useState('');
   const dispatch = useDispatch();
   const [orgData, setOrgData] = useState(null);
@@ -60,6 +62,10 @@ const HomeScreen = ({navigation, route}) => {
   };
 
   const onItemSelect = () => {};
+
+  const [jobs, setJobs] = useState(null);
+  const [progressJobs, setProgressJobs] = useState(null);
+  const [upcoming, setUpcomingJobs] = useState(null);
 
   const [JobsData, setJobsData] = useState([
     {
@@ -99,8 +105,23 @@ const HomeScreen = ({navigation, route}) => {
         };
         dispatch(reportRead(payload));
       }
+      const payload = {
+        id: id,
+        offset: 0,
+        status: 0,
+      };
+
+      dispatch(getJobs(payload));
     }, 1200);
   };
+
+  // const getJob = async () => {
+  //   const orgId = await AsyncStorage.getItem('orgId');
+  //   setTimeout(() => {
+  //     // console.log('Ord Id ===> ', orgId);
+
+  //   }, 1500);
+  // };
 
   useEffect(() => {
     if (isFocused) {
@@ -118,6 +139,30 @@ const HomeScreen = ({navigation, route}) => {
     }
   }, [responseOrg]);
 
+  useEffect(() => {
+    if (responseJobs != null && responseJobs.status == 'OK') {
+      setJobs(responseJobs.results);
+      const progJobs = responseJobs.results.filter(
+        item => item.action_status === '1' || item.action_status === '2',
+      );
+      const sortProgJobs = progJobs.sort(
+        (a, b) => parseInt(b.start_date) - parseInt(a.start_date), // descending
+      );
+
+      console.log('InProgress jobs ===>', sortProgJobs);
+      setProgressJobs(sortProgJobs);
+      const upJobs = responseJobs.results.filter(
+        item => item.status === 'a' && item.action_status == null,
+      );
+      const sortUpJobs = upJobs.sort(
+        (a, b) => parseInt(b.start_date) - parseInt(a.start_date), // descending
+      );
+
+      console.log('Upcoming jobs ===>', sortUpJobs);
+      setUpcomingJobs(sortUpJobs);
+    }
+  }, [responseJobs]);
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
@@ -125,7 +170,7 @@ const HomeScreen = ({navigation, route}) => {
         {selectedOrg != null && (
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <TouchableOpacity onPress={() => setOrgVisible(true)}>
-              <DownIcon hieght={16} width={16} />
+              <DownIcon height={16} width={16} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setOrgVisible(true)}>
               <Image
@@ -166,7 +211,7 @@ const HomeScreen = ({navigation, route}) => {
           style={{flex: 1}}
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled>
-          <View style={{paddingHorizontal: 16}}>
+          <View>
             <View style={styles.resultViewStyle}>
               <View style={[styles.row_, {justifyContent: 'space-between'}]}>
                 <View style={[styles.cardBox, {marginRight: 8}]}>
@@ -325,14 +370,19 @@ const HomeScreen = ({navigation, route}) => {
           <Text style={styles.titleStyle}>Jobs in Progress</Text>
           <FlatList
             key={0}
-            data={JobsData}
+            data={progressJobs}
             horizontal
             style={{paddingHorizontal: 16}}
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             renderItem={({item}) => (
-              <View style={{width: 320}}>
-                <TaskComponent />
+              <View
+                style={{
+                  flex: 1,
+                  width: '100%',
+                  marginRight: 16,
+                }}>
+                <TaskComponent itemData={item} />
               </View>
             )}
             keyExtractor={item => item.id}
@@ -341,14 +391,19 @@ const HomeScreen = ({navigation, route}) => {
 
           <FlatList
             key={1}
-            data={JobsData}
+            data={upcoming}
             horizontal
-            style={{paddingHorizontal: 16, paddingBottom: 16}}
+            style={{paddingLeft: 8, marginBottom: 16}}
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             renderItem={({item}) => (
-              <View style={{width: 320}}>
-                <TaskComponent />
+              <View
+                style={{
+                  flex: 1,
+                  width: '100%',
+                  marginHorizontal: 8,
+                }}>
+                <TaskComponent itemData={item} />
               </View>
             )}
             keyExtractor={item => item.id}
@@ -561,6 +616,7 @@ const styles = StyleSheet.create({
     paddingRight: 3,
     paddingBottom: 0,
     paddingLeft: 3,
+    marginHorizontal: 16,
   },
   titleStyle: {
     color: appColors.black,

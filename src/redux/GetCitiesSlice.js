@@ -4,18 +4,18 @@ import axios from 'axios';
 import {ApiBaseUrl, getCity, getCountries, getStates} from '../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const hitGetCities= createAsyncThunk('hitGetCities', async payload => {
+export const hitGetCities = createAsyncThunk('hitGetCities', async payload => {
   try {
-    const token = await AsyncStorage.getItem("token")
+    const token = await AsyncStorage.getItem('token');
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: "Bearer "+token
+        Authorization: 'Bearer ' + token,
       },
     };
-   
-    const url = ApiBaseUrl+getCity+payload.id+"/"
+
+    const url = ApiBaseUrl + getCity + payload.id + '/';
     console.log('Payload ===> ', url);
     const response = await axios.get(url, config);
 

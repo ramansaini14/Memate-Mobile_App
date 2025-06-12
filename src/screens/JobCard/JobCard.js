@@ -60,7 +60,11 @@ import DoneTickButton from '../../assets/svg/DoneTickButton';
 import AddImageIcon from '../../assets/svg/AddImageIcon';
 import CameraLibraryModal from '../../components/CameraLibraryModal';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {hitAttachmentFileUrl} from '../../redux/AttachmentFileUrlSlice';
+import {
+  clearAttachmentFileUrl,
+  hitAttachmentFileUrl,
+} from '../../redux/AttachmentFileUrlSlice';
+import {uploadImageToS3} from '../../redux/uploadSlice';
 
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
@@ -76,7 +80,7 @@ const JobCard = ({navigation, route}) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isExpand, setExpand] = useState(false);
-
+  const [selectedImage, setSelectedImage] = useState(null);
   // Get global timer state (primarily for the active job)
   const globalTimer = useSelector(state => state.timer.value);
 
@@ -95,6 +99,9 @@ const JobCard = ({navigation, route}) => {
 
   const responseAccDec = useSelector(
     state => state.jobsAcceptDeclineReducer.data,
+  );
+  const attachmentResponse = useSelector(
+    state => state.attachmentFileUrlReducer.data,
   );
 
   const jobStatusResponse = useSelector(state => state.jobsStatusReducer.data);
@@ -520,6 +527,19 @@ const JobCard = ({navigation, route}) => {
     }
   }, [jobStatusResponse, dispatch, jobData.id]);
 
+  useEffect(() => {
+    if (attachmentResponse != null && attachmentResponse.status == 200) {
+      console.log('attachmentResponse ====> ', attachmentResponse);
+      dispatch(
+        uploadImageToS3({
+          localFilePath: selectedImage.uri,
+          presignedUrl: attachmentResponse.data.url,
+        }),
+      );
+      dispatch(clearAttachmentFileUrl());
+    }
+  }, [attachmentResponse]);
+
   const handleCopy = () => {
     Clipboard.setString(text);
     if (Platform.OS === 'android') {
@@ -681,6 +701,7 @@ const JobCard = ({navigation, route}) => {
         console.log('Camera Error: ', result.errorMessage);
       } else {
         console.log('Camera Image: ', result.assets[0]);
+        setSelectedImage(result.assets[0]);
         const payload = {
           orgId: orgId,
           jobId: jobData.id,

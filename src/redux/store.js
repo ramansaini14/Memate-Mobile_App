@@ -21,6 +21,8 @@ import readTaskReducer from './ReadTasksSlice';
 import completeTaskReducer from './CompleteTaskSlice';
 import attachmentFileUrlReducer from './AttachmentFileUrlSlice';
 import reportReadReducer from './ReportReadSlice';
+import upload from './uploadSlice';
+import getProfileReducer from './GetProfileSlice';
 
 const store = configureStore({
   reducer: {
@@ -46,6 +48,8 @@ const store = configureStore({
     completeTaskReducer: completeTaskReducer,
     attachmentFileUrlReducer: attachmentFileUrlReducer,
     reportReadReducer: reportReadReducer,
+    upload: upload,
+    getProfileReducer: getProfileReducer,
   },
 });
 
