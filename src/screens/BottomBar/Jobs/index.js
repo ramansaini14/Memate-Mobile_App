@@ -43,23 +43,22 @@ const JobsScreen = ({navigation}) => {
 
   const [filterData, setFilterData] = useState([
     {status: '0', name: 'All Jobs', count: 0},
-    {status: '1', name: 'Open', count: 0},
-    {status: '2', name: 'Assign', count: 0},
-    {status: '3', name: 'Require Confirmation', count: 0},
-    {status: '4', name: 'Confirmed', count: 0},
-    {status: '5', name: 'Completed', count: 0},
-    {status: '6', name: 'Manager Declined', count: 0},
-    {status: 'a', name: 'Accepted', count: 0},
+    {status: '2', name: 'Require Confirmation', count: 0},
+    {status: 'a', name: 'Confirmed Jobs', count: 0},
+    {status: '3', name: 'Waiting for Approval', count: 0},
+    {status: '4', name: 'Job In Progress', count: 0},
+    {status: '1', name: 'Open Jobs', count: 0},
+    // {status: '6', name: 'Declined Jobs', count: 0},
   ]);
 
   const statusMap = {
-    1: 'Open',
-    2: 'Assign',
-    3: 'Require Confirmation',
-    4: 'Confirmed',
+    1: 'Open Jobs',
+    2: 'Require Confirmation',
+    3: 'Waiting for Approval',
+    4: 'Job In Progress',
     5: 'Completed',
-    6: 'Manager Declined',
-    a: 'Accepted',
+    6: 'Declined Jobs',
+    a: 'Confirmed Jobs',
     d: 'Declined', // Note: Declined does not exist in your `filterData` array
   };
 

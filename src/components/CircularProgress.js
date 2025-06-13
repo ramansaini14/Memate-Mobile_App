@@ -3,7 +3,7 @@ import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedCircularProgress} from 'react-native-circular-progress';
 
 const CircularProgress = () => {
-  const fill = 75; // percentage to fill
+  const fill = 95; // percentage to fill
 
   return (
     <View style={styles.container}>
@@ -13,11 +13,11 @@ const CircularProgress = () => {
         fill={fill}
         tintColor="#00e0ff"
         backgroundColor="#3d5875"
-        duration={1000} // animation duration
+        // duration={1000} // animation duration
       >
-        {fill => (
+        {/* {fill => (
           <Text style={styles.progressText}>{`${Math.round(fill)}%`}</Text>
-        )}
+        )} */}
       </AnimatedCircularProgress>
     </View>
   );

@@ -36,6 +36,7 @@ import PdfIcon from '../../../assets/svg/PdfIcon';
 import DownloadPdfIcon from '../../../assets/svg/DownloadPdfIcon';
 import CalendarStrip from '../../../components/CalendarStrip';
 import {getJobs} from '../../../redux/GetJobsSlice';
+import BackIcon from '../../../assets/svg/BackIcon';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -167,27 +168,34 @@ const HomeScreen = ({navigation, route}) => {
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
         {/* <DummyUserIcon /> */}
-        {selectedOrg != null && (
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <TouchableOpacity onPress={() => setOrgVisible(true)}>
-              <DownIcon height={16} width={16} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setOrgVisible(true)}>
-              <Image
-                source={{uri: selectedOrg.logo}}
-                style={{width: 80, height: 40}}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setOrgVisible(true)}>
-              <Text
-                style={[styles.smallTextStyleHeader, {width: 120}]}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {selectedOrg.name}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {selectedOrg != null &&
+          (isResultReport ? (
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <TouchableOpacity onPress={() => setOrgVisible(true)}>
+                <DownIcon height={16} width={16} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setOrgVisible(true)}>
+                <Image
+                  source={{uri: selectedOrg.logo}}
+                  style={{width: 80, height: 40}}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setOrgVisible(true)}>
+                <Text
+                  style={[styles.smallTextStyleHeader, {width: 120}]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {selectedOrg.name}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <TouchableOpacity onPress={() => setIsResultReport(true)}>
+                <BackIcon />
+              </TouchableOpacity>
+            </View>
+          ))}
         <View style={styles.right_}>
           <TouchableOpacity>
             <NotificationIcon />
@@ -263,8 +271,9 @@ const HomeScreen = ({navigation, route}) => {
 
               <TouchableOpacity
                 style={styles.blackBar}
-                onPress={() =>
-                  navigation.navigate('ResultReport', {orgId: orgId})
+                onPress={
+                  () => setIsResultReport(false)
+                  // navigation.navigate('ResultReport', {orgId: orgId})
                 }>
                 <ReportIcon />
                 <View style={{marginHorizontal: 16}}>
@@ -376,14 +385,15 @@ const HomeScreen = ({navigation, route}) => {
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             renderItem={({item}) => (
-              <View
+              <TouchableOpacity
                 style={{
                   flex: 1,
                   width: '100%',
                   marginRight: 16,
-                }}>
+                }}
+                onPress={() => navigation.navigate('JobCard', {data: item})}>
                 <TaskComponent itemData={item} />
-              </View>
+              </TouchableOpacity>
             )}
             keyExtractor={item => item.id}
           />
@@ -393,18 +403,19 @@ const HomeScreen = ({navigation, route}) => {
             key={1}
             data={upcoming}
             horizontal
-            style={{paddingLeft: 8, marginBottom: 16}}
+            style={{paddingHorizontal: 16}}
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             renderItem={({item}) => (
-              <View
+              <TouchableOpacity
                 style={{
                   flex: 1,
                   width: '100%',
-                  marginHorizontal: 8,
-                }}>
+                  marginRight: 16,
+                }}
+                onPress={() => navigation.navigate('JobCard', {data: item})}>
                 <TaskComponent itemData={item} />
-              </View>
+              </TouchableOpacity>
             )}
             keyExtractor={item => item.id}
           />
@@ -477,14 +488,14 @@ const HomeScreen = ({navigation, route}) => {
                 </View>
               </View>
 
-              <TouchableOpacity
-                style={styles.whiteBar}
-                onPress={() =>
-                  navigation.navigate('ResultReport', {orgId: orgId})
-                }>
+              <TouchableOpacity style={styles.whiteBar}>
                 <PdfIcon />
                 <View style={{marginHorizontal: 8}}>
-                  <Text style={styles.invoiceText}>{pdfFileName}</Text>
+                  <Text style={styles.invoiceText}>
+                    {reportReadData.invoice.number != null
+                      ? reportReadData.invoice.number
+                      : 'Invoice ID 0001'}
+                  </Text>
                 </View>
                 <View style={{alignItems: 'flex-end', flex: 1}}>
                   <DownloadPdfIcon />
@@ -501,7 +512,7 @@ const HomeScreen = ({navigation, route}) => {
             showsHorizontalScrollIndicator={false}
             renderItem={({item}) => (
               <View style={{flex: 1, paddingBottom: 16}}>
-                <TaskComponent />
+                <TaskComponent itemData={item} />
               </View>
             )}
             keyExtractor={item => item.id}

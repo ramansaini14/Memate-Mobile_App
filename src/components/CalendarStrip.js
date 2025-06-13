@@ -83,12 +83,12 @@ const CalendarStrip = ({setApprovedJobs, orgId, setPdfFileName}) => {
       id: orgId,
       dateFrom: moment()
         .year(2025)
-        .isoWeek(isWhitDot)
+        .isoWeek(isWhitDot + 1)
         .startOf('isoWeek')
         .format('YYYY-MM-DD'),
       dateTo: moment()
         .year(2025)
-        .isoWeek(isWhitDot)
+        .isoWeek(isWhitDot + 1)
         .endOf('isoWeek')
         .format('YYYY-MM-DD'),
     };
@@ -99,6 +99,7 @@ const CalendarStrip = ({setApprovedJobs, orgId, setPdfFileName}) => {
   useEffect(() => {
     if (reportReadData != null) {
       setPdfFileName(reportReadData.report_pdf);
+      setApprovedJobs(reportReadData.jobs);
     }
   }, [reportReadData]);
 

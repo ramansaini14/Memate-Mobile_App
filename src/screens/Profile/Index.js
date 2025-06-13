@@ -18,7 +18,7 @@ import {getProfile} from '../../redux/GetProfileSlice';
 import CircularProgress from '../../components/CircularProgress';
 import {clearGetCountries, hitGetCounties} from '../../redux/GetCountriesSlice';
 import {clearGetState, hitGetState} from '../../redux/GetStateSlice';
-import {hitGetCities} from '../../redux/GetCitiesSlice';
+import {clearGetCity, hitGetCities} from '../../redux/GetCitiesSlice';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -50,7 +50,7 @@ const Profile = ({navigation}) => {
     console.log('Response Countries ===>', responseCountries);
     if (responseCountries != null) {
       setCountries(responseCountries);
-      dispatch(clearGetCountries());
+      // dispatch(clearGetCountries());
       const payload = {
         id: responseCountries[0].id,
       };
@@ -63,7 +63,7 @@ const Profile = ({navigation}) => {
     if (responseState != null) {
       setStates(responseState);
       dispatch(getProfile());
-      dispatch(clearGetState());
+      // dispatch(clearGetState());
     }
   }, [responseState]);
 
@@ -75,6 +75,7 @@ const Profile = ({navigation}) => {
         obj => obj.id === profileResponse.data.city,
       );
       setCity(city);
+      // dispatch(clearGetCity());
     }
   }, [responseCities]);
 
@@ -130,7 +131,7 @@ const Profile = ({navigation}) => {
         </View>
       </View>
       {profile != null ? (
-        <ScrollView style={{flex: 1}}>
+        <ScrollView style={{flex: 1, paddingBottom: 16}}>
           <View style={{alignItems: 'center'}}>
             <View style={{marginVertical: 15}}>
               {profile != null && (
@@ -158,7 +159,7 @@ const Profile = ({navigation}) => {
             <View style={{marginBottom: 8}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>Email</Text>
               <Text style={{color: appColors.white, fontSize: 15}}>
-                email@gmail.com
+                {profile.email}
               </Text>
             </View>
             <View style={{marginBottom: 8}}>
@@ -181,17 +182,19 @@ const Profile = ({navigation}) => {
             </View>
             <View style={{marginBottom: 8}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>Address</Text>
-              {selectedCity != null && (
-                <Text style={{color: appColors.white, fontSize: 15}}>
-                  {profile.street_address +
-                    ', ' +
-                    selectedCity.name +
-                    ', ' +
-                    selectedState.name +
-                    ', ' +
-                    selectedCountry.name}
-                </Text>
-              )}
+              {selectedCity != null &&
+                selectedState != null &&
+                selectedCountry != null && (
+                  <Text style={{color: appColors.white, fontSize: 15}}>
+                    {profile.street_address +
+                      ', ' +
+                      selectedCity.name +
+                      ', ' +
+                      selectedState.name +
+                      ',' +
+                      selectedCountry.name}
+                  </Text>
+                )}
             </View>
           </View>
           <View style={{marginTop: 15}}>
@@ -217,13 +220,23 @@ const Profile = ({navigation}) => {
             )}
           </View>
 
-          <View style={{alignItems: 'center'}}>
+          <TouchableOpacity style={{alignItems: 'center'}}>
             <Text
               style={styles.editButton}
-              onPress={() => navigation.navigate('EditProfile')}>
+              onPress={() =>
+                navigation.navigate('EditProfile', {
+                  profileData: profile,
+                  countries: countries,
+                  states: states,
+                  cities: cities,
+                  country: selectedCountry,
+                  state: selectedState,
+                  city: selectedCity,
+                })
+              }>
               Edit Profile
             </Text>
-          </View>
+          </TouchableOpacity>
         </ScrollView>
       ) : (
         <CircularProgress />
@@ -238,7 +251,8 @@ const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
     backgroundColor: appColors.black,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   headerStyle: {
     flexDirection: 'row',

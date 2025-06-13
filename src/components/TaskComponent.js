@@ -8,12 +8,8 @@ import moment from 'moment';
 
 const TaskComponent = ({itemData}) => {
   return (
-    <TouchableOpacity
-      style={styles.shiftCard}
-      //  onPress={() => navigation.navigate('JobCard', {data: item})}
-    >
+    <View style={styles.shiftCard}>
       <View style={styles.viewStyle}>
-        TouchableOpacity
         <View style={styles.headerViewStyle}>
           <View
             style={{
@@ -211,7 +207,7 @@ const TaskComponent = ({itemData}) => {
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
