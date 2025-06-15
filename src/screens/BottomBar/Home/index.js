@@ -37,6 +37,9 @@ import DownloadPdfIcon from '../../../assets/svg/DownloadPdfIcon';
 import CalendarStrip from '../../../components/CalendarStrip';
 import {getJobs} from '../../../redux/GetJobsSlice';
 import BackIcon from '../../../assets/svg/BackIcon';
+import LinearGradient from 'react-native-linear-gradient';
+import WhiteDot from '../../../assets/svg/WhiteDot';
+import PinkDot from '../../../assets/svg/PinkDot';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -67,34 +70,28 @@ const HomeScreen = ({navigation, route}) => {
   const [jobs, setJobs] = useState(null);
   const [progressJobs, setProgressJobs] = useState(null);
   const [upcoming, setUpcomingJobs] = useState(null);
+  const [isWhitDot, setWhiteDot] = useState(0);
 
-  const [JobsData, setJobsData] = useState([
-    {
-      id: '1',
-      number: 20,
-      name: 'Require Confirmation',
-    },
-    {
-      id: '2',
-      number: 23,
-      name: 'Require Confirmation',
-    },
-    {
-      id: '3',
-      number: 25,
-      name: 'Require Confirmation',
-    },
-    {
-      id: '4',
-      number: 5,
-      name: 'Require Confirmation',
-    },
-    {
-      id: '5',
-      number: 9,
-      name: 'Require Confirmation',
-    },
+  const [filterData, setFilterData] = useState([
+    {status: '0', name: 'All Jobs', count: 0},
+    {status: '2', name: 'Require Confirmation', count: 0},
+    {status: 'a', name: 'Confirmed Jobs', count: 0},
+    {status: '3', name: 'Waiting for Approval', count: 0},
+    {status: '0', name: 'Job In Progress', count: 0},
+    {status: '1', name: 'Open Jobs', count: 0},
+    // {status: '6', name: 'Declined Jobs', count: 0},
   ]);
+
+  const statusMap = {
+    1: 'Open Jobs',
+    2: 'Require Confirmation',
+    3: 'Waiting for Approval',
+    4: 'Job In Progress',
+    5: 'Completed',
+    6: 'Declined Jobs',
+    a: 'Confirmed Jobs',
+    d: 'Declined', // Note: Declined does not exist in your `filterData` array
+  };
 
   const getReportData = async () => {
     const id = await AsyncStorage.getItem('orgId');
@@ -161,6 +158,45 @@ const HomeScreen = ({navigation, route}) => {
 
       console.log('Upcoming jobs ===>', sortUpJobs);
       setUpcomingJobs(sortUpJobs);
+
+      const updatedData = filterData.map(item => ({...item, count: 0}));
+
+      responseJobs.summary.forEach(item => {
+        const statusName = statusMap[item.status];
+        const filterItem = updatedData.find(fd => fd.name === statusName);
+        // console.log('Filter Item ===> ', filterItem);
+        filterItem.count = item.total;
+      });
+
+      const totalJobs = responseJobs.summary
+        .filter(item => item.name !== 'All Jobs')
+        .reduce((sum, item) => sum + item.total, 0);
+
+      const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
+      if (allJobsItem) {
+        allJobsItem.count = totalJobs;
+      }
+
+      if (isWhitDot == 0) {
+        const inProgressData = responseJobs.results.filter(
+          item =>
+            (String(item.action_status) === '1' ||
+              String(item.action_status) === '2') &&
+            item.status === 'a',
+        );
+
+        const inProgressJobsItem = updatedData.find(
+          fd => fd.name === 'Job In Progress',
+        );
+
+        if (inProgressJobsItem) {
+          inProgressJobsItem.count = inProgressData.length;
+        }
+
+        // console.log('IN Progress Data ====> ', inProgressData);
+      }
+
+      setFilterData(updatedData);
     }
   }, [responseJobs]);
 
@@ -240,7 +276,7 @@ const HomeScreen = ({navigation, route}) => {
                   <Text style={styles.lightTextStyle}>Potential</Text>
                   <Text style={styles.bigTextStyle2}>
                     {reportReadData != null
-                      ? '$' + reportReadData.income.potentianl
+                      ? '$' + reportReadData.income.potential
                       : '$0.00'}
                   </Text>
                 </View>
@@ -257,14 +293,14 @@ const HomeScreen = ({navigation, route}) => {
 
                   <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
                     {reportReadData != null
-                      ? '$' + reportReadData.finished.done
-                      : '$0.00'}
+                      ? reportReadData.finished.done
+                      : '0.00'}
                   </Text>
                   <Text style={styles.lightTextStyle}>Accepted</Text>
                   <Text style={styles.bigTextStyle2}>
                     {reportReadData != null
-                      ? '$' + reportReadData.finished.accepted
-                      : '$0.00'}
+                      ? reportReadData.finished.accepted
+                      : '0.00'}
                   </Text>
                 </View>
               </View>
@@ -318,32 +354,115 @@ const HomeScreen = ({navigation, route}) => {
               </Text>
             </View>
           </View>
+
           <FlatList
-            data={JobsData}
             horizontal
-            style={{paddingHorizontal: 16}}
-            nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
-            renderItem={({item, index}) => (
-              <View style={styles.jobCard} key={index}>
-                <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
-                  {item?.number}
-                </Text>
-                <Text style={[styles.bigTextStyle, {fontWeight: '500'}]}>
-                  {item?.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.lightTextStyle,
-                    {fontSize: 12},
-                    {marginBottom: 4},
-                  ]}>
-                  {'View Jobs '} <RightArrowHome />
-                </Text>
-              </View>
-            )}
+            style={{marginTop: 16, paddingLeft: 16}}
+            data={filterData}
             keyExtractor={item => item.id}
+            renderItem={({item, index}) => (
+              <TouchableOpacity
+                onPress={() => {
+                  setWhiteDot(index);
+                  navigation.navigate('Work', {isWhiteDot: index});
+                }}
+                style={{
+                  width: 136,
+                  height: 124,
+                  justifyContent: 'center',
+                  marginRight: 16,
+                }}>
+                <LinearGradient
+                  colors={
+                    isWhitDot == index
+                      ? ['#1AB2FF', '#FFB258']
+                      : [appColors.white, appColors.white]
+                  } // Define gradient colors
+                  start={{x: 0, y: 0}} // Top-left corner
+                  end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
+                  style={{
+                    flex: 1,
+                    borderRadius: 25,
+                    // paddingHorizontal: 16,
+                    // paddingVertical: 16,
+                    borderWidth: 1,
+                    borderColor: appColors.lightGrey,
+                    // justifyContent: 'center',
+                  }}>
+                  <View style={{flexDirection: 'row'}}>
+                    <Text
+                      style={{
+                        color:
+                          isWhitDot == index
+                            ? appColors.white
+                            : appColors.black,
+                        paddingRight: 10,
+                        fontSize: 24,
+                        fontWeight: '500',
+                        paddingLeft: 10,
+                        paddingTop: 16,
+                      }}>
+                      {item.count}
+                    </Text>
+                    {isWhitDot == index ? (
+                      <View
+                        style={{
+                          flex: 1,
+                          alignItems: 'flex-end',
+                          padding: 16,
+                        }}>
+                        <WhiteDot height={6} width={6} />
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          flex: 1,
+                          alignItems: 'flex-end',
+                          padding: 16,
+                        }}>
+                        <PinkDot height={6} width={6} />
+                      </View>
+                    )}
+                  </View>
+
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      marginTop: 7,
+                      fontFamily: 'sf-pro-text-semibold',
+                      fontWeight: 600,
+
+                      color:
+                        isWhitDot == index ? appColors.white : appColors.black,
+                      // width: "70%"
+                      paddingHorizontal: 8,
+                    }}>
+                    {item.name}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      marginVertical: 4,
+                      marginLeft: 8,
+                      color:
+                        isWhitDot == index
+                          ? appColors.white
+                          : appColors.placeholderColor,
+                      fontSize: 12,
+                      fontFamily: 'SF-Pro',
+                      fontWeight: '400',
+                    }}>
+                    {'View Jobs '}
+                    <View style={{marginVertical: 4}}>
+                      <RightArrowHome />
+                    </View>
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           />
+
           <View style={{alignItems: 'flex-end', marginTop: 16}}>
             <View
               style={{
@@ -459,7 +578,7 @@ const HomeScreen = ({navigation, route}) => {
                   <Text style={styles.lightTextStyle}>Potential</Text>
                   <Text style={styles.bigTextStyle2}>
                     {reportReadData != null
-                      ? '$' + reportReadData.income.potentianl
+                      ? '$' + reportReadData.income.potential
                       : '$0.00'}
                   </Text>
                 </View>
@@ -476,14 +595,14 @@ const HomeScreen = ({navigation, route}) => {
 
                   <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
                     {reportReadData != null
-                      ? '$' + reportReadData.finished.done
-                      : '$0.00'}
+                      ? reportReadData.finished.done
+                      : '0.00'}
                   </Text>
                   <Text style={styles.lightTextStyle}>Accepted</Text>
                   <Text style={styles.bigTextStyle2}>
                     {reportReadData != null
-                      ? '$' + reportReadData.finished.accepted
-                      : '$0.00'}
+                      ? reportReadData.finished.accepted
+                      : '0.00'}
                   </Text>
                 </View>
               </View>

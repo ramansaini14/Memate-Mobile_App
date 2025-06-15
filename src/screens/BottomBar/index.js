@@ -138,7 +138,11 @@ const BottomBar = ({navigation, route}) => {
         component={HomeScreen}
         initialParams={{orgId: orgId}}
       />
-      <Tab.Screen name="Work" component={JobsScreen} />
+      <Tab.Screen
+        name="Work"
+        component={JobsScreen}
+        initialParams={{isWhiteDot: 0}}
+      />
       <Tab.Screen
         name="Plus"
         component={AddScreen}

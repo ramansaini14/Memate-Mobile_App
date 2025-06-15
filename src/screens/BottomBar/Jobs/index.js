@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {appColors} from '../../../utils/appColors';
 import WhiteBackIcon from '../../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../../assets/svg/CalenderIcon';
@@ -29,14 +29,18 @@ import JobFilterModal from '../../../components/JobFilterModal';
 import moment from 'moment';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 
-const JobsScreen = ({navigation}) => {
+const JobsScreen = ({navigation, route}) => {
+  const {isWhiteDot} = route.params;
+
+  const flatListRef = useRef(null);
+
   const [active, setInActive] = useState(0);
   const [isWhitDot, setWhiteDot] = useState(0);
 
   const [isFiltersVisible, setFilterVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState([]);
   const [jobsData, setJobsData] = useState(null);
-
+  const [inProgressLength, setInProgressLength] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const isFocused = useIsFocused();
@@ -46,7 +50,7 @@ const JobsScreen = ({navigation}) => {
     {status: '2', name: 'Require Confirmation', count: 0},
     {status: 'a', name: 'Confirmed Jobs', count: 0},
     {status: '3', name: 'Waiting for Approval', count: 0},
-    {status: '4', name: 'Job In Progress', count: 0},
+    {status: '0', name: 'Job In Progress', count: 0},
     {status: '1', name: 'Open Jobs', count: 0},
     // {status: '6', name: 'Declined Jobs', count: 0},
   ]);
@@ -68,7 +72,7 @@ const JobsScreen = ({navigation}) => {
   const getJob = async () => {
     const orgId = await AsyncStorage.getItem('orgId');
     setTimeout(() => {
-      // console.log('Ord Id ===> ', orgId);
+      console.log('isWhitDot Id ===> ', isWhitDot);
       const payload = {
         id: orgId,
         offset: 0,
@@ -82,6 +86,9 @@ const JobsScreen = ({navigation}) => {
   useEffect(() => {
     if (isFocused) {
       setLoading(true);
+      setWhiteDot(isWhiteDot);
+      setInActive(!active);
+      scrollToSelectedIndex(isWhitDot);
       getJob();
     }
   }, [isFocused, isWhitDot]);
@@ -90,24 +97,58 @@ const JobsScreen = ({navigation}) => {
     if (responseJobs != null && responseJobs.status == 'OK') {
       console.log('responseJobs ===>', responseJobs);
       setLoading(false);
-      setJobsData(responseJobs.results);
+      if (filterData[isWhitDot].status == 0 && isWhitDot != 0) {
+        const inProgressData = responseJobs.results.filter(
+          item =>
+            (String(item.action_status) === '1' ||
+              String(item.action_status) === '2') &&
+            item.status === 'a',
+        );
+        setJobsData(inProgressData);
+      } else {
+        setJobsData(responseJobs.results);
+      }
       const updatedData = filterData.map(item => ({...item, count: 0}));
 
       responseJobs.summary.forEach(item => {
         const statusName = statusMap[item.status];
         const filterItem = updatedData.find(fd => fd.name === statusName);
-        if (filterItem) {
+        // console.log('Filter Item ===> ', filterItem);
+        if (filterItem.name == 'Job In Progress') {
+          filterItem.count = inProgressLength;
+          console.log('Filter Item ===> ', filterItem);
+        } else {
           filterItem.count = item.total;
         }
       });
 
-      const totalJobs = updatedData
+      const totalJobs = responseJobs.summary
         .filter(item => item.name !== 'All Jobs')
-        .reduce((sum, item) => sum + item.count, 0);
+        .reduce((sum, item) => sum + item.total, 0);
 
       const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
       if (allJobsItem) {
         allJobsItem.count = totalJobs;
+      }
+
+      if (isWhitDot == 0) {
+        const inProgressData = responseJobs.results.filter(
+          item =>
+            (String(item.action_status) === '1' ||
+              String(item.action_status) === '2') &&
+            item.status === 'a',
+        );
+
+        const inProgressJobsItem = updatedData.find(
+          fd => fd.name === 'Job In Progress',
+        );
+
+        if (inProgressJobsItem) {
+          setInProgressLength(inProgressData.length);
+          inProgressJobsItem.count = inProgressData.length;
+        }
+
+        // console.log('IN Progress Data ====> ', inProgressData);
       }
 
       setFilterData(updatedData);
@@ -130,9 +171,19 @@ const JobsScreen = ({navigation}) => {
     });
     // setSelectedFilter(index)
   };
-  useEffect(() => {
-    setInActive(!active);
-  }, [isWhitDot]);
+
+  const scrollToSelectedIndex = index => {
+    if (flatListRef.current && index >= 0 && index < filterData.length) {
+      flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }
+  };
+  // useEffect(() => {
+
+  // }, [isWhitDot]);
   // console.log(item)
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -161,6 +212,7 @@ const JobsScreen = ({navigation}) => {
         <Text style={styles.headStyle}>Jobs</Text>
 
         <FlatList
+          ref={flatListRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           data={filterData}
@@ -238,32 +290,7 @@ const JobsScreen = ({navigation}) => {
                     paddingHorizontal: 8,
                   }}>
                   {item.name}
-                  {/* <Text style={{textAlign: 'left', color: appColors.black , fontSize: 14, fontFamily: 'sf-pro-text-semibold', fontWeight: 600}}>{item.name}</Text> */}
-                  {/* {item.name.split(' ').map((word, index) => (
-                     <Text key={index}  style={{textAlign: 'left',fontSize: 14, fontFamily: 'sf-pro-text-semibold', fontWeight: 600}}>{word}</Text>
-                   )
-                   )} */}
-                  {/* <View style={{ flexDirection: 'column', alignItems: 'left'}}>
-                    {item.name=='All Jobs' ?  item.name.split(' ').map((word, index) => (
-                      <Text key={index} style={{ textAlign: 'left', color: appColors.white , fontSize: 14, fontFamily: 'sf-pro-text-semibold', fontWeight: 600}}>
-                        {word}
-                      </Text>
-                    )) : 
-                    <Text style={{textAlign: 'left', color: appColors.black , fontSize: 14, fontFamily: 'sf-pro-text-semibold', fontWeight: 600}}>{item.name}</Text>
-                  //   item.name.split(' ').map((word, index) => (
-                  //   <Text key={index}  style={{textAlign: 'left', color: appColors.black , fontSize: 14, fontFamily: 'sf-pro-text-semibold', fontWeight: 600}}>{word}</Text>
-                  // )
-                  // )
-                  }
-                  </View>                 */}
                 </Text>
-                {/* <Text
-                style={{
-                  fontSize: 14,
-                  color: active === index ? appColors.white : appColors.black,
-                }}>
-                Jobs
-              </Text> */}
               </LinearGradient>
             </TouchableOpacity>
           )}
