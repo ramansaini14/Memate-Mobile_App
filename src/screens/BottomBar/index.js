@@ -130,7 +130,7 @@ const BottomBar = ({navigation, route}) => {
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: '#fff',
-          height: 76,
+          height: 90,
         },
       })}>
       <Tab.Screen
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.5,
   },
   tabIconStyle: {
-    height: 40,
+    height: 50,
     marginTop: 20,
     alignItems: 'center',
     gap: 6,

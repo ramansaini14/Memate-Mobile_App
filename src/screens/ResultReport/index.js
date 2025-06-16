@@ -160,7 +160,7 @@ const ResultReport = ({navigation, route}) => {
                 <Text style={styles.lightTextStyle}>Potential</Text>
                 <Text style={styles.bigTextStyle2}>
                   {reportReadData != null
-                    ? '$' + reportReadData.income.potentianl
+                    ? '$' + reportReadData.income.potential
                     : '$0.00'}
                 </Text>
               </View>

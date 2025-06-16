@@ -36,9 +36,10 @@ const SignInWithEmail = ({ navigation,route }) => {
 
   const loginSuccess = useSelector(state => state.loginReducer.data);
   const responseVerifyEmail = useSelector(state => state.verifyEmailReducer.data);
+   const {statusCode, error, isLoading,data } = useSelector(state => state.verifyEmailReducer);
 
   const onLoginClick = async () => {
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{3,4}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const isValidEmail = emailRegex.test(email);
     setIsValid(isValidEmail);
 
@@ -81,6 +82,15 @@ const SignInWithEmail = ({ navigation,route }) => {
       // alert('Invalid credentials!');
     }
   }, [responseVerifyEmail]);
+
+  useEffect(() => { 
+    console.log('error Error ===>', error);
+    if(error!=null){
+     
+      Alert.alert('MeMate', error.detail);
+      dispatch(clearVerifyEmailSlice());
+    }
+  }, [error]);
 
   // Function to handle focus change
   const handleFocusChange = () => {

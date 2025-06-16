@@ -325,7 +325,7 @@ const JobsScreen = ({navigation, route}) => {
                   key={index}
                   LinearGradient={LinearGradient}
                   style={{
-                    height: 100,
+                    height: 230,
                     width: '100%',
                     borderRadius: 24,
                     marginVertical: 10,

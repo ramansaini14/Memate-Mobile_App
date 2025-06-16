@@ -25,14 +25,14 @@ import WhiteDownArrow from '../../assets/svg/WhiteDownArrow';
 import {hitGetCities} from '../../redux/GetCitiesSlice';
 
 const EditProfile = ({navigation, route}) => {
-  const {profileData, countries, states, cities, country, state, city} =
+  const {profileData, countries, states, cities, country, state, city, profileEmail, profilePhone} =
     route.params;
   const [profile, setProfile] = useState(null);
 
   const dispatch = useDispatch();
   const phoneRef = useRef(null);
 
-  const [phoneNumber, setPhoneNumber] = useState('1');
+  const [phoneNumber, setPhoneNumber] = useState(profilePhone);
   const [countryCode, setCountryCode] = useState('Au'); // Assuming default country is Aus
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
@@ -76,6 +76,7 @@ const EditProfile = ({navigation, route}) => {
     setCountry(country);
     setState(state);
     setCity(city);
+    setEmail(profileEmail);
   }, []);
   const onDropDownClick = value => {
     setIsState(value);

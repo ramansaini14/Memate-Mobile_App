@@ -20,6 +20,7 @@ import {
 import {clearVerifyEmailSlice} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {clearLoginData, loginUser} from '../../redux/loginSlice';
+import BackIcon from '../../assets/svg/BackIcon';
 
 const LoginPin = ({navigation, route}) => {
   const {email, from} = route.params;
@@ -31,6 +32,7 @@ const LoginPin = ({navigation, route}) => {
   );
 
   const responseLogin = useSelector(state => state.loginReducer.data);
+  const {error} = useSelector(state => state.verifyEmailReducer);
 
   const [otp, setOtp] = useState('');
 
@@ -47,7 +49,12 @@ const LoginPin = ({navigation, route}) => {
   }, [responseVerifyCode]);
 
   useEffect(() => {
-    if (responseLogin != null) {
+    console.log('Response Login ===> ', responseLogin);
+    if (responseLogin && responseLogin.detail) {
+      Alert.alert('MeMate', responseLogin.detail);
+      dispatch(clearLoginData());
+      return;
+    } else if (responseLogin != null) {
       saveToken(responseLogin.access);
       navigation.navigate('ChooseOrganization');
       dispatch(clearVerifyEmailSlice());
@@ -83,11 +90,22 @@ const LoginPin = ({navigation, route}) => {
     }
   };
 
+  useEffect(() => {
+    console.log('Error Error ===>', error);
+    if (error != null) {
+      Alert.alert('MeMate', error.detail);
+      dispatch(clearVerifyEmailSlice());
+    }
+  }, [error]);
+
   return (
     <SafeAreaView
       style={styles.containerStyle}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.textView}>
+        <TouchableOpacity onPress={() => {navigation.goBack()}}>
+          <BackIcon />
+        </TouchableOpacity>
         <Text style={styles.headerTextStyle}>Email Confirmation</Text>
       </View>
 
@@ -156,6 +174,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
     textAlign: 'center',
+    marginRight: 'auto',
+    marginLeft: 'auto',
   },
 
   textStyle: {
@@ -168,7 +188,11 @@ const styles = StyleSheet.create({
   },
   textView: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginRight: 22,
+    marginLeft: 8,
   },
   inputStyle: {
     marginHorizontal: 16,

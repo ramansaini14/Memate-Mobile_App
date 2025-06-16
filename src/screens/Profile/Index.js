@@ -232,6 +232,8 @@ const Profile = ({navigation}) => {
                   country: selectedCountry,
                   state: selectedState,
                   city: selectedCity,
+                  profileEmail: profile.email,
+                  profilePhone: profile.phone,
                 })
               }>
               Edit Profile

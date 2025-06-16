@@ -3,7 +3,7 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
 import {ApiBaseUrl, emailLogin} from '../utils/Constants';
 
-export const loginUser = createAsyncThunk('loginUser', async payload => {
+export const loginUser = createAsyncThunk('loginUser', async (payload,{ rejectWithValue } )=> {
   try {
     const config = {
       headers: {
@@ -17,7 +17,10 @@ export const loginUser = createAsyncThunk('loginUser', async payload => {
     return response.data;
   } catch (error) {
     console.log('Error  ===> ', error.response.data);
-    throw error.response.data;
+    return error.response.data;
+    // return rejectWithValue({
+    //   message: error.response?.data || 'Something went wrong',
+    // });
   }
 });
 
@@ -27,12 +30,14 @@ const loginSlice = createSlice({
   initialState: {
     isLoading: false,
     data: null,
+    error:null
   },
   reducers: {
     clearLoginData: state => {
       // Reset the data property to an empty array
       state.data = null;
       state.isAuthenticated = false;
+      error: null;
     },
   },
   extraReducers: builder => {
@@ -47,8 +52,9 @@ const loginSlice = createSlice({
         state.data = action.payload;
       })
       .addCase(loginUser.rejected, (state, action) => {
-        console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        console.log('Errorrrrrr  Login Slice===> ', action.error);
+        state.isLoading = false;
+        state.error = action.error.message;
       });
   },
 });

@@ -522,7 +522,7 @@ const HomeScreen = ({navigation, route}) => {
             key={1}
             data={upcoming}
             horizontal
-            style={{paddingHorizontal: 16}}
+            style={{paddingHorizontal: 16, marginBottom: 64}}
             nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             renderItem={({item}) => (
@@ -611,7 +611,7 @@ const HomeScreen = ({navigation, route}) => {
                 <PdfIcon />
                 <View style={{marginHorizontal: 8}}>
                   <Text style={styles.invoiceText}>
-                    {reportReadData.invoice.number != null
+                    {reportReadData != null && reportReadData.invoice && reportReadData.invoice.number != null
                       ? reportReadData.invoice.number
                       : 'Invoice ID 0001'}
                   </Text>
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.white,
     justifyContent: 'center',
     paddingVertical: 16,
-    marginBottom: 64,
+    // marginBottom: 64,
   },
   headerStyle: {
     flexDirection: 'row',
