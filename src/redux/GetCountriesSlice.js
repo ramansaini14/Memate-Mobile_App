@@ -16,6 +16,7 @@ export const hitGetCounties = createAsyncThunk('hitGetCounties', async payload =
     };
     console.log('Payload ===> ', config);
     const url = ApiBaseUrl+getCountries
+    console.log('URL Country===> ', url);
     const response = await axios.get(url, config);
     console.log('Response Verify Phone ===> ', response.data);
     return response.data;

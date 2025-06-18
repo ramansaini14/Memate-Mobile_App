@@ -11,7 +11,7 @@ const RightArrowHome = (props) => (
   >
     <Path
       d="M0.726685 7.05333L3.78002 4L0.726685 0.94L1.66668 0L5.66668 4L1.66668 8L0.726685 7.05333Z"
-      fill="#75808A"
+      fill={props.fill ? props.fill : "#75808A"}
     />
   </Svg>
 );

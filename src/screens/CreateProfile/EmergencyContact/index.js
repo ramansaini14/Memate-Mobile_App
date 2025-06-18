@@ -15,7 +15,7 @@ const ProfileAgencyContact = ({navigation, route}) => {
     const phoneRef = useRef(null);
 
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState("IN"); // Default country
+  const [countryCode, setCountryCode] = useState("AU"); // Default country
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [name, setName] = useState('');
 
@@ -86,7 +86,7 @@ const ProfileAgencyContact = ({navigation, route}) => {
                 data: data,
                 emergencyData: {
                   name: name,
-                  countryCode: countryCode=="IN"?91:countryCode,
+                  countryCode: countryCode=="AU"?61:countryCode,
                   phoneNumber: phoneNumber.substring(countryCode.length+1),
                 },
               },

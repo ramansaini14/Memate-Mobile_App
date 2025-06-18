@@ -460,10 +460,10 @@ const HomeScreen = ({navigation, route}) => {
                       }}>
                       {item.name}
                     </Text>
+                    <View style={{flexDirection:'row',marginTop:4}}>
                     <Text
                       style={{
                         fontSize: 12,
-                        marginVertical: 4,
                         marginLeft: 8,
                         color:
                           isWhitDot == index
@@ -474,10 +474,12 @@ const HomeScreen = ({navigation, route}) => {
                         fontWeight: '400',
                       }}>
                       {'View Jobs '}
-                      <View style={{marginVertical: 4}}>
-                        <RightArrowHome />
-                      </View>
                     </Text>
+                    <View style={{marginTop: 4}}>
+                        <RightArrowHome fill = {isWhitDot == index?appColors.white:"#75808A"}/>
+                      </View>
+                    </View>
+                    
                   </LinearGradient>
                 </TouchableOpacity>
               )}
@@ -521,8 +523,8 @@ const HomeScreen = ({navigation, route}) => {
           {active == 0 && (
             <Text style={styles.titleStyle}>Jobs in Progress</Text>
           )}
-          {active == 0 && (
-            <FlatList
+          {active == 0 ? (
+            progressJobs!=null&&progressJobs.length>0?<FlatList
               key={0}
               data={progressJobs}
               horizontal
@@ -541,14 +543,16 @@ const HomeScreen = ({navigation, route}) => {
                 </TouchableOpacity>
               )}
               keyExtractor={item => item.id}
-            />
-          )}
+            />:(<Text style={{alignSelf:'center',marginTop:8}}>
+              No Jobs Found
+            </Text>)
+          ):<View/>}
           {active == 0 && (
-            <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
+            <Text style={[styles.titleStyle,{marginTop:16}]}>Upcoming Deadlines</Text>
           )}
 
-          {active == 0 && (
-            <FlatList
+          {active == 0 ? (
+            upcoming!=null&&upcoming.length>0?<FlatList
               key={1}
               data={upcoming}
               horizontal
@@ -567,13 +571,15 @@ const HomeScreen = ({navigation, route}) => {
                 </TouchableOpacity>
               )}
               keyExtractor={item => item.id}
-            />
-          )}
+            />:(<Text style={{alignSelf:'center',marginTop:8}}>
+              No Jobs Found
+            </Text>)
+          ):<View/>}
         {active == 1 && (
             <Text style={styles.titleStyle}>Not Complete Tasks</Text>
           )}
           {active == 1 ? (
-            tasks.length>0?<FlatList
+            tasks!=null && tasks.length>0?<FlatList
               key={2}
               data={tasks}
               horizontal

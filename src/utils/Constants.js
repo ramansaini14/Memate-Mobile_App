@@ -28,7 +28,7 @@ export const getCity = 'api/v1/references/cities/';
 export const attachmentFileUrl = 'api/v1/m/jobs/attachments/url/';
 
 // https://dev.memate.com.au/api/v1/m/user/profile/update/
-export const updateProfile = 'api/v1/m/user/profile/update/';
+export const updateProfile = 'api/v1/m/user/profile/';
 
 // https://dev.memate.com.au/api/v1/m/terms-and-conditions/
 export const appTerms = 'api/v1/m/terms-and-conditions/';

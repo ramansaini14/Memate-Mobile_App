@@ -19,6 +19,7 @@ import _fetch from '../../utils/_fetch';
 import MainLogo from '../../assets/svg/MainLogo';
 import { clearVerifyEmailSlice, hitVerifyEmail } from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BackIcon from '../../assets/svg/BackIcon';
 
 const SignInWithEmail = ({ navigation,route }) => {
   const dispatch = useDispatch();
@@ -86,8 +87,11 @@ const SignInWithEmail = ({ navigation,route }) => {
   useEffect(() => { 
     console.log('error Error ===>', error);
     if(error!=null){
-     
-      Alert.alert('MeMate', error.detail);
+      if (error?.error) {
+        Alert.alert('MeMate', error.error);
+      } else if (error?.detail) {
+        Alert.alert('MeMate', error.detail);
+      } 
       dispatch(clearVerifyEmailSlice());
     }
   }, [error]);
@@ -102,6 +106,12 @@ const SignInWithEmail = ({ navigation,route }) => {
 
   return (
     <SafeAreaView style={styles.containerStyle}>
+       <View style={styles.textView}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <BackIcon />
+        </TouchableOpacity>
+        <Text style={styles.headerTextStyle}>{from==0?"Sign in - Email":"Sign up - Email"}</Text>
+      </View>
       <View style={styles.logoStyle}>
         <MainLogo width={200} />
       </View>
@@ -192,5 +202,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding:20,
     marginBottom:24
+  },
+  headerTextStyle: {
+    color: appColors.white,
+    fontWeight: '700',
+    fontSize: 16,
+    textAlign: 'center',
+    marginRight: 'auto',
+    marginLeft: 'auto',
+  },
+  textView: {
+    alignItems: 'center',
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginRight: 22,
+    marginLeft: 8,
   },
 });

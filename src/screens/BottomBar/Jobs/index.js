@@ -426,7 +426,7 @@ const JobsScreen = ({navigation, route}) => {
                           fontFamily: 'SF-Pro-Text-Semibold',
                           fontWeight: '600',
                         }}>
-                        THE-JB-{item.number}
+                        {item.number}
                       </Text>
                       <Text style={[styles.headerTextStyle, {marginTop: 8}]}>
                         {item.short_description}
@@ -480,7 +480,7 @@ const JobsScreen = ({navigation, route}) => {
                               fontSize: 11,
                             }}>
                             {moment
-                              .unix(parseInt(item.end_date, 10))
+                              .unix(parseInt(item.start_date, 10))
                               .format('HH:mm')}
                           </Text>
                         </View>
@@ -523,7 +523,7 @@ const JobsScreen = ({navigation, route}) => {
                               fontSize: 11,
                             }}>
                             {moment
-                              .unix(parseInt(item.start_date, 10))
+                              .unix(parseInt(item.end_date, 10))
                               .format('HH:mm')}
                           </Text>
                         </View>
@@ -550,7 +550,17 @@ const JobsScreen = ({navigation, route}) => {
                             fontSize: 12,
                             fontWeight: '600',
                           }}>
-                          {item.status_text}
+                          {item.status == 2
+                            ? 'Require Confirmation'
+                            : item.status == 3
+                            ? 'Waiting for Approval'
+                            : item.status == 4
+                            ? 'Job In Progress'
+                            : item.status == 5
+                            ? 'Completed'
+                            : item.status == 6
+                            ? 'Declined'
+                            : 'Confirmed'}
                         </Text>
                       </View>
                     </View>

@@ -8,9 +8,8 @@ import {
   Alert,
   Modal,
   TextInput,
-  Platform,
   ToastAndroid,
-  PermissionsAndroid,
+  FlatList,
 } from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
 import {appColors} from '../../utils/appColors';
@@ -65,6 +64,9 @@ import {
   hitAttachmentFileUrl,
 } from '../../redux/AttachmentFileUrlSlice';
 import {uploadImageToS3} from '../../redux/uploadSlice';
+
+import RNFS from 'react-native-fs';
+import {PermissionsAndroid, Platform} from 'react-native';
 
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
@@ -730,6 +732,42 @@ const JobCard = ({navigation, route}) => {
     }
   };
 
+  const downloadFile = async (fileUrl, fileName) => {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'Storage Permission Required',
+            message: 'App needs access to your storage to download the file',
+          },
+        );
+
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Permission Denied', 'Storage permission not granted');
+          return;
+        }
+      }
+
+      const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+
+      const options = {
+        fromUrl: fileUrl,
+        toFile: downloadDest,
+      };
+
+      const result = await RNFS.downloadFile(options).promise;
+
+      if (result.statusCode === 200) {
+        Alert.alert('Success', `File downloaded to: ${downloadDest}`);
+      } else {
+        Alert.alert('Download failed', 'Status Code: ' + result.statusCode);
+      }
+    } catch (error) {
+      Alert.alert('Download error', error.message);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
@@ -845,7 +883,19 @@ const JobCard = ({navigation, route}) => {
                 flexDirection: 'row',
               }}>
               <SettingIcon width={20} height={20} />
-              <Text style={styles.headerTextStyle}>{jobData.status_text}</Text>
+              <Text style={styles.headerTextStyle}>
+                {jobData.status == 2
+                  ? 'Require Confirmation'
+                  : jobData.status == 3
+                  ? 'Waiting for Approval'
+                  : jobData.status == 4
+                  ? 'Job In Progress'
+                  : jobData.status == 5
+                  ? 'Completed'
+                  : jobData.status == 6
+                  ? 'Declined'
+                  : 'Confirmed'}
+              </Text>
             </View>
           </View>
         )}
@@ -1052,74 +1102,113 @@ const JobCard = ({navigation, route}) => {
           }}>
           {jobData.address}
         </Text>
-        <View style={{flexDirection: 'row'}}>
-          <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>
-            Documents Attached{' '}
-          </Text>
-          <View
-            style={{
-              backgroundColor: appColors.placeholderColor,
-              // paddingHorizontal: 5,
-              borderRadius: 50,
-              // marginLeft: 2,
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingHorizontal: 5,
-              borderRadius: 50,
-            }}>
-            <Text
-              style={{
-                color: appColors.white,
-                fontSize: 12,
-              }}>
-              1
+        {jobData != null && jobData.attachments.length > 0 && (
+          <View style={{flexDirection: 'row'}}>
+            <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>
+              Documents Attached{' '}
             </Text>
+            <View
+              style={{
+                backgroundColor: appColors.placeholderColor,
+                // paddingHorizontal: 5,
+                borderRadius: 50,
+                // marginLeft: 2,
+                justifyContent: 'center',
+                alignItems: 'center',
+                paddingHorizontal: 5,
+                borderRadius: 50,
+              }}>
+              <Text
+                style={{
+                  color: appColors.white,
+                  fontSize: 10,
+                }}>
+                {jobData.attachments.length}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
 
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            gap: 4,
-            marginTop: 12,
-            paddingBottom: 15,
-            borderColor: appColors.lightGrey,
-            // borderBottomWidth: 1,
-            marginLeft: 16,
-          }}>
-          <DocumentIcon width={18} height={18} />
-          <Text style={{color: appColors.black}}>Brief.pdf</Text>
-        </View>
+        {jobData != null &&
+          jobData.attachments != null &&
+          jobData.attachments.length > 0 && (
+            <FlatList
+              key={2}
+              data={jobData.attachments}
+              style={{paddingHorizontal: 16}}
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginTop: 12,
+                    marginRight: 8,
+                    borderColor: appColors.lightGrey,
+                    // borderBottomWidth: 1,
+                  }}
+                  onPress={() => downloadFile(item.file, item.title)}>
+                  <DocumentIcon width={18} height={18} />
+                  <Text style={{color: appColors.black}}>{item.title}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item.id}
+            />
+          )}
+
         <Text
           style={{
             borderColor: appColors.lightGrey,
             borderBottomWidth: 1,
           }}></Text>
         <View>
-          <Text style={{fontSize: 20, fontWeight: '600', marginTop: 20}}>
-            Images
-          </Text>
-          <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
-            Photos before
-          </Text>
-          <TouchableOpacity
-            style={styles.imageViewStyle}
-            onPress={() => setModalVisible(!modalVisible)}>
-            <AddImageIcon />
-          </TouchableOpacity>
-          <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
-            Photos of the Process
-          </Text>
-          <TouchableOpacity style={styles.imageViewStyle}>
-            <AddImageIcon />
-          </TouchableOpacity>
-          <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
-            Photo after
-          </Text>
-          <TouchableOpacity style={[styles.imageViewStyle, {marginBottom: 16}]}>
-            <AddImageIcon />
-          </TouchableOpacity>
+          {jobData != null && jobData.project_photos != null && (
+            <Text style={{fontSize: 20, fontWeight: '600', marginTop: 20}}>
+              Project Photos
+            </Text>
+          )}
+          {jobData != null && jobData.project_photos == 3 && (
+            <View>
+              <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+                Before & After
+              </Text>
+              <TouchableOpacity
+                style={styles.imageViewStyle}
+                onPress={() => setModalVisible(!modalVisible)}>
+                <AddImageIcon />
+              </TouchableOpacity>
+              <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+                In Process
+              </Text>
+              <TouchableOpacity style={styles.imageViewStyle}>
+                <AddImageIcon />
+              </TouchableOpacity>
+            </View>
+          )}
+           {jobData != null && jobData.project_photos == 1 && (
+            <View>
+              <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+                Before & After
+              </Text>
+              <TouchableOpacity
+                style={styles.imageViewStyle}
+                onPress={() => setModalVisible(!modalVisible)}>
+                <AddImageIcon />
+              </TouchableOpacity>
+            </View>
+          )}
+           {jobData != null && jobData.project_photos == 2 && (
+            <View>
+              <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+                In Process
+              </Text>
+              <TouchableOpacity style={styles.imageViewStyle}>
+                <AddImageIcon />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
       {/* <View style={{alignItems: 'flex-end', marginBottom: 20}}>
@@ -1439,11 +1528,11 @@ const styles = StyleSheet.create({
   },
   blackCardStyle: {
     backgroundColor: appColors.black,
-    paddingHorizontal: 14,
+    paddingHorizontal: 20,
     paddingVertical: 22,
     borderRadius: 28,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     marginBottom: 20,
     gap: 40,
   },

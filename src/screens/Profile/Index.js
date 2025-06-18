@@ -114,7 +114,7 @@ const Profile = ({navigation}) => {
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
         <View style={{height: 40, width: 40}}>
-          <WhiteBackIcon onPress={() => navigation.navigate('Menu')} />
+          <WhiteBackIcon onPress={() => navigation.goBack()} />
         </View>
         <Text style={styles.usernameStyle}>Profile</Text>
         <View

@@ -71,7 +71,7 @@ const LoginPin = ({navigation, route}) => {
 
   const onSubmitClick = () => {
     if (otp.length < 6) {
-      Alert.alert('Please enter valid otp');
+      Alert.alert('MeMate', 'Please enter valid otp');
     } else {
       if (from == 0) {
         const payload = {
@@ -92,10 +92,12 @@ const LoginPin = ({navigation, route}) => {
 
   useEffect(() => {
     console.log('Error Error ===>', error);
-    if (error != null) {
+    if (error?.error) {
+      Alert.alert('MeMate', error.error);
+    } else if (error?.detail) {
       Alert.alert('MeMate', error.detail);
-      dispatch(clearVerifyEmailSlice());
-    }
+    } 
+    dispatch(clearVerifyEmailSlice());
   }, [error]);
 
   return (
@@ -103,10 +105,12 @@ const LoginPin = ({navigation, route}) => {
       style={styles.containerStyle}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.textView}>
-        <TouchableOpacity onPress={() => {navigation.goBack()}}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <BackIcon />
         </TouchableOpacity>
-        <Text style={styles.headerTextStyle}>Email Confirmation</Text>
+        <Text style={styles.headerTextStyle}>
+          {from == 0 ? 'Sign in - Pin' : 'Email Confirmation'}
+        </Text>
       </View>
 
       {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss}> */}

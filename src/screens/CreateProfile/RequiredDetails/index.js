@@ -49,7 +49,7 @@ const RequiredDetails = ({navigation}) => {
   const [abn, setAbn] = useState('');
   const [verifiedPhn, setVarifiedPhn] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('IN'); // Default country
+  const [countryCode, setCountryCode] = useState('AU'); // Default country
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [selectedOption, setSelectedOption] = useState('yes');
   const [date, setDate] = useState(new Date());
@@ -129,7 +129,6 @@ const RequiredDetails = ({navigation}) => {
       lastName == '' ||
       firstName == '' ||
       phoneNumber == '' ||
-      abn == '' ||
       selectedDate==''
     ) {
       Alert.alert('All fields are required!');
@@ -139,7 +138,7 @@ const RequiredDetails = ({navigation}) => {
           firstName: firstName,
           lastName: lastName,
           email: email,
-          countryCode:countryCode,
+          countryCode: countryCode == 'AU' ? 61 : countryCode,
           phoneNumber: phoneNumber.substring(countryCode.length + 1),
           dob: selectedDate,
           abn: abn,
@@ -333,7 +332,7 @@ const RequiredDetails = ({navigation}) => {
           <Text style={styles.textStyle}>
             {selectedOption == 'yes' ? 'ABN' : 'TFN'}
           </Text>
-          <View style={styles.inputViewStyle}>
+         {selectedOption=='yes'&& <View style={styles.inputViewStyle}>
             <TextInput
               style={styles.inputStyle}
               placeholder="00000000000"
@@ -342,7 +341,7 @@ const RequiredDetails = ({navigation}) => {
               value={abn}
               onChangeText={setAbn}
             />
-          </View>
+          </View>}
           <TouchableOpacity
             style={styles.buttonStyle}
             onPress={() => goToNextScreen()}>
@@ -382,7 +381,7 @@ const RequiredDetails = ({navigation}) => {
                       setShowDatePicker(false);
                       if (tempDate) {
                         const formattedDate = tempDate.toISOString().split('T')[0];
-                        setSelectedDate(formattedDate);
+                        setSelectedDate(moment(formattedDate, "YYYY-MM-DD").format("DD MMM, YYYY"));
                       }
                     }}
                   />
