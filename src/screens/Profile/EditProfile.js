@@ -23,6 +23,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import StateModal from '../../components/StateModal';
 import WhiteDownArrow from '../../assets/svg/WhiteDownArrow';
 import {hitGetCities} from '../../redux/GetCitiesSlice';
+import moment from 'moment';
 
 const EditProfile = ({navigation, route}) => {
   const {profileData, countries, states, cities, country, state, city, profileEmail, profilePhone} =
@@ -32,7 +33,7 @@ const EditProfile = ({navigation, route}) => {
   const dispatch = useDispatch();
   const phoneRef = useRef(null);
 
-  const [phoneNumber, setPhoneNumber] = useState(profilePhone);
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('Au'); // Assuming default country is Aus
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
@@ -52,8 +53,14 @@ const EditProfile = ({navigation, route}) => {
   const [selectedCity, setCity] = useState(null);
   const [isState, setIsState] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-
+  
   const [email, setEmail] = useState('');
+  const [dob,setDob] = useState('');
+  const [abn,setAbn] = useState('');
+  const [street,setStreet] = useState('');
+  const [postcode,setPostcode] = useState('');
+  const [emgNumber,setEmgNumber] = useState('');
+  const [emgName,setEmgName] = useState('');
 
   const toggleCountryPicker = () => {
     setCountryPickerVisible(!countryPickerVisible);
@@ -69,6 +76,7 @@ const EditProfile = ({navigation, route}) => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    console.log('profileData', profileData);
     setProfile(profileData);
     setCountries(countries);
     setState(states);
@@ -77,6 +85,12 @@ const EditProfile = ({navigation, route}) => {
     setState(state);
     setCity(city);
     setEmail(profileEmail);
+    setAbn(profileData.abn || '');
+    setDob(moment(profileData.date_of_birth*1000).format('DD MMM, YYYY')|| '');
+    setStreet(profileData.street_address || '');
+    setPostcode(profileData.postcode || '');
+    setEmgName(profileData.emergency_name || '');
+    setPhoneNumber(profileData.phone || '');
   }, []);
   const onDropDownClick = value => {
     setIsState(value);
@@ -135,13 +149,14 @@ const EditProfile = ({navigation, route}) => {
             <Text style={styles.userName}>
               {profile.first_name + ' ' + profile.last_name}
             </Text>
-            <Text style={styles.ratingNumber}>
+            {/* <Text style={styles.ratingNumber}>
               Rating: <Text style={{color: appColors.yellow}}>367</Text>
-            </Text>
+            </Text> */}
           </View>
           <View
             style={{
               paddingBottom: 15,
+              marginTop: 15,
               borderColor: appColors.borderLightGrey,
               borderBottomWidth: 1,
             }}>
@@ -227,6 +242,7 @@ const EditProfile = ({navigation, route}) => {
                   alignItems: 'center',
                 }}>
                 <TextInput
+                value={dob}
                   style={{
                     color: appColors.white,
                     paddingHorizontal: 15,
@@ -235,6 +251,7 @@ const EditProfile = ({navigation, route}) => {
                   }}
                   placeholder="1986-11-25"
                   placeholderTextColor={appColors.placeholderColor}
+                  onChangeText={v => setDob(v)}
                 />
                 <View style={{height: 30, width: 30}}>
                   <FormCalender onPress={() => setOpen(true)} />
@@ -268,6 +285,8 @@ const EditProfile = ({navigation, route}) => {
                 }}
                 placeholder="Number"
                 placeholderTextColor={appColors.placeholderColor}
+                value={abn}
+                onChangeText={v => setAbn(v)}
               />
             </View>
           </View>
@@ -356,6 +375,8 @@ const EditProfile = ({navigation, route}) => {
                   }}
                   placeholder="Number"
                   placeholderTextColor={appColors.placeholderColor}
+                  value={street}
+                  onChangeText={v => setStreet(v)}
                 />
               </View>
               <View style={{marginBottom: 15}}>
@@ -373,6 +394,8 @@ const EditProfile = ({navigation, route}) => {
                   }}
                   placeholder="Number"
                   placeholderTextColor={appColors.placeholderColor}
+                  value={postcode}
+                  onChangeText={v => setPostcode(v)}
                 />
               </View>
             </View>
@@ -403,6 +426,8 @@ const EditProfile = ({navigation, route}) => {
                   }}
                   placeholder="Number"
                   placeholderTextColor={appColors.placeholderColor}
+                  value={emgName}
+                  onChangeText={v => setEmgName(v)}
                 />
               </View>
               <View style={{marginBottom: 8}}>
@@ -544,7 +569,7 @@ const styles = StyleSheet.create({
     borderColor: appColors.grey,
     paddingHorizontal: 15,
     fontFamily: 'SF-Pro',
-    fontWeight: '700',
+    fontWeight: '600',
     borderRadius: 25,
     textAlign: 'center',
 

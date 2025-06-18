@@ -139,7 +139,7 @@ const RequiredDetails = ({navigation}) => {
           firstName: firstName,
           lastName: lastName,
           email: email,
-          countryCode: countryCode == 'IN' ? 91 : countryCode,
+          countryCode:countryCode,
           phoneNumber: phoneNumber.substring(countryCode.length + 1),
           dob: selectedDate,
           abn: abn,

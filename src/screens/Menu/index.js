@@ -1,12 +1,13 @@
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
-import { appColors } from '../../utils/appColors';
+import React, {useEffect, useState} from 'react';
+import {appColors} from '../../utils/appColors';
 import DummyUserIcon from '../../assets/svg/DummyUserIcon';
 import WhiteCrossIcon from '../../assets/svg/WhiteCrossIcon';
 import MenuJobIcon from '../../assets/svg/MenuJobIcon';
@@ -18,31 +19,59 @@ import MenuNewsIcon from '../../assets/svg/MenuNewsIcon';
 import MenuProfileIcon from '../../assets/svg/MenuProfileIcon';
 import MenuSettingIcon from '../../assets/svg/MenuSettingIcon';
 import MenuHelpIcon from '../../assets/svg/MenuHelpIcon';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {get} from 'http';
+import {getProfile} from '../../redux/GetProfileSlice';
+import {useDispatch, useSelector} from 'react-redux';
 
-const Menu = ({ navigation }) => {
+const Menu = ({navigation}) => {
+  const [profile, setProfile] = useState(null);
+  const profileResponse = useSelector(state => state.getProfileReducer.data);
 
-    const clearToken = async () => {
-      await AsyncStorage.clear();
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'StartScreen'}]
-  })}
+  const dispatch = useDispatch();
 
-  
+  const clearToken = async () => {
+    await AsyncStorage.clear();
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'StartScreen'}],
+    });
+  };
+
+  useEffect(() => {
+    dispatch(getProfile());
+  }, []);
+
+  useEffect(() => {
+    console.log('profileResponse ===> ', profileResponse);
+    if (profileResponse != null && profileResponse.status === 200) {
+      setProfile(profileResponse.data);
+      // dispatch(getProfile());
+      // dispatch(clearGetState());
+    }
+  }, [profileResponse]);
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
-        <DummyUserIcon />
-        <View style={{ marginLeft: 8, flex: 1 }}>
-          <Text style={styles.usernameStyle}>Username</Text>
-          <Text style={styles.smallTextStyle}>Designer</Text>
-        </View>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <WhiteCrossIcon />
         </TouchableOpacity>
       </View>
+
+      {profile != null && (
+        <View style={{alignItems: 'center'}}>
+          <Image
+            source={{uri: profile.photo}}
+            style={styles.avatar_}
+            resizeMode="contain"
+          />
+
+          <Text style={styles.usernameStyle}>{profile.first_name} {profile.last_name}</Text>
+          {/* <Text style={styles.smallTextStyle}>Designer</Text> */}
+        </View>
+      )}
       <ScrollView>
         <View>
           <View
@@ -51,7 +80,7 @@ const Menu = ({ navigation }) => {
               marginTop: 16,
               justifyContent: 'flex-start',
             }}>
-            <TouchableOpacity style={styles.optionStyle} onPress={() => navigation.navigate('JobsScreen')}>
+            {/* <TouchableOpacity style={styles.optionStyle} onPress={() => navigation.navigate('JobsScreen')}>
               <MenuJobIcon />
               <View style={{ marginLeft: 16 }}>
                 <Text style={styles.mainTextStyle}>Jobs</Text>
@@ -71,7 +100,6 @@ const Menu = ({ navigation }) => {
               <MenuCalenderIcon />
               <View style={{ marginLeft: 16 }}>
                 <Text style={styles.mainTextStyle}>Calender</Text>
-                {/* <Text style={styles.textStyle}>Not Accepted</Text> */}
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.optionStyle} onPress={() => navigation.navigate('Chat')}>
@@ -89,22 +117,28 @@ const Menu = ({ navigation }) => {
                 <Text style={styles.textStyle}>Not Accepted</Text>
               </View>
               <Text style={styles.badgeStyle}>3</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.optionStyle} onPress={() => navigation.navigate('Profile')}>
+            </TouchableOpacity> */}
+            <TouchableOpacity
+              style={styles.optionStyle}
+              onPress={() => navigation.navigate('Profile')}>
               <MenuProfileIcon />
-              <View style={{ marginLeft: 16 }}>
+              <View style={{marginLeft: 16}}>
                 <Text style={styles.mainTextStyle}>Profile</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionStyle} onPress={() => navigation.navigate('Setting')}>
+            <TouchableOpacity
+              style={styles.optionStyle}
+              onPress={() => navigation.navigate('Setting')}>
               <MenuSettingIcon />
-              <View style={{ marginLeft: 16 }}>
+              <View style={{marginLeft: 16}}>
                 <Text style={styles.mainTextStyle}>Setting</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionStyle} onPress={() => clearToken()}>
+            <TouchableOpacity
+              style={styles.optionStyle}
+              onPress={() => clearToken()}>
               <MenuSettingIcon />
-              <View style={{ marginLeft: 16 }}>
+              <View style={{marginLeft: 16}}>
                 <Text style={styles.mainTextStyle}>Logout</Text>
               </View>
             </TouchableOpacity>
@@ -118,12 +152,15 @@ const Menu = ({ navigation }) => {
             />
             <TouchableOpacity style={styles.optionStyle}>
               <MenuHelpIcon />
-              <View style={{ marginLeft: 16 }}>
+              <View style={{marginLeft: 16}}>
                 <Text style={styles.mainTextStyle}>Help</Text>
               </View>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('BottomBar')}>
+          <View style={{}}>
+          <TouchableOpacity 
+          // onPress={() => navigation.navigate('BottomBar')}
+          >
             <View
               style={{
                 backgroundColor: appColors.black,
@@ -141,7 +178,13 @@ const Menu = ({ navigation }) => {
               <Text style={styles.rateTextStyle}>Rate MeMate</Text>
             </View>
           </TouchableOpacity>
-          <Text style={styles.termsStyle} onPress={() => navigation.navigate('Conditions')} >Terms and Conditions</Text>
+          <Text
+            style={styles.termsStyle}
+            onPress={() => navigation.navigate('Conditions')}>
+            Terms and Conditions
+          </Text>
+          </View>
+          
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -157,14 +200,15 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerStyle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     marginBottom: 16,
   },
   usernameStyle: {
     color: appColors.white,
     fontFamily: 'SF-Pro',
-    fontWeight: '700',
+    fontWeight: '600',
+    fontSize: 20,
+    marginTop:8
   },
   smallTextStyle: {
     fontSize: 12,
@@ -176,7 +220,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'SF-Pro',
   },
-  textStyle: { color: appColors.grey, fontWeight: '500' },
+  deleteTextStyle: {
+    fontSize: 18,
+    color: 'red',
+    fontWeight: '700',
+    fontFamily: 'SF-Pro',
+  },
+  textStyle: {color: appColors.grey, fontWeight: '500'},
   badgeStyle: {
     backgroundColor: appColors.pink,
     borderRadius: 16,
@@ -188,7 +238,7 @@ const styles = StyleSheet.create({
     color: appColors.white,
     fontSize: 12,
   },
-  optionStyle: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
+  optionStyle: {flexDirection: 'row', alignItems: 'center', marginTop: 16},
   rateTextStyle: {
     color: appColors.white,
     marginLeft: 8,
@@ -202,5 +252,11 @@ const styles = StyleSheet.create({
     marginVertical: 32,
     fontFamily: 'SF-Pro',
     fontWeight: '700',
+  },
+  avatar_: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: appColors.lightGrey,
   },
 });

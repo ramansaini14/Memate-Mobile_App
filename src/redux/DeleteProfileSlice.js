@@ -1,21 +1,24 @@
 // src/redux/slices/authSlice.js
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
-import {ApiBaseUrl, verifyEmail} from '../utils/Constants';
+import {ApiBaseUrl, deleteProfile} from '../utils/Constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const hitVerifyEmail = createAsyncThunk('hitVerifyEmail', async (payload, { rejectWithValue }) => {
-    try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
+export const hitDeleteProfile = createAsyncThunk('hitDeleteProfile', async (payload, { rejectWithValue }) => {
+  try {
+    const token = await AsyncStorage.getItem("token");
 
-      console.log('Payload ===> ', payload);
-      const url = ApiBaseUrl + verifyEmail;
-      console.log('URL ===> ', url);
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: "Bearer " + token,
+      },
+    };
 
-      const response = await axios.post(url, payload, config);
+  
+    const url = ApiBaseUrl + deleteProfile;
+    console.log("url ===> ",url)
+    const response = await axios.delete(url, config);
 
     console.log("Response ===> ",response.data, " status ===> ",response.status)
     return {
@@ -32,8 +35,8 @@ export const hitVerifyEmail = createAsyncThunk('hitVerifyEmail', async (payload,
 });
 
 
-const VerifyEmailSlice = createSlice({
-  name: 'verifyEmailReducer',
+const DeleteProfileSlice = createSlice({
+  name: 'deleteProfileReducer',
   initialState: {
     isLoading: false,
     data: null,
@@ -41,7 +44,7 @@ const VerifyEmailSlice = createSlice({
     error: null,
   },
   reducers: {
-    clearVerifyEmailSlice: state => {
+    clearDeleteProfile: state => {
       state.data = null;
       state.isAuthenticated = false;
       state.statusCode = null;
@@ -50,25 +53,23 @@ const VerifyEmailSlice = createSlice({
   },
   extraReducers: builder => {
     builder
-      .addCase(hitVerifyEmail.pending, state => {
+      .addCase(hitDeleteProfile.pending, state => {
         state.isLoading = true;
         state.statusCode = null;
         state.error = null;
       })
-      .addCase(hitVerifyEmail.fulfilled, (state, action) => {
+      .addCase(hitDeleteProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.data = action.payload.data;
         state.statusCode = action.payload.status;
       })
-      .addCase(hitVerifyEmail.rejected, (state, action) => {
-        console.log("Erroradff===> ",action.payload?.message)
+      .addCase(hitDeleteProfile.rejected, (state, action) => {
         state.isLoading = false;
         state.statusCode = action.payload?.status;
-      
         state.error = action.payload?.message;
       });
   },
 });
 
-export const {clearVerifyEmailSlice} = VerifyEmailSlice.actions;
-export default VerifyEmailSlice.reducer;
+export const {clearDeleteProfile} = DeleteProfileSlice.actions;
+export default DeleteProfileSlice.reducer;

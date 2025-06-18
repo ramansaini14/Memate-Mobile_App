@@ -40,6 +40,7 @@ import BackIcon from '../../../assets/svg/BackIcon';
 import LinearGradient from 'react-native-linear-gradient';
 import WhiteDot from '../../../assets/svg/WhiteDot';
 import PinkDot from '../../../assets/svg/PinkDot';
+import {hitAllTasks} from '../../../redux/AllTaskSlice';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -49,6 +50,9 @@ const HomeScreen = ({navigation, route}) => {
   const [isResultReport, setIsResultReport] = useState(true);
 
   const [approvedJobs, setApprovedJobs] = useState(null);
+   const [tasks, setTasks] = useState(null);
+  
+    const responseAllTasks = useSelector(state => state.allTaskReducer.data);
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const reportReadData = useSelector(state => state.reportReadReducer.data);
@@ -110,6 +114,12 @@ const HomeScreen = ({navigation, route}) => {
       };
 
       dispatch(getJobs(payload));
+
+      const payload1 = {
+        id: id,
+        api: 'not-completed',
+      };
+      dispatch(hitAllTasks(payload1));
     }, 1200);
   };
 
@@ -199,6 +209,13 @@ const HomeScreen = ({navigation, route}) => {
       setFilterData(updatedData);
     }
   }, [responseJobs]);
+
+  useEffect(() => {
+    console.log('All Tasks Response ===> ', responseAllTasks);
+    if (responseAllTasks) {
+      setTasks(responseAllTasks.results);
+    }
+  }, [responseAllTasks]);
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -355,189 +372,287 @@ const HomeScreen = ({navigation, route}) => {
             </View>
           </View>
 
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{marginTop: 16, paddingLeft: 16}}
-            data={filterData}
-            keyExtractor={item => item.id}
-            renderItem={({item, index}) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setWhiteDot(index);
-                  navigation.navigate('Work', {isWhiteDot: index});
-                }}
-                style={{
-                  width: 136,
-                  height: 124,
-                  justifyContent: 'center',
-                  marginRight: 16,
-                }}>
-                <LinearGradient
-                  colors={
-                    isWhitDot == index
-                      ? ['#1AB2FF', '#FFB258']
-                      : [appColors.white, appColors.white]
-                  } // Define gradient colors
-                  start={{x: 0, y: 0}} // Top-left corner
-                  end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
+          {active == 0 && (
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{marginTop: 16, paddingLeft: 16}}
+              data={filterData}
+              keyExtractor={item => item.id}
+              renderItem={({item, index}) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    setWhiteDot(index);
+                    navigation.navigate('Work', {isWhiteDot: index});
+                  }}
                   style={{
-                    flex: 1,
-                    borderRadius: 25,
-                    // paddingHorizontal: 16,
-                    // paddingVertical: 16,
-                    borderWidth: 1,
-                    borderColor: appColors.lightGrey,
-                    // justifyContent: 'center',
+                    width: 136,
+                    height: 124,
+                    justifyContent: 'center',
+                    marginRight: 16,
                   }}>
-                  <View style={{flexDirection: 'row'}}>
+                  <LinearGradient
+                    colors={
+                      isWhitDot == index
+                        ? ['#1AB2FF', '#FFB258']
+                        : [appColors.white, appColors.white]
+                    } // Define gradient colors
+                    start={{x: 0, y: 0}} // Top-left corner
+                    end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
+                    style={{
+                      flex: 1,
+                      borderRadius: 25,
+                      // paddingHorizontal: 16,
+                      // paddingVertical: 16,
+                      borderWidth: 1,
+                      borderColor: appColors.lightGrey,
+                      // justifyContent: 'center',
+                    }}>
+                    <View style={{flexDirection: 'row'}}>
+                      <Text
+                        style={{
+                          color:
+                            isWhitDot == index
+                              ? appColors.white
+                              : appColors.black,
+                          paddingRight: 10,
+                          fontSize: 24,
+                          fontWeight: '500',
+                          paddingLeft: 10,
+                          paddingTop: 16,
+                        }}>
+                        {item.count}
+                      </Text>
+                      {isWhitDot == index ? (
+                        <View
+                          style={{
+                            flex: 1,
+                            alignItems: 'flex-end',
+                            padding: 16,
+                          }}>
+                          <WhiteDot height={6} width={6} />
+                        </View>
+                      ) : (
+                        <View
+                          style={{
+                            flex: 1,
+                            alignItems: 'flex-end',
+                            padding: 16,
+                          }}>
+                          <PinkDot height={6} width={6} />
+                        </View>
+                      )}
+                    </View>
+
                     <Text
                       style={{
+                        fontSize: 14,
+                        marginTop: 7,
+                        fontFamily: 'sf-pro-text-semibold',
+                        fontWeight: 600,
+
                         color:
                           isWhitDot == index
                             ? appColors.white
                             : appColors.black,
-                        paddingRight: 10,
-                        fontSize: 24,
-                        fontWeight: '500',
-                        paddingLeft: 10,
-                        paddingTop: 16,
+                        // width: "70%"
+                        paddingHorizontal: 8,
                       }}>
-                      {item.count}
+                      {item.name}
                     </Text>
-                    {isWhitDot == index ? (
-                      <View
-                        style={{
-                          flex: 1,
-                          alignItems: 'flex-end',
-                          padding: 16,
-                        }}>
-                        <WhiteDot height={6} width={6} />
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        marginVertical: 4,
+                        marginLeft: 8,
+                        color:
+                          isWhitDot == index
+                            ? appColors.white
+                            : appColors.placeholderColor,
+                        fontSize: 12,
+                        fontFamily: 'SF-Pro',
+                        fontWeight: '400',
+                      }}>
+                      {'View Jobs '}
+                      <View style={{marginVertical: 4}}>
+                        <RightArrowHome />
                       </View>
-                    ) : (
-                      <View
-                        style={{
-                          flex: 1,
-                          alignItems: 'flex-end',
-                          padding: 16,
-                        }}>
-                        <PinkDot height={6} width={6} />
-                      </View>
-                    )}
-                  </View>
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+            />
+          )}
 
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      marginTop: 7,
-                      fontFamily: 'sf-pro-text-semibold',
-                      fontWeight: 600,
-
-                      color:
-                        isWhitDot == index ? appColors.white : appColors.black,
-                      // width: "70%"
-                      paddingHorizontal: 8,
-                    }}>
-                    {item.name}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      marginVertical: 4,
-                      marginLeft: 8,
-                      color:
-                        isWhitDot == index
-                          ? appColors.white
-                          : appColors.placeholderColor,
-                      fontSize: 12,
-                      fontFamily: 'SF-Pro',
-                      fontWeight: '400',
-                    }}>
-                    {'View Jobs '}
-                    <View style={{marginVertical: 4}}>
-                      <RightArrowHome />
-                    </View>
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-          />
-
-          <View style={{alignItems: 'flex-end', marginTop: 16}}>
-            <View
-              style={{
-                flexDirection: 'row',
-                backgroundColor: appColors.black,
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexDirection: 'row',
-                paddingVertical: 12,
-                paddingHorizontal: 18,
-                borderRadius: 50,
-                marginRight: 8,
-              }}>
-              <Text
+          {active == 0 && (
+            <View style={{alignItems: 'flex-end', marginTop: 16}}>
+              <View
                 style={{
-                  color: appColors.white,
-                  textAlign: 'center',
-                  fontWeight: '700',
-                  width: '18%',
-                  height: '100%',
-                  paddingTop: 2,
-                  paddingBottom: 2,
-                  paddingRight: 3,
-                  fontSize: 14,
+                  flexDirection: 'row',
+                  backgroundColor: appColors.black,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  paddingVertical: 12,
+                  paddingHorizontal: 18,
+                  borderRadius: 50,
+                  marginRight: 8,
                 }}>
-                View All
-              </Text>
-              <View style={{paddingLeft: 6}}>
-                <CherryRightArrow />
+                <Text
+                  style={{
+                    color: appColors.white,
+                    textAlign: 'center',
+                    fontWeight: '700',
+                    width: '18%',
+                    height: '100%',
+                    paddingTop: 2,
+                    paddingBottom: 2,
+                    paddingRight: 3,
+                    fontSize: 14,
+                  }}>
+                  View All
+                </Text>
+                <View style={{paddingLeft: 6}}>
+                  <CherryRightArrow />
+                </View>
               </View>
             </View>
-          </View>
-          <Text style={styles.titleStyle}>Jobs in Progress</Text>
-          <FlatList
-            key={0}
-            data={progressJobs}
-            horizontal
-            style={{paddingHorizontal: 16}}
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  width: '100%',
-                  marginRight: 16,
-                }}
-                onPress={() => navigation.navigate('JobCard', {data: item})}>
-                <TaskComponent itemData={item} />
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item.id}
-          />
-          <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
+          )}
+          {active == 0 && (
+            <Text style={styles.titleStyle}>Jobs in Progress</Text>
+          )}
+          {active == 0 && (
+            <FlatList
+              key={0}
+              data={progressJobs}
+              horizontal
+              style={{paddingHorizontal: 16}}
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    marginRight: 16,
+                  }}
+                  onPress={() => navigation.navigate('JobCard', {data: item})}>
+                  <TaskComponent itemData={item} />
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item.id}
+            />
+          )}
+          {active == 0 && (
+            <Text style={styles.titleStyle}>Upcoming Deadlines</Text>
+          )}
 
-          <FlatList
-            key={1}
-            data={upcoming}
-            horizontal
-            style={{paddingHorizontal: 16, marginBottom: 64}}
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  width: '100%',
-                  marginRight: 16,
-                }}
-                onPress={() => navigation.navigate('JobCard', {data: item})}>
-                <TaskComponent itemData={item} />
-              </TouchableOpacity>
-            )}
-            keyExtractor={item => item.id}
-          />
+          {active == 0 && (
+            <FlatList
+              key={1}
+              data={upcoming}
+              horizontal
+              style={{paddingHorizontal: 16, marginBottom: 64}}
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    marginRight: 16,
+                  }}
+                  onPress={() => navigation.navigate('JobCard', {data: item})}>
+                  <TaskComponent itemData={item} />
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item.id}
+            />
+          )}
+        {active == 1 && (
+            <Text style={styles.titleStyle}>Not Complete Tasks</Text>
+          )}
+          {active == 1 ? (
+            tasks.length>0?<FlatList
+              key={2}
+              data={tasks}
+              horizontal
+              style={{paddingHorizontal: 16, marginBottom: 64}}
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() =>
+                    navigation.navigate('NotCompleteTask', {
+                      taskId: item.id,
+                      orgId: oId,
+                    })
+                  }>
+                  <View style={styles.noteCardStyle}>
+                    <View style={{flexDirection: 'row'}}>
+                      <Text
+                        style={{
+                          color: appColors.black,
+                          fontWeight: '600',
+                          marginBottom: 4,
+                          fontSize: 12,
+                          backgroundColor: '#FFA6D1',
+                          paddingHorizontal: 10,
+                          paddingVertical: 2,
+                          borderRadius: 14,
+                        }}>
+                        {item.finished ? 'Completed' : 'Not Complete'}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        color: appColors.black,
+                        marginTop: 10,
+                        fontSize: 16,
+                        letterSpacing: 0.3,
+                      }}>
+                      {item.title}
+                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginTop: 10,
+                      }}>
+                      <Text
+                        style={{
+                          color: appColors.grey,
+                          fontSize: 12,
+                          fontWeight: '600',
+                        }}>
+                        Created:
+                      </Text>
+                      <Text
+                        style={{
+                          paddingVertical: 4,
+                          backgroundColor: appColors.white,
+                          paddingHorizontal: 8,
+                          borderRadius: 16,
+                          color: appColors.black,
+                          fontWeight: '600',
+                          fontSize: 12,
+                          marginLeft: 6,
+                        }}>
+                        {moment
+                          .unix(parseInt(item.created, 10))
+                          .format('DD.MM.YYYY')}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item.id}
+            />:(<Text style={{alignSelf:'center',marginTop:24}}>
+              No Tasks Found
+            </Text>)
+          ): ''}
+
           <OrganizationListModal
             visible={orgVisible}
             onClose={onClose}
@@ -611,7 +726,9 @@ const HomeScreen = ({navigation, route}) => {
                 <PdfIcon />
                 <View style={{marginHorizontal: 8}}>
                   <Text style={styles.invoiceText}>
-                    {reportReadData != null && reportReadData.invoice && reportReadData.invoice.number != null
+                    {reportReadData != null &&
+                    reportReadData.invoice &&
+                    reportReadData.invoice.number != null
                       ? reportReadData.invoice.number
                       : 'Invoice ID 0001'}
                   </Text>

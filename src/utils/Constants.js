@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //BASE URL
-// export const ApiBaseUrl = 'https://dev.memate.com.au/';
+export const ApiBaseUrl = 'https://dev.memate.com.au/';
 // export const BASE_URL = `https://dev.memate.com.au/api/v1`;
-export const ApiBaseUrl = 'https://app.memate.com.au/';
+// export const ApiBaseUrl = 'https://app.memate.com.au/';
 export const BASE_URL = `https://app.memate.com.au/api/v1`;
 // export const ApiBaseUrl = 'http://sn-cast-api.sparcknet.com:3001/api/';
 
@@ -52,6 +52,7 @@ export const completeTask = 'api/v1/m/tasks/';
 //Home Api's
 export const report_read = 'api/v1/m/dashboard/report/';
 export const profile = 'api/v1/m/user/profile/';
+export const deleteProfile = 'api/v1/m/profile/delete';
 
 export const getToken = async () => {
   const token = await AsyncStorage.getItem('token');

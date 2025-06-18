@@ -23,6 +23,7 @@ import attachmentFileUrlReducer from './AttachmentFileUrlSlice';
 import reportReadReducer from './ReportReadSlice';
 import upload from './uploadSlice';
 import getProfileReducer from './GetProfileSlice';
+import deleteProfileReducer from './DeleteProfileSlice';
 
 const store = configureStore({
   reducer: {
@@ -50,6 +51,7 @@ const store = configureStore({
     reportReadReducer: reportReadReducer,
     upload: upload,
     getProfileReducer: getProfileReducer,
+    deleteProfileReducer: deleteProfileReducer,
   },
 });
 
