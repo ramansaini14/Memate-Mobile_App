@@ -135,11 +135,11 @@ const Profile = ({navigation}) => {
           <View style={{alignItems: 'center'}}>
             <View style={{marginVertical: 15}}>
               {profile != null && (
-                <Image
+                 profile.has_photo?<Image
                   source={{uri: profile.photo}}
                   style={styles.avatar_}
                   resizeMode="contain"
-                />
+                />:<ProfileDummy width={120} height={120}/>
               )}
             </View>
             <Text style={styles.userName}>

@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {get} from 'http';
 import {getProfile} from '../../redux/GetProfileSlice';
 import {useDispatch, useSelector} from 'react-redux';
+import ProfileDummy from '../../assets/svg/ProfileDummy';
 
 const Menu = ({navigation}) => {
   const [profile, setProfile] = useState(null);
@@ -62,11 +63,11 @@ const Menu = ({navigation}) => {
 
       {profile != null && (
         <View style={{alignItems: 'center'}}>
-          <Image
+          {profile.has_photo?<Image
             source={{uri: profile.photo}}
             style={styles.avatar_}
             resizeMode="contain"
-          />
+          />:<ProfileDummy width={120} height={120}/>}
 
           <Text style={styles.usernameStyle}>{profile.first_name} {profile.last_name}</Text>
           {/* <Text style={styles.smallTextStyle}>Designer</Text> */}

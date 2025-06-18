@@ -32,9 +32,12 @@ const EditProfile = ({navigation, route}) => {
 
   const dispatch = useDispatch();
   const phoneRef = useRef(null);
+  const emgPhoneRef = useRef(null);
 
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('Au'); // Assuming default country is Aus
+  const [countryCode, setCountryCode] = useState('AU'); // Assuming default country is Aus
+  const [emgPhoneNumber, setEmgPhoneNumber] = useState('');
+  const [emgCountryCode, setEmgCountryCode] = useState('Au'); // Assuming default country is Aus
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
 
@@ -66,12 +69,6 @@ const EditProfile = ({navigation, route}) => {
     setCountryPickerVisible(!countryPickerVisible);
   };
 
-  const onSelectCountry = country => {
-    setCountryCode(country.cca2);
-    const callingCode = country.callingCode[0];
-    setPhoneNumber(callingCode);
-    setCountryPickerVisible(false);
-  };
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
 
@@ -90,7 +87,15 @@ const EditProfile = ({navigation, route}) => {
     setStreet(profileData.street_address || '');
     setPostcode(profileData.postcode || '');
     setEmgName(profileData.emergency_name || '');
-    setPhoneNumber(profileData.phone || '');
+
+    if (phoneRef.current && emgCountryCode) {
+      phoneRef.current.selectCountry(emgCountryCode); // Set country using ISO2 (e.g., 'us', 'in')
+    }
+
+    setPhoneNumber(profileData.country_code+profileData.phone || '');
+    // setCountryCode(profileData.country_code );
+    setEmgPhoneNumber(profileData.emergency_country_code+profileData?.emergency);
+    // setEmgCountryCode( );
   }, []);
   const onDropDownClick = value => {
     setIsState(value);
@@ -139,11 +144,11 @@ const EditProfile = ({navigation, route}) => {
           <View style={{alignItems: 'center'}}>
             <View style={{marginVertical: 15}}>
               {profile != null && (
-                <Image
+                profile.has_photo?<Image
                   source={{uri: profile.photo}}
                   style={styles.avatar_}
                   resizeMode="contain"
-                />
+                />:<ProfileDummy width={120} height={120}/>
               )}
             </View>
             <Text style={styles.userName}>
@@ -192,8 +197,9 @@ const EditProfile = ({navigation, route}) => {
                     padding: 16,
                     backgroundColor: appColors.inputBackground,
                   }}
-                  initialCountry={countryCode.toLowerCase()} // Convert to lowercase
                   value={phoneNumber}
+                  initialValue={phoneNumber}
+                  initialCountry={countryCode}
                   onChangePhoneNumber={setPhoneNumber}
                   textStyle={{color: 'white'}}
                   onSelectCountry={iso2 => {
@@ -206,28 +212,6 @@ const EditProfile = ({navigation, route}) => {
                   }}
                 />
               </View>
-              {/* <PhoneInput
-                  onPressFlag={toggleCountryPicker}
-                  initialCountry={countryCode}
-                  initialValue={phoneNumber}
-                  value={phoneNumber}
-                  onChangePhoneNumber={number => setPhoneNumber(number)}
-                  textStyle={{color: 'white'}}
-                />
-              </View>
-
-              {countryPickerVisible && (
-                <CountryPicker
-                  withFilter
-                  withFlagButton={false}
-                  withCountryNameButton={false}
-                  onSelect={onSelectCountry}
-                  onClose={() => setCountryPickerVisible(false)}
-                  visible={countryPickerVisible}
-                  containerButtonStyle={styles.countryPickerButton}
-                  closeButtonImageStyle={styles.countryPickerCloseButton}
-                />
-              )} */}
             </View>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>DOB</Text>
@@ -432,35 +416,26 @@ const EditProfile = ({navigation, route}) => {
               </View>
               <View style={{marginBottom: 8}}>
                 <Text style={{color: appColors.grey, fontSize: 13}}>Phone</Text>
-                <View
+                <PhoneInput
+                  ref={emgPhoneRef}
                   style={{
-                    backgroundColor: '#212528',
-                    padding: 15,
-                    borderRadius: 8,
-                    marginTop: 5,
-                  }}>
-                  <PhoneInput
-                    onPressFlag={toggleCountryPicker}
-                    initialCountry={countryCode}
-                    initialValue={phoneNumber}
-                    value={phoneNumber}
-                    onChangePhoneNumber={number => setPhoneNumber(number)}
-                    textStyle={{color: 'white'}}
-                  />
-                </View>
-
-                {countryPickerVisible && (
-                  <CountryPicker
-                    withFilter
-                    withFlagButton={false}
-                    withCountryNameButton={false}
-                    onSelect={onSelectCountry}
-                    onClose={() => setCountryPickerVisible(false)}
-                    visible={countryPickerVisible}
-                    containerButtonStyle={styles.countryPickerButton}
-                    closeButtonImageStyle={styles.countryPickerCloseButton}
-                  />
-                )}
+                    padding: 16,
+                    backgroundColor: appColors.inputBackground,
+                  }}
+                  value={emgPhoneNumber}
+                  initialValue={emgPhoneNumber}
+                  initialCountry={emgCountryCode}
+                  onChangePhoneNumber={setEmgPhoneNumber}
+                  textStyle={{color: 'white'}}
+                  onSelectCountry={iso2 => {
+                    console.log(
+                      'phoneRef.current.getCountryCode() ===> ',
+                      emgPhoneRef.current.getCountryCode(),
+                    );
+                    const code = emgPhoneRef.current.getCountryCode();
+                    setEmgCountryCode(code);
+                  }}
+                />
               </View>
             </View>
           </View>
@@ -497,9 +472,9 @@ const EditProfile = ({navigation, route}) => {
             </View>
           </TouchableOpacity>
 
-          <View style={{alignItems: 'center', flex: 1}}>
+          <TouchableOpacity style={{alignItems: 'center', flex: 1}}>
             <Text style={styles.saveChangeButton}>Save changes</Text>
-          </View>
+          </TouchableOpacity>
           <StateModal
             title={isState ? 'Select State' : 'Select City'}
             modalVisible={modalVisible}
@@ -572,8 +547,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     borderRadius: 25,
     textAlign: 'center',
-
     marginBottom: 10,
+    fontSize:14
   },
   countryPickerButton: {
     borderRadius: 5,
