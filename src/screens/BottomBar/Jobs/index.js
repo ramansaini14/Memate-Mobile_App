@@ -88,7 +88,7 @@ const JobsScreen = ({navigation, route}) => {
       setLoading(true);
       setWhiteDot(isWhiteDot);
       setInActive(!active);
-      scrollToSelectedIndex(isWhitDot);
+      // scrollToSelectedIndex(isWhitDot);
       getJob();
     }
   }, [isFocused, isWhitDot]);
@@ -172,15 +172,15 @@ const JobsScreen = ({navigation, route}) => {
     // setSelectedFilter(index)
   };
 
-  const scrollToSelectedIndex = index => {
-    if (flatListRef.current && index >= 0 && index < filterData.length) {
-      flatListRef.current.scrollToIndex({
-        index,
-        animated: true,
-        viewPosition: 0.5,
-      });
-    }
-  };
+  // const scrollToSelectedIndex = index => {
+  //   if (flatListRef.current && index >= 0 && index < filterData.length) {
+  //     flatListRef.current.scrollToIndex({
+  //       index,
+  //       animated: true,
+  //       viewPosition: 0.5,
+  //     });
+  //   }
+  // };
   // useEffect(() => {
 
   // }, [isWhitDot]);

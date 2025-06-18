@@ -1,6 +1,6 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import React, { useState } from 'react';
-import { appColors } from '../utils/appColors';
+import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useState} from 'react';
+import {appColors} from '../utils/appColors';
 import OrgIcon from '../assets/svg/OrgIcon';
 import ListIcon from '../assets/svg/ListIcon';
 import FrameIcon from '../assets/svg/Frame';
@@ -12,45 +12,91 @@ import BlackChatIcon from '../assets/svg/BlackChatIcon';
 import GreenTick from '../assets/svg/GreenTick';
 import LinearGradient from 'react-native-linear-gradient';
 
+const OrganizationComponent = ({onNextClick, itemData, from}) => {
+  const [isActive, setIsActive] = useState(true);
 
-const OrganizationComponent = ({ onNextClick,itemData,from }) => {
-  const [isActive, setIsActive] = useState(true)
-
-  console.log("From ===> ",from)
+  console.log('From ===> ', from);
   return (
     <LinearGradient
-    colors={['#1AB2FF', '#FFB258']}
-    start={{x: 0.2, y: 0.1}}
-    end={{x: 0.5, y: 1}}
-    style={[styles.containerStyle]}
-  >
-    <View style={[styles.innerContainerStyle,{backgroundColor: from==1 ?appColors.offWhite:appColors.white}]}>
-      <View style={styles.viewStyle}>
-        {/* <OrgIcon /> */}
-        <Image source={{uri:itemData.logo}} style={{width:80,height:36}}/>
-        <View style={styles.valueStyle}>
-          {isActive ? <BlackIconOrgSelection/> : <JobsListIcon />}
-        
-          <Text style={[styles.textStyle, {color: itemData.jobs == 0 ? appColors.placeholderColor : appColors.black }]}>{itemData.jobs}</Text>
-          {isActive ? <BlackListIcon/> : <ListIcon />}
-          <Text style={[styles.textStyle, {color: itemData.tasks == 0 ? appColors.placeholderColor : appColors.black }]}>{itemData.tasks}</Text>
-          {isActive ? <BlackChatIcon/> : <FrameIcon />}
-          <Text style={[styles.textStyle, {color: itemData.messages == 0 ? appColors.placeholderColor : appColors.black }]}>{itemData.messages}</Text>
-        </View>
-      </View>
+      colors={['#1AB2FF', '#FFB258']}
+      start={{x: 0.2, y: 0.1}}
+      end={{x: 0.5, y: 1}}
+      style={[styles.containerStyle]}>
       <View
-        style={{
-          height: 1,
-          backgroundColor: appColors.lightGrey,
-          marginHorizontal: 16,
-        }}
-      />
-      <TouchableOpacity style={styles.viewStyle} onPress={() => onNextClick(itemData)}>
-      {isActive ? <View><GreenTick /> </View>: ''}
-        <Text style={styles.titleStyle}>{itemData.name}</Text>
-        <ArrowRight />
-      </TouchableOpacity>
-    </View>
+        style={[
+          styles.innerContainerStyle,
+          {backgroundColor: from == 1 ? appColors.offWhite : appColors.white},
+        ]}>
+        <View style={styles.viewStyle}>
+          {/* <OrgIcon /> */}
+          <Image
+            source={{uri: itemData.logo}}
+            style={{width: 80, height: 36}}
+          />
+          <View style={styles.valueStyle}>
+            {isActive ? <BlackIconOrgSelection /> : <JobsListIcon />}
+
+            <Text
+              style={[
+                styles.textStyle,
+                {
+                  color:
+                    itemData.jobs == 0
+                      ? appColors.placeholderColor
+                      : appColors.black,
+                },
+              ]}>
+              {itemData.jobs}
+            </Text>
+            {isActive ? <BlackListIcon /> : <ListIcon />}
+            <Text
+              style={[
+                styles.textStyle,
+                {
+                  color:
+                    itemData.tasks == 0
+                      ? appColors.placeholderColor
+                      : appColors.black,
+                },
+              ]}>
+              {itemData.tasks}
+            </Text>
+            {isActive ? <BlackChatIcon /> : <FrameIcon />}
+            <Text
+              style={[
+                styles.textStyle,
+                {
+                  color:
+                    itemData.messages == 0
+                      ? appColors.placeholderColor
+                      : appColors.black,
+                },
+              ]}>
+              {itemData.messages}
+            </Text>
+          </View>
+        </View>
+        <View
+          style={{
+            height: 1,
+            backgroundColor: appColors.lightGrey,
+            marginHorizontal: 16,
+          }}
+        />
+        <TouchableOpacity
+          style={styles.viewStyle}
+          onPress={() => onNextClick(itemData)}>
+          {isActive ? (
+            <View>
+              <GreenTick />
+            </View>
+          ) : (
+            <View />
+          )}
+          <Text style={styles.titleStyle}>{itemData.name}</Text>
+          <ArrowRight />
+        </TouchableOpacity>
+      </View>
     </LinearGradient>
   );
 };
@@ -65,7 +111,7 @@ const styles = StyleSheet.create({
   },
   innerContainerStyle: {
     backgroundColor: appColors.white,
-    margin:2,
+    margin: 2,
     borderRadius: 16,
   },
   viewStyle: {
@@ -89,8 +135,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flex: 1,
   },
-  greenTick:{
+  greenTick: {
     borderWidth: 2,
-    
-  }
+  },
 });
