@@ -6,11 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Async thunk for fetching data
 export const hitUpdateProfile = createAsyncThunk(
   'hitUpdateProfile',
-  async ( payload) => {
-
-  
+  async payload => {
     const token = await AsyncStorage.getItem('token');
-    
+
     const config = {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -18,62 +16,102 @@ export const hitUpdateProfile = createAsyncThunk(
         Authorization: 'Bearer ' + token,
       },
     };
+    console.log('payload ===> ', payload);
 
-    const formData = new FormData();
+    if (payload.image === null || payload.image === undefined) {
 
-  
-    formData.append('photo', {
-      uri: payload.image.path,
-      name: payload.image.filename,
-      type: 'image/jpeg',
-    });
+     
+      
+      formData.append(
+        'first_name',
+        payload.profileData.firstName,
+      );
+      
+      formData.append(
+        'last_name',
+        payload.profileData.lastName,
+      );
 
-   
-    formData.append('first_name', payload.profileData.data.detailData.firstName);
-    formData.append('last_name',payload.profileData.data.detailData.lastName);
-    formData.append('country_code', payload.profileData.data.detailData.countryCode);
-    formData.append('phone', payload.profileData.data.detailData.phoneNumber);
-    formData.append('date_of_birth',payload.profileData.data.detailData.dob);
-    formData.append('abn', payload.profileData.data.detailData.abn);
-    formData.append('city', payload.profileData.data.profileData.city);
-    formData.append('street_address',payload.profileData.data.profileData.streetAddress);
-    formData.append('postcode', payload.profileData.data.profileData.postcode);
-    formData.append('emergency_country_code', payload.profileData.emergencyData.countryCode);
-    formData.append('emergency', payload.profileData.emergencyData.phoneNumber);
-    formData.append('emergency_name', payload.profileData.emergencyData.name);
+      console.log("First Name ===> ", payload.profileData.firstName);
+      console.log("Last Name ===> ", payload.profileData.lastName);
+      formData.append(
+        'country_code',
+        payload.profileData.countryCode,
+      );
+     
+      formData.append('phone', payload.profileData.phoneNumber);
+      formData.append('date_of_birth', payload.profileData.dob);
+      formData.append('abn', payload.profileData.abn);
+      formData.append('city', payload.profileData.city);
+      formData.append(
+        'street_address',
+        payload.profileData.streetAddress,
+      );
+      formData.append(
+        'postcode',
+        payload.profileData.postcode,
+      );
+      formData.append(
+        'emergency_country_code',
+        payload.profileData.countryCode,
+      );
+      formData.append(
+        'emergency',
+        payload.profileData.phoneNumber,
+      );
+      formData.append('emergency_name', payload.profileData.name);
+
+
+    
+
+    } else {
+      const formData = new FormData();
+
+      formData.append('photo', {
+        uri: payload.image.path,
+        name: payload.image.filename,
+        type: 'image/jpeg',
+      });
+
+      formData.append(
+        'first_name',
+        payload.profileData.data.detailData.firstName,
+      );
+      formData.append(
+        'last_name',
+        payload.profileData.data.detailData.lastName,
+      );
+      formData.append(
+        'country_code',
+        payload.profileData.data.detailData.countryCode,
+      );
+      formData.append('phone', payload.profileData.data.detailData.phoneNumber);
+      formData.append('date_of_birth', payload.profileData.data.detailData.dob);
+      formData.append('abn', payload.profileData.data.detailData.abn);
+      formData.append('city', payload.profileData.data.profileData.city);
+      formData.append(
+        'street_address',
+        payload.profileData.data.profileData.streetAddress,
+      );
+      formData.append(
+        'postcode',
+        payload.profileData.data.profileData.postcode,
+      );
+      formData.append(
+        'emergency_country_code',
+        payload.profileData.emergencyData.countryCode,
+      );
+      formData.append(
+        'emergency',
+        payload.profileData.emergencyData.phoneNumber,
+      );
+      formData.append('emergency_name', payload.profileData.emergencyData.name);
+    
+    }
     console.log('FormData ===> ', formData);
-
-    // const requestBody = {
-    //   first_name: payload.profileData.data.detailData.firstName || '',
-    //   last_name: payload.profileData.data.detailData.lastName || '',
-    //   country_code: payload.profileData.data.detailData.countryCode || '',
-    //   phone: payload.profileData.data.detailData.phoneNumber || '',
-    //   date_of_birth: payload.profileData.data.detailData.dob || '',
-    //   abn: payload.profileData.data.detailData.abn || '',
-    //   city: payload.profileData.data.profileData.city || '',
-    //   street_address: payload.profileData.data.profileData.streetAddress || '',
-    //   postcode: payload.profileData.data.profileData.postcode || '',
-    //   emergency_country_code:payload.profileData.emergencyData.countryCode || '',
-    //   emergency: payload.profileData.emergencyData.phoneNumber || '',
-    //   emergency_name: payload.profileData.emergencyData.name|| '',
-    // };
-    
-    // If the image exists, add its base64 or file URL (depending on API requirements)
-    // if (payload.image && payload.image.path) {
-    //   requestBody.photo = {
-    //     uri: payload.image.path,
-    //     name: payload.image.filename || payload.image.name || 'profile.jpg',
-    //     type: payload.image.mime || 'image/jpeg',
-    //   };
-    // }
-    
-    // Convert the request body into JSON for the API call
-    // const jsonBody = JSON.stringify(requestBody);
-    // console.log('FormData ===> ', jsonBody);
-
     try {
       const url = ApiBaseUrl + updateProfile;
-      console.log("URl ====> ",url)
+      console.log('URl ====> ', url);
       const response = await axios.put(url, formData, config);
       console.log('Upload file Response ===>', response.data);
       return {
@@ -92,7 +130,7 @@ const UpdateProfileSlice = createSlice({
   initialState: {
     data: null,
     loading: 'idle',
-    status:null,
+    status: null,
     error: null,
   },
   reducers: {

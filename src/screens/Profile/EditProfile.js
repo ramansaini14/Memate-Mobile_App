@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -24,11 +25,23 @@ import StateModal from '../../components/StateModal';
 import WhiteDownArrow from '../../assets/svg/WhiteDownArrow';
 import {hitGetCities} from '../../redux/GetCitiesSlice';
 import moment from 'moment';
+import {hitUpdateProfile} from '../../redux/UpdateProfileSlice';
 
 const EditProfile = ({navigation, route}) => {
-  const {profileData, countries, states, cities, country, state, city, profileEmail, profilePhone} =
-    route.params;
+  const {
+    profileData,
+    countries,
+    states,
+    cities,
+    country,
+    state,
+    city,
+    profileEmail,
+    profilePhone,
+  } = route.params;
   const [profile, setProfile] = useState(null);
+
+    const {statusCode,data} = useSelector((state)=>state.updateProfileReducer)
 
   const dispatch = useDispatch();
   const phoneRef = useRef(null);
@@ -37,7 +50,7 @@ const EditProfile = ({navigation, route}) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('AU'); // Assuming default country is Aus
   const [emgPhoneNumber, setEmgPhoneNumber] = useState('');
-  const [emgCountryCode, setEmgCountryCode] = useState('Au'); // Assuming default country is Aus
+  const [emgCountryCode, setEmgCountryCode] = useState('AU'); // Assuming default country is Aus
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
 
@@ -56,14 +69,14 @@ const EditProfile = ({navigation, route}) => {
   const [selectedCity, setCity] = useState(null);
   const [isState, setIsState] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
   const [email, setEmail] = useState('');
-  const [dob,setDob] = useState('');
-  const [abn,setAbn] = useState('');
-  const [street,setStreet] = useState('');
-  const [postcode,setPostcode] = useState('');
-  const [emgNumber,setEmgNumber] = useState('');
-  const [emgName,setEmgName] = useState('');
+  const [dob, setDob] = useState('');
+  const [abn, setAbn] = useState('');
+  const [street, setStreet] = useState('');
+  const [postcode, setPostcode] = useState('');
+  const [emgNumber, setEmgNumber] = useState('');
+  const [emgName, setEmgName] = useState('');
 
   const toggleCountryPicker = () => {
     setCountryPickerVisible(!countryPickerVisible);
@@ -83,7 +96,9 @@ const EditProfile = ({navigation, route}) => {
     setCity(city);
     setEmail(profileEmail);
     setAbn(profileData.abn || '');
-    setDob(moment(profileData.date_of_birth*1000).format('DD MMM, YYYY')|| '');
+    setDob(
+      moment(profileData.date_of_birth * 1000).format('DD MMM, YYYY') || '',
+    );
     setStreet(profileData.street_address || '');
     setPostcode(profileData.postcode || '');
     setEmgName(profileData.emergency_name || '');
@@ -92,9 +107,11 @@ const EditProfile = ({navigation, route}) => {
       phoneRef.current.selectCountry(emgCountryCode); // Set country using ISO2 (e.g., 'us', 'in')
     }
 
-    setPhoneNumber(profileData.country_code+profileData.phone || '');
+    setPhoneNumber(profileData.country_code + profileData.phone || '');
     // setCountryCode(profileData.country_code );
-    setEmgPhoneNumber(profileData.emergency_country_code+profileData?.emergency);
+    setEmgPhoneNumber(
+      profileData.emergency_country_code + profileData?.emergency,
+    );
     // setEmgCountryCode( );
   }, []);
   const onDropDownClick = value => {
@@ -118,6 +135,37 @@ const EditProfile = ({navigation, route}) => {
       setCity(responseCities[0]);
     }
   }, [responseCities]);
+
+  const onUpdate = () => {
+    const profileData = {
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      email: email,
+      countryCode: countryCode == 'AU' ? 61 : countryCode,
+      phoneNumber: phoneNumber.substring(countryCode.length),
+      dob: dob,
+      abn: abn,
+      city:selectedCity.id,
+      streetAddress: street,
+      postcode: postcode,
+      emgCountryCode: emgCountryCode == 'AU' ? 61 : emgCountryCode,
+      emgPhoneNumber: emgPhoneNumber.substring(emgCountryCode.length),
+      emgName: emgName,
+    };
+
+    const payload = {
+      image:null,
+      profileData,
+    };
+
+    dispatch(hitUpdateProfile(payload));
+  };
+  useEffect(()=>{
+    if(statusCode == 200) {
+      Alert.alert('Profile updated successfully');
+      navigation.goBack();
+    }
+  },[data])
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -143,13 +191,16 @@ const EditProfile = ({navigation, route}) => {
         <ScrollView style={{flex: 1}}>
           <View style={{alignItems: 'center'}}>
             <View style={{marginVertical: 15}}>
-              {profile != null && (
-                profile.has_photo?<Image
-                  source={{uri: profile.photo}}
-                  style={styles.avatar_}
-                  resizeMode="contain"
-                />:<ProfileDummy width={120} height={120}/>
-              )}
+              {profile != null &&
+                (profile.has_photo ? (
+                  <Image
+                    source={{uri: profile.photo}}
+                    style={styles.avatar_}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <ProfileDummy width={120} height={120} />
+                ))}
             </View>
             <Text style={styles.userName}>
               {profile.first_name + ' ' + profile.last_name}
@@ -226,7 +277,7 @@ const EditProfile = ({navigation, route}) => {
                   alignItems: 'center',
                 }}>
                 <TextInput
-                value={dob}
+                  value={dob}
                   style={{
                     color: appColors.white,
                     paddingHorizontal: 15,
@@ -472,7 +523,7 @@ const EditProfile = ({navigation, route}) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={{alignItems: 'center', flex: 1}}>
+          <TouchableOpacity style={{alignItems: 'center', flex: 1}} onPress={()=> onUpdate()}>
             <Text style={styles.saveChangeButton}>Save changes</Text>
           </TouchableOpacity>
           <StateModal
@@ -548,7 +599,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     textAlign: 'center',
     marginBottom: 10,
-    fontSize:14
+    fontSize: 14,
   },
   countryPickerButton: {
     borderRadius: 5,

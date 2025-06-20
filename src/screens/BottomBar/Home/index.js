@@ -487,7 +487,7 @@ const HomeScreen = ({navigation, route}) => {
           )}
 
           {active == 0 && (
-            <View style={{alignItems: 'flex-end', marginTop: 16}}>
+            <TouchableOpacity style={{alignItems: 'flex-end', marginTop: 16}} onPress={() =>navigation.navigate('Work', {isWhiteDot: 0})}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -518,7 +518,7 @@ const HomeScreen = ({navigation, route}) => {
                   <CherryRightArrow />
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
           {active == 0 && (
             <Text style={styles.titleStyle}>Jobs in Progress</Text>

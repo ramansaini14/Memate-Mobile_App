@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AddScreen = () => {
   return (
-    <SafeAreaView>
-      <Text>AddScreen</Text>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>In Progress</Text>
     </SafeAreaView>
   );
 };

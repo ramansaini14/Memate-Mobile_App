@@ -94,6 +94,8 @@ const Profile = ({navigation}) => {
         id: profileResponse.data.state,
       };
       dispatch(hitGetCities(payload));
+
+      // dispatch(clearProfile())
     }
   }, [profileResponse]);
 

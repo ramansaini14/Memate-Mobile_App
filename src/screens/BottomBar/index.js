@@ -145,7 +145,7 @@ const BottomBar = ({navigation, route}) => {
       />
       <Tab.Screen
         name="Plus"
-        component={AddScreen}
+        component={HomeScreen}
         options={{
           tabBarIcon: () => (
             <Text
