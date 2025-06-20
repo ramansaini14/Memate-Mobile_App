@@ -287,7 +287,7 @@ const RequiredDetails = ({navigation}) => {
               placeholder="21 Aug 2021"
               placeholderTextColor={appColors.placeholderColor}
               keyboardType="email-address"
-              value={selectedDate}
+              value={moment(selectedDate, "YYYY-MM-DD").format("DD MMM, YYYY")}
             />
             <TouchableOpacity
               style={{marginRight: 16}}
@@ -381,7 +381,7 @@ const RequiredDetails = ({navigation}) => {
                       setShowDatePicker(false);
                       if (tempDate) {
                         const formattedDate = tempDate.toISOString().split('T')[0];
-                        setSelectedDate(moment(formattedDate, "YYYY-MM-DD").format("DD MMM, YYYY"));
+                        setSelectedDate(formattedDate);
                       }
                     }}
                   />

@@ -1,6 +1,8 @@
 import {
   Alert,
+  Button,
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,6 +28,8 @@ import WhiteDownArrow from '../../assets/svg/WhiteDownArrow';
 import {hitGetCities} from '../../redux/GetCitiesSlice';
 import moment from 'moment';
 import {hitUpdateProfile} from '../../redux/UpdateProfileSlice';
+import WhiteCalender from '../../assets/svg/WhiteCalender';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const EditProfile = ({navigation, route}) => {
   const {
@@ -77,6 +81,9 @@ const EditProfile = ({navigation, route}) => {
   const [postcode, setPostcode] = useState('');
   const [emgNumber, setEmgNumber] = useState('');
   const [emgName, setEmgName] = useState('');
+
+   const [showDatePicker, setShowDatePicker] = useState(false);
+    const [tempDate, setTempDate] = useState(new Date());
 
   const toggleCountryPicker = () => {
     setCountryPickerVisible(!countryPickerVisible);
@@ -266,46 +273,21 @@ const EditProfile = ({navigation, route}) => {
             </View>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>DOB</Text>
-              <View
-                style={{
-                  flex: 1,
-                  marginTop: 5,
-                  borderRadius: 8,
-                  flexDirection: 'row',
-                  backgroundColor: '#212528',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <TextInput
-                  value={dob}
-                  style={{
-                    color: appColors.white,
-                    paddingHorizontal: 15,
-                    paddingVertical: 10,
-                    flex: 1,
-                  }}
-                  placeholder="1986-11-25"
-                  placeholderTextColor={appColors.placeholderColor}
-                  onChangeText={v => setDob(v)}
-                />
-                <View style={{height: 30, width: 30}}>
-                  <FormCalender onPress={() => setOpen(true)} />
-
-                  <DatePicker
-                    modal
-                    open={open}
-                    date={date}
-                    mode="date"
-                    onConfirm={date => {
-                      setOpen(false);
-                      setDate(date);
-                    }}
-                    onCancel={() => {
-                      setOpen(false);
-                    }}
-                  />
-                </View>
-              </View>
+              <View style={styles.inputViewStyle}>
+            <TextInput
+              style={styles.inputStyle}
+              editable={false}
+              placeholder="21 Aug 2021"
+              placeholderTextColor={appColors.placeholderColor}
+              keyboardType="email-address"
+              value={moment(dob, "YYYY-MM-DD").format("DD MMM, YYYY")}
+            />
+            <TouchableOpacity
+              style={{marginRight: 16}}
+              onPress={() => setShowDatePicker(true)}>
+              <WhiteCalender />
+            </TouchableOpacity>
+          </View>
             </View>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>ABN</Text>
@@ -534,6 +516,36 @@ const EditProfile = ({navigation, route}) => {
             setSelectedItem={isState ? setState : setCity}
             items={isState ? states : cities}
           />
+
+{showDatePicker  && (
+            <Modal transparent={true} animationType="slide">
+              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000088' }}>
+                <View style={{ backgroundColor: 'white', padding: 16 }}>
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        console.log("Selected Date ====> ",selectedDate)
+                        setTempDate(selectedDate); // Store temporarily until OK is pressed
+                      }
+                    }}
+                  />
+                  <Button
+                    title="OK"
+                    onPress={() => {
+                      setShowDatePicker(false);
+                      if (tempDate) {
+                        const formattedDate = tempDate.toISOString().split('T')[0];
+                        setDob(formattedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
+          )} 
         </ScrollView>
       )}
     </SafeAreaView>

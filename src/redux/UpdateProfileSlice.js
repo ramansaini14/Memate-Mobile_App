@@ -18,6 +18,8 @@ export const hitUpdateProfile = createAsyncThunk(
     };
     console.log('payload ===> ', payload);
 
+    const formData = new FormData();
+
     if (payload.image === null || payload.image === undefined) {
 
      
@@ -65,7 +67,7 @@ export const hitUpdateProfile = createAsyncThunk(
     
 
     } else {
-      const formData = new FormData();
+     
 
       formData.append('photo', {
         uri: payload.image.path,
