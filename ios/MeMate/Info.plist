@@ -33,18 +33,16 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to your camera</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app requires access to store downloaded files.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to track your activity even when the app is in the background, for accurate job tracking and updates.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>We need background location for job tracking.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location while using the app to show nearby jobs and improve tracking accuracy.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location to track your activity even when the app is in the background, for accurate job tracking and updates.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app needs access to save photos</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app requires access to save files to your photo library.</string>
-	<key>NSDocumentsFolderUsageDescription</key>
-	<string>This app requires access to store downloaded files.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library</string>
 	<key>UIBackgroundModes</key>
