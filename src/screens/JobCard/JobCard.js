@@ -1187,7 +1187,7 @@ const JobCard = ({navigation, route}) => {
               </TouchableOpacity>
             </View>
           )}
-           {jobData != null && jobData.project_photos == 1 && (
+          {jobData != null && jobData.project_photos == 1 && (
             <View>
               <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
                 Before & After
@@ -1199,7 +1199,7 @@ const JobCard = ({navigation, route}) => {
               </TouchableOpacity>
             </View>
           )}
-           {jobData != null && jobData.project_photos == 2 && (
+          {jobData != null && jobData.project_photos == 2 && (
             <View>
               <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
                 In Process
@@ -1253,7 +1253,8 @@ const JobCard = ({navigation, route}) => {
             borderRadius: 32,
             alignItems: 'center',
             justifyContent: 'center',
-          }}>
+          }}
+          onPress={() => navigation.navigate('MainChatRoom')}>
           <ChatIconJob />
           <Text style={styles.ChatButton}>Start Chat</Text>
         </TouchableOpacity>

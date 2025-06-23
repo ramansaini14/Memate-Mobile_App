@@ -47,7 +47,8 @@
     "react-native-svg": "^15.11.2",
     "react-native-view-shot": "^4.0.3",
     "react-redux": "^9.2.0",
-    "rn-swipe-button": "^3.0.1"
+    "rn-swipe-button": "^3.0.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

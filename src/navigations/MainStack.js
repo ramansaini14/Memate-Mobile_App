@@ -14,7 +14,6 @@ import Setting from '../screens/Settng/Setting';
 import Unavailability from '../screens/Unavailability/Unavailability';
 import NewDateAdd from '../screens/NewDateAdd/NewDateAdd';
 import Chat from '../screens/Chat/Chat';
-import BellaMeillenia from '../screens/BellaMeillenia/BellaMeillenia';
 import News from '../screens/News/News';
 import NewsLink from '../screens/News/NewsLink';
 import Conditions from '../screens/Conditions/Conditions';
@@ -43,6 +42,7 @@ import ImageCropper from '../screens/ImageCropper';
 import SplashScreen from '../screens/SplashScreen';
 import LoginPin from '../screens/LoginPin';
 import ResultReport from '../screens/ResultReport';
+import MainChatRoom from '../screens/BellaMeillenia/BellaMeillenia';
 
 const Stack = createNativeStackNavigator();
 
@@ -79,7 +79,7 @@ const MainStack = () => {
       <Stack.Screen name="Unavailability" component={Unavailability} />
       <Stack.Screen name="NewDateAdd" component={NewDateAdd} />
       <Stack.Screen name="Chat" component={Chat} />
-      <Stack.Screen name="BellaMeillenia" component={BellaMeillenia} />
+      <Stack.Screen name="MainChatRoom" component={MainChatRoom} />
       <Stack.Screen name="News" component={News} />
       <Stack.Screen name="NewLink" component={NewsLink} />
       <Stack.Screen name="Conditions" component={Conditions} />
