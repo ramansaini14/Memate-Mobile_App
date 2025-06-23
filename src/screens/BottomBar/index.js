@@ -127,7 +127,7 @@ const BottomBar = () => {
         <Tab.Screen
           name="Work"
           component={JobsScreen}
-          initialParams={{isWhiteDot: 0}}
+          initialParams={{isWhiteDot: 0,from:0}}
         />
 
         <Tab.Screen

@@ -47,6 +47,7 @@ const LocationTracker = ({
   timer,
   onCompleteJob,
   isCompleted,
+  jobCompleteLoad
 }) => {
   const dispatch = useDispatch();
   const [isStopped, setStopped] = useState(false);
@@ -422,6 +423,7 @@ const LocationTracker = ({
       {isJobStarted || data.action_status == 1 || data.action_status == 2 ? (
         <View style={styles.containerInner}>
           <View style={{flex: 1}}>
+            
             <SwipeButton
               title="Swipe to Complete"
               titleStyles={{

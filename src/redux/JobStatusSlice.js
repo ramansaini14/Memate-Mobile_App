@@ -127,7 +127,7 @@ const JobsStatusSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(hitJobStop.fulfilled, (state, action) => {
-        console.log('Response  ===> ', state);
+        console.log('Response  ===> ', action);
         state.isLoading = false;
         state.data = action.payload;
       })

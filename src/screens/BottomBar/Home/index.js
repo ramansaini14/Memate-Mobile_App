@@ -383,7 +383,7 @@ const HomeScreen = ({navigation, route}) => {
                 <TouchableOpacity
                   onPress={() => {
                     setWhiteDot(index);
-                    navigation.navigate('Work', {isWhiteDot: index});
+                    navigation.navigate('Work', {isWhiteDot: index,from:1});
                   }}
                   style={{
                     width: 136,

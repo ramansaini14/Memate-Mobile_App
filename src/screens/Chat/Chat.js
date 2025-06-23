@@ -20,38 +20,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {io} from 'socket.io-client';
 import {useSocket} from '../../components/useSocket';
 
-const SOCKET_URL = 'https://chatd.memate.com.au'; // ⚠️ Use IP, not localhost
-
 const Chat = ({navigation}) => {
-  // const socket = useSocket(SOCKET_URL);
-  const [socket, setSocket] = useState(null);
-  // const [status, setStatus] = useState('Connecting...');
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    const newSocket = io(SOCKET_URL, {
-      transports: ['websocket'], // Important for React Native
-    });
-    console.log('Socket ===>', socket);
-
-    setSocket(newSocket);
-  }, []);
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on('connect', () => {
-      console.log('✅ Connected to socket server');
-    });
-
-    socket.on('disconnect', data => {
-      console.log('📩 disconnect: ', data);
-    });
-
-    return () => {
-      socket.off('disconnect');
-    };
-  }, socket);
 
   return (
     <SafeAreaView style={styles.containerStyle}>

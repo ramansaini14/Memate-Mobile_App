@@ -18,8 +18,8 @@ export const getJobs = createAsyncThunk('getJobs', async payload => {
       ApiBaseUrl +
       jobs +
       payload.id +
-      (payload.status == '0' ? '/' : `/?statuses=${payload.status}`);
-    // +      `/?limit=10&offset=${payload.offset}&statuses=${payload.status}`;
+      (payload.status == '0' ? '' : `/?statuses=${payload.status}`)
+    +(payload.status == '0' ? `/?limit=10&offset=${payload.offset}`:(`&limit=10&offset=${payload.offset}`));
 
     console.log('URL JOBs ====> ', url);
 

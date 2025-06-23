@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {use, useEffect, useRef, useState} from 'react';
 import {appColors} from '../../../utils/appColors';
 import WhiteBackIcon from '../../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../../assets/svg/CalenderIcon';
@@ -30,7 +30,7 @@ import moment from 'moment';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 
 const JobsScreen = ({navigation, route}) => {
-  const {isWhiteDot} = route.params;
+  const {isWhiteDot, from} = route.params;
 
   const flatListRef = useRef(null);
 
@@ -78,15 +78,20 @@ const JobsScreen = ({navigation, route}) => {
         offset: 0,
         status: filterData[isWhitDot].status,
       };
-
       dispatch(getJobs(payload));
     }, 1500);
   };
 
   useEffect(() => {
     if (isFocused) {
-      setLoading(true);
       setWhiteDot(isWhiteDot);
+    }
+  }, [isFocused]);
+
+  useEffect(() => {
+    if (isFocused) {
+      setLoading(true);
+      console.log('from ===> ', from);
       setInActive(!active);
       // scrollToSelectedIndex(isWhitDot);
       getJob();

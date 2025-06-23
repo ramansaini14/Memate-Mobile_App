@@ -10,6 +10,7 @@ import {
   TextInput,
   ToastAndroid,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState, useRef} from 'react';
 import {appColors} from '../../utils/appColors';
@@ -80,6 +81,7 @@ const JobCard = ({navigation, route}) => {
   let text = jobData.long_description;
   const [isJobStarted, setIsJobStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [jobCompleteLoad, setJobCompleteLoad] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isExpand, setExpand] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -181,6 +183,10 @@ const JobCard = ({navigation, route}) => {
         }
       }
     });
+
+    if (jobData.action_status == 3) {
+      setIsCompleted(true);
+    }
 
     // Make sure the background timer starts if needed
     startBackgroundTimer(dispatch);
@@ -344,7 +350,6 @@ const JobCard = ({navigation, route}) => {
     setIsJobStarted(false);
     setIsPaused(false);
     setShowTracker(false);
-    setIsCompleted(true);
     setJobData(prevData => ({
       ...prevData,
       status: '3',
@@ -516,18 +521,23 @@ const JobCard = ({navigation, route}) => {
 
   // Monitor job status response
   useEffect(() => {
+    console.log("jobStatusResponse  ====> ",jobStatusResponse);
     if (jobStatusResponse && jobStatusResponse.jobId === jobData.id) {
       if (jobStatusResponse.hasOwnProperty('timer')) {
         // If we got a timer from the API
         if (!isPaused) {
           setIsJobStarted(true);
         }
+
+        if (jobData.action_status == 3) {
+          setIsCompleted(true);
+        }
       }
 
       // Clear the response after processing
       dispatch(clearJobStatus());
     }
-  }, [jobStatusResponse, dispatch, jobData.id]);
+  }, [jobStatusResponse, jobData.id]);
 
   useEffect(() => {
     if (attachmentResponse != null && attachmentResponse.status == 200) {
@@ -809,14 +819,20 @@ const JobCard = ({navigation, route}) => {
             timer={timer}
             onCompleteJob={onCompleteJob}
             isCompleted={isCompleted}
+            jobCompleteLoad={jobCompleteLoad}
           />
         ) : (
-          jobData.action_status != null && (
+          jobData.action_status != null &&
+          (isCompleted ? (
             <View style={styles.doneButton}>
               <DoneTickButton />
               <Text style={styles.doneButtonText}>Done</Text>
             </View>
-          )
+          ) : (
+            <View>
+              <ActivityIndicator color={appColors.black} />
+            </View>
+          ))
         )}
         {isJobStarted ||
         jobData.action_status == 1 ||
