@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, use} from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,28 @@ import {
   Modal,
   Animated,
   Easing,
+  ActivityIndicator,
 } from 'react-native';
-import { appColors } from '../utils/appColors';
+import {appColors} from '../utils/appColors';
 import RightArrowWhite from '../assets/svg/RightArrowWhite';
 import BackIcon from '../assets/svg/BackIcon';
 import SwipeButton from 'rn-swipe-button';
 import RightArrowJobStart from '../assets/svg/RightArrowJobStart';
 import TrueIcon from '../assets/svg/TrueIcon';
 import TimeTrackerCard from './TimeTrackerCard';
+import {useDispatch, useSelector} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {pauseTimer, stopTimer} from '../redux/TimerSlice';
+import {setIsPayused, setJobDataGlobally} from '../redux/GlobalSlice';
+import {hitJobPause, hitJobStop} from '../redux/JobStatusSlice';
 
-const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
+const CenterButtonModal = ({
+  visible,
+  onClose,
+  onStateChange,
+  onAvailableClick,
+  orgId
+}) => {
   const [currentView, setCurrentView] = useState('initial');
   const [animating, setAnimating] = useState(false);
   const [isJobStarted, setIsJobStarted] = useState(false);
@@ -27,23 +39,27 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
   const opacityAnim = useState(new Animated.Value(0))[0];
   const textSlideAnim = useState(new Animated.Value(0))[0];
   const trackerSlideAnim = useState(new Animated.Value(-200))[0];
+  const jobData = useSelector(state => state.globalReducer.jobData);
 
-  const demoData = {
-    id: 'THE-JB-113-234998',
-    number: '113-234998',
-    time_type_text: 'Time Frame',
-    type_text: 'Hours',
-  };
+  const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    jobData ? setCurrentView('progress') : setCurrentView('initial');
+
+    jobData ? onStateChange('pause') : onStateChange('start');
+  }, [jobData]);
 
   useEffect(() => {
     if (visible) {
       setAnimating(true);
       slideAnim.setValue(300);
       opacityAnim.setValue(0);
-      
-      if (currentView === 'progress') {
-        trackerSlideAnim.setValue(0);
-      }
+
+      // if (currentView === 'progress') {
+      //   trackerSlideAnim.setValue(0);
+      // }
 
       const animations = [
         Animated.timing(slideAnim, {
@@ -67,7 +83,7 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
             duration: 300,
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
-          })
+          }),
         );
       }
 
@@ -77,10 +93,10 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
     }
   }, [visible]);
 
-    const hideModal = () => {
+  const hideModal = () => {
     if (animating) return;
     setAnimating(true);
-    
+
     Animated.parallel([
       Animated.timing(slideAnim, {
         toValue: 300,
@@ -94,14 +110,16 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }),
-      ...(currentView === 'progress' ? [
-        Animated.timing(trackerSlideAnim, {
-          toValue: -300,
-          duration: 200,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        })
-      ] : []),
+      ...(currentView === 'progress'
+        ? [
+            Animated.timing(trackerSlideAnim, {
+              toValue: -300,
+              duration: 200,
+              easing: Easing.in(Easing.cubic),
+              useNativeDriver: true,
+            }),
+          ]
+        : []),
     ]).start(() => {
       trackerSlideAnim.setValue(-300);
       setAnimating(false);
@@ -110,43 +128,45 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
   };
 
   const handleContinue = () => {
-    onStateChange && onStateChange('play');
-    
-    Animated.timing(textSlideAnim, {
-      toValue: -300, 
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setCurrentView('progress');
-      setIsJobStarted(true);
-      textSlideAnim.setValue(300);
-      Animated.parallel([
-        Animated.timing(textSlideAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(trackerSlideAnim, {
-          toValue: 0, 
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
+    onAvailableClick(4);
+    hideModal();
+    // onStateChange && onStateChange('play');
+
+    // Animated.timing(textSlideAnim, {
+    //   toValue: -300,
+    //   duration: 200,
+    //   useNativeDriver: true,
+    // }).start(() => {
+    //   setCurrentView('progress');
+    //   setIsJobStarted(true);
+    //   textSlideAnim.setValue(300);
+    //   Animated.parallel([
+    //     Animated.timing(textSlideAnim, {
+    //       toValue: 0,
+    //       duration: 200,
+    //       useNativeDriver: true,
+    //     }),
+    //     Animated.timing(trackerSlideAnim, {
+    //       toValue: 0,
+    //       duration: 300,
+    //       easing: Easing.out(Easing.cubic),
+    //       useNativeDriver: true,
+    //     }),
+    //   ]).start();
+    // });
   };
 
   const handleBack = () => {
     onStateChange && onStateChange('initial');
-    
+
     Animated.parallel([
       Animated.timing(textSlideAnim, {
-        toValue: 300, 
+        toValue: 300,
         duration: 200,
         useNativeDriver: true,
       }),
       Animated.timing(trackerSlideAnim, {
-        toValue: -200, 
+        toValue: -200,
         duration: 200,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
@@ -163,7 +183,7 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
   };
 
   const handleCompleteJob = () => {
-    console.log("completed");
+    console.log('completed');
     setIsCompleted(true);
   };
 
@@ -183,18 +203,179 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
     setIsPaused(false);
   };
 
-    const setTimer = () => {
-       
+  const setTimer = () => {};
+
+  const handlePauseClick = () => {};
+
+  const onCompleteJob = async () => {
+    console.log(`Completing job ${jobData.id}`);
+
+    // First, stop the timer in Redux
+    dispatch(stopTimer(jobData.id));
+
+    // Update local state
+    setIsJobStarted(false);
+    setIsPaused(false);
+    dispatch(setIsPayused(false));
+    
+    setIsSwipeCompleted(true);
+    setShowTracker(false);
+
+    // Get the locations for this specific job
+    const locationsKey = `locations_${jobData.id}`;
+    try {
+      const locationsStr = await AsyncStorage.getItem(locationsKey);
+      let locationsData = [];
+
+      if (locationsStr) {
+        locationsData = JSON.parse(locationsStr);
+        console.log(
+          `Found ${locationsData.length} location points for job completion`,
+        );
+      } else {
+        console.log('No stored locations, using current location');
+        // Fallback to current location if available
+        if (location && location.length > 0) {
+          locationsData = location;
+        } else {
+          // Create a minimal valid location entry
+          const currentDate = new Date().toISOString();
+          locationsData = [
+            {
+              latitude: '0',
+              longitude: '0',
+              date: currentDate,
+            },
+          ];
+        }
+      }
+
+      setTimeout(() => {
+        console.log('Dispatching increment action for job completion');
+        setIsSwipeCompleted(false);
+        onClose();
+        dispatch(setJobDataGlobally(null));
+      }, 1500);
+
+      // Prepare and send API call
+      const payload = {
+        orgId,
+        jobId: jobData.id,
+        data: locationsData,
+      };
+
+      console.log(`Sending job completion payload for job ${jobData.id}`);
+      dispatch(hitJobStop(payload));
+
+      // Clear the stored locations
+      await AsyncStorage.removeItem(locationsKey);
+    } catch (err) {
+      console.error('Error processing job completion:', err);
+      // Even on error, send minimal data to complete the job
+      const currentDate = new Date().toISOString();
+      const fallbackData = [
+        {
+          latitude: '0',
+          longitude: '0',
+          date: currentDate,
+        },
+      ];
+
+      dispatch(
+        hitJobStop({
+          orgId,
+          jobId: jobData.id,
+          data: fallbackData,
+        }),
+      );
+    }
   };
 
-  const handlePauseClick = () => {
-    if (isPaused) {
-      onStateChange && onStateChange('play');
-      setIsPaused(false);
-    } else {
-      onStateChange && onStateChange('pause');
-      setIsPaused(true);
-    }
+  // Fix the direct pause handler
+  const handleDirectPause = () => {
+    // Update Redux timer state to paused
+    dispatch(pauseTimer(jobData.id));
+
+    dispatch(setIsPayused(true));
+    dispatch(setJobDataGlobally(null));
+
+    // Prepare and send API call with properly formatted data
+    console.log('Making pause API call');
+
+    // Get the locations for this specific job
+    const locationsKey = `locations_${jobData.id}`;
+    AsyncStorage.getItem(locationsKey)
+      .then(locationsStr => {
+        let locationsData = [];
+
+        try {
+          if (locationsStr) {
+            locationsData = JSON.parse(locationsStr);
+            console.log(
+              `Found ${locationsData.length} location points for pause API call`,
+            );
+          } else {
+            console.log('No stored locations, using current location');
+            // Fallback to current location if available
+            if (location && location.length > 0) {
+              locationsData = location;
+            } else {
+              // Create a minimal valid location entry
+              const currentDate = new Date().toISOString();
+              locationsData = [
+                {
+                  latitude: '0',
+                  longitude: '0',
+                  date: currentDate,
+                },
+              ];
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing locations:', error);
+          // Fallback to a minimal valid location
+          const currentDate = new Date().toISOString();
+          locationsData = [
+            {
+              latitude: '0',
+              longitude: '0',
+              date: currentDate,
+            },
+          ];
+        }
+
+        // Ensure the payload is correctly formatted
+        const payload = {
+          orgId,
+          jobId: jobData.id,
+          data: locationsData,
+        };
+
+        console.log(`Sending pause payload for job ${jobData.id}:`, payload);
+        dispatch(hitJobPause(payload));
+        onClose();
+        console.log('Pause API call completed');
+      })
+      .catch(err => {
+        console.error('Error loading locations:', err);
+        // Even on error, send minimal data to avoid API errors
+        const currentDate = new Date().toISOString();
+        const fallbackData = [
+          {
+            latitude: '0',
+            longitude: '0',
+            date: currentDate,
+          },
+        ];
+
+        dispatch(
+          hitJobPause({
+            orgId,
+            jobId: jobData.id,
+            data: fallbackData,
+          }),
+        );
+      });
   };
 
   const renderInitialView = () => (
@@ -202,22 +383,23 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
       style={[
         styles.contentContainer,
         {
-          transform: [{ translateX: textSlideAnim }],
-        }
+          transform: [{translateX: textSlideAnim}],
+        },
       ]}>
       <View>
         <Text style={styles.modalText}>Start the Job</Text>
       </View>
 
-      <View style={{ gap: 16, width: '100%' }}>
+      <View style={{gap: 16, width: '100%'}}>
         <TouchableOpacity
           style={styles.modalClose}
-          onPress={() => console.log('clicked on see available')}>
+          onPress={() => {
+            onAvailableClick(2);
+            hideModal();
+          }}>
           <Text style={styles.modalCloseText}>See Available</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.modalClose}
-          onPress={handleContinue}>
+        <TouchableOpacity style={styles.modalClose} onPress={handleContinue}>
           <Text style={styles.modalCloseText}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -229,36 +411,36 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
       style={[
         styles.contentContainer,
         {
-          transform: [{ translateX: textSlideAnim }],
-        }
+          transform: [{translateX: textSlideAnim}],
+        },
       ]}>
       <View style={styles.progressHeader}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        {/* <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <BackIcon width={24} height={24} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <View style={styles.statusContainer}>
-          <Text style={styles.statusText}>{isPaused ? 'Paused' : 'In Progress'}</Text>
-          <Text style={styles.jobId}>THE-JB-113-234998</Text>
-          <Text style={styles.companyText}>SMM | theAd Templates</Text>
+          <Text style={styles.statusText}>In Progress</Text>
+          <Text style={styles.jobId}>{jobData?.number}</Text>
+          <Text style={styles.companyText}>{jobData?.short_description}</Text>
         </View>
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.actionButtonsContainer}>
+      {/* <View style={styles.actionButtonsContainer}>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionButtonText}>Photo</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionButtonText}>Note</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
-      <TouchableOpacity style={styles.pauseButton} onPress={handlePauseClick}>
-        <Text style={styles.pauseButtonText}>{isPaused ? 'Resume' : 'Pause'}</Text>
+      <TouchableOpacity style={styles.pauseButton} onPress={handleDirectPause}>
+        <Text style={styles.pauseButtonText}>{'Pause'}</Text>
       </TouchableOpacity>
 
       <View style={styles.swipeContainer}>
-        {!isCompleted ? (
+        {!isSwipeCompleted ? (
           <SwipeButton
             title="Swipe to Complete"
             titleStyles={{
@@ -266,7 +448,7 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
               marginLeft: 30,
               fontSize: 16,
             }}
-            thumbIconBackgroundColor='#DAFD90'
+            thumbIconBackgroundColor="#DAFD90"
             thumbIconWidth={56}
             thumbIconBorderColor="transparent"
             railBackgroundColor={appColors.white}
@@ -293,21 +475,20 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
               borderRadius: 100,
               paddingHorizontal: 1,
             }}
-            onSwipeSuccess={handleCompleteJob}
+            onSwipeSuccess={() => onCompleteJob()}
           />
         ) : (
-          <TouchableOpacity style={styles.doneButton} disabled={true}>
-            <TrueIcon width={25} height={25} />
-            <Text style={styles.doneButtonText}>Done</Text>
-          </TouchableOpacity>
-        )}
+          <View>
+            <ActivityIndicator color={appColors.white} />
+          </View>
+         )} 
       </View>
     </Animated.View>
   );
 
   return (
     <>
-      {visible && currentView === 'progress' && !isCompleted && (
+      {/* {visible && currentView === 'progress' && !isCompleted && (
         <Animated.View
           style={[
             styles.timeTrackerContainer,
@@ -328,7 +509,7 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
             setTimer={setTimer}
           />
         </Animated.View>
-      )}
+      )} */}
 
       <Modal
         visible={visible}
@@ -343,15 +524,17 @@ const CenterButtonModal = ({ visible, onClose, onStateChange }) => {
             style={[
               styles.modalBox,
               {
-                transform: [{ translateY: slideAnim }],
+                transform: [{translateY: slideAnim}],
                 opacity: opacityAnim,
-              }
+              },
             ]}>
             <TouchableOpacity
               style={styles.modalContent}
               activeOpacity={1}
-              onPress={() => { }}>
-              {currentView === 'initial' ? renderInitialView() : renderProgressView()}
+              onPress={() => {}}>
+              {currentView === 'initial'
+                ? renderInitialView()
+                : renderProgressView()}
             </TouchableOpacity>
           </Animated.View>
         </TouchableOpacity>
@@ -388,7 +571,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 10,
     shadowColor: appColors.black,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: {width: 0, height: 10},
     shadowOpacity: 0.3,
     shadowRadius: 20,
     overflow: 'hidden',
@@ -450,9 +633,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   companyText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: appColors.white,
+    width: '100%',
+    textAlign: 'center',
   },
   actionButtonsContainer: {
     flexDirection: 'row',
@@ -514,4 +699,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CenterButtonModal; 
+export default CenterButtonModal;

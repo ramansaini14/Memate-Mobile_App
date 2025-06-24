@@ -24,6 +24,7 @@ import reportReadReducer from './ReportReadSlice';
 import upload from './uploadSlice';
 import getProfileReducer from './GetProfileSlice';
 import deleteProfileReducer from './DeleteProfileSlice';
+import globalReducer from './GlobalSlice';
 
 const store = configureStore({
   reducer: {
@@ -52,6 +53,7 @@ const store = configureStore({
     upload: upload,
     getProfileReducer: getProfileReducer,
     deleteProfileReducer: deleteProfileReducer,
+    globalReducer:globalReducer
   },
 });
 

@@ -68,8 +68,9 @@ const MainStack = () => {
       />
       <Stack.Screen name="ProfilePicture" component={ProfilePicture} />
       <Stack.Screen name="ChooseOrganization" component={ChooseOrganization} />
-      <Stack.Screen name="BottomBar" component={BottomBar} />
+
       <Stack.Screen name="JobsScreen" component={JobsScreen} />
+      <Stack.Screen name="BottomBar" component={BottomBar} />
       <Stack.Screen name="Menu" component={Menu} />
       <Stack.Screen name="Profile" component={Profile} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />

@@ -105,7 +105,7 @@ const TimeTrackerCard = ({
         </Text> */}
       </View>
 
-      <Text style={styles.title}>SMM | theAd Templates ST</Text>
+      <Text style={styles.title}>{data.short_description}</Text>
       <Text style={styles.timer}>{formatTime(timer)}</Text>
 
       <View style={styles.footer}>
