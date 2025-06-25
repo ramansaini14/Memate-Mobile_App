@@ -15,8 +15,8 @@ export const hitAppTerms= createAsyncThunk('hitAppTerms', async payload => {
       },
     };
    
-    const url = ApiBaseUrl+appTerms
-    console.log('config ===> ', config);
+    const url =  payload?.orgId?`${ApiBaseUrl+appTerms}${payload.orgId}/`:ApiBaseUrl+appTerms;
+    console.log('url terms ===> ', url);
     const response = await axios.get(url, config);
 
     console.log('response appTerms ===> ', response.data);

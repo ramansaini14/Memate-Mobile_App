@@ -43,6 +43,7 @@ import PinkDot from '../../../assets/svg/PinkDot';
 import {hitAllTasks} from '../../../redux/AllTaskSlice';
 import {selectJobTimer} from '../../../redux/TimerSlice';
 import TimerHomePage from '../../../components/TimerHomePage';
+import {setGloballyOrgData} from '../../../redux/GlobalSlice';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -51,9 +52,18 @@ const HomeScreen = ({navigation, route}) => {
   const [orgId, setOrgId] = useState('');
   const [isResultReport, setIsResultReport] = useState(true);
 
+  const globallyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
+  console.log(
+    'globallyOrgData ===> ',
+    globallyOrgData,
+    ' isPaused: ',
+    isPaused,
+  );
+
   const jobData = useSelector(state => state.globalReducer.jobData);
   const isPaused = useSelector(state => state.globalReducer.isPausedGlobal);
-  console.log('Job Data Home===> ', jobData, ' isPaused: ', isPaused);
 
   const jobTimer = useSelector(state => selectJobTimer(state, jobData?.id));
   const timer = jobTimer ? jobTimer.value : 0;
@@ -66,6 +76,7 @@ const HomeScreen = ({navigation, route}) => {
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const reportReadData = useSelector(state => state.reportReadReducer.data);
   const responseJobs = useSelector(state => state.getJobsReducer.data);
+
   const [pdfFileName, setPdfFileName] = useState('');
   const dispatch = useDispatch();
   const [orgData, setOrgData] = useState(null);
@@ -78,7 +89,19 @@ const HomeScreen = ({navigation, route}) => {
     setOrgVisible(false);
   };
 
-  const onItemSelect = () => {};
+  const onItemSelect = itemData => {
+    console.log('Selected Organization ===> ', itemData);
+    dispatch(setGloballyOrgData(itemData));
+
+    if (!itemData.terms) {
+      navigation.navigate('TermsAndConditions', {from: 'org', id: itemData.id});
+      setTimeout(() => {
+        setOrgVisible(false);
+      }, 200);
+    } else {
+      setOrgVisible(false);
+    }
+  };
 
   const [jobs, setJobs] = useState(null);
   const [progressJobs, setProgressJobs] = useState(null);
@@ -107,31 +130,27 @@ const HomeScreen = ({navigation, route}) => {
   };
 
   const getReportData = async () => {
-    const id = await AsyncStorage.getItem('orgId');
-    setTimeout(() => {
-      setOrgId(id);
-      if (isResultReport) {
-        const payload = {
-          id: id,
-        };
-        dispatch(reportRead(payload));
-      }
-      
+    if (isResultReport) {
       const payload = {
-        id: id,
-        offset: 0,
-        status: "a",
-        action_status: '',
+        id: globallyOrgData.id,
       };
+      dispatch(reportRead(payload));
+    }
 
-      dispatch(getJobs(payload));
+    const payload = {
+      id: globallyOrgData.id,
+      offset: 0,
+      status: 'a',
+      action_status: '',
+    };
 
-      const payload1 = {
-        id: id,
-        api: 'not-completed',
-      };
-      dispatch(hitAllTasks(payload1));
-    }, 1200);
+    dispatch(getJobs(payload));
+
+    const payload1 = {
+      id: globallyOrgData.id,
+      api: 'not-completed',
+    };
+    dispatch(hitAllTasks(payload1));
   };
 
   // const getJob = async () => {
@@ -143,11 +162,12 @@ const HomeScreen = ({navigation, route}) => {
   // };
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused && globallyOrgData != null) {
+      setOrgId(globallyOrgData.id);
       dispatch(getOrganization());
       getReportData();
     }
-  }, [isFocused,jobData]);
+  }, [isFocused, jobData, globallyOrgData]);
 
   useEffect(() => {
     // clearToken()
@@ -171,7 +191,9 @@ const HomeScreen = ({navigation, route}) => {
       console.log('InProgress jobs ===>', sortProgJobs);
       setProgressJobs(sortProgJobs);
       const upJobs = responseJobs.results.filter(
-        item => item.status === 'a' && (item.action_status === '0' || item.action_status === null),
+        item =>
+          item.status === 'a' &&
+          (item.action_status === '0' || item.action_status === null),
       );
       const sortUpJobs = upJobs.sort(
         (a, b) => parseInt(b.start_date) - parseInt(a.start_date), // descending
@@ -185,15 +207,26 @@ const HomeScreen = ({navigation, route}) => {
       responseJobs.summary.forEach(item => {
         const statusName = statusMap[item.status];
         if (item.status != '4') {
-        const filterItem = updatedData.find(fd => fd.name === statusName);
-        // console.log('Filter Item ===> ', filterItem);
-        filterItem.count = item.total;
+          const filterItem = updatedData.find(fd => fd.name === statusName);
+          // console.log('Filter Item ===> ', filterItem);
+          if (filterItem.status == 'a') {
+            const comfiredJobData = responseJobs.results.filter(
+              item => item.status === 'a' && item.action_status === null,
+            );
+            filterItem.count = comfiredJobData.length;
+          } else {
+            filterItem.count = item.total;
+          }
         }
       });
 
       const totalJobs = responseJobs.summary
         .filter(item => item.name !== 'All Jobs')
-        .reduce((sum, item) => sum + (item.status=='p'?0:item.total), 0);
+        .reduce(
+          (sum, item) =>
+            sum + (item.status == 'p' || item.status == '4' ? 0 : item.total),
+          0,
+        );
 
       const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
       if (allJobsItem) {
@@ -234,15 +267,22 @@ const HomeScreen = ({navigation, route}) => {
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
         {/* <DummyUserIcon /> */}
-        {selectedOrg != null &&
+        {globallyOrgData != null &&
           (isResultReport ? (
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               <TouchableOpacity onPress={() => setOrgVisible(true)}>
                 <DownIcon height={16} width={16} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setOrgVisible(true)}>
                 <Image
-                  source={{uri: selectedOrg.logo}}
+                  source={{
+                    uri: globallyOrgData.logo.replace('http://', 'https://'),
+                  }}
                   style={{width: 80, height: 40}}
                 />
               </TouchableOpacity>
@@ -251,7 +291,7 @@ const HomeScreen = ({navigation, route}) => {
                   style={[styles.smallTextStyleHeader, {width: 120}]}
                   numberOfLines={1}
                   ellipsizeMode="tail">
-                  {selectedOrg.name}
+                  {globallyOrgData.name}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -287,7 +327,9 @@ const HomeScreen = ({navigation, route}) => {
           nestedScrollEnabled>
           <View>
             {jobData != null && (
-              <TouchableOpacity style={{marginHorizontal: 16}}  onPress={() => navigation.navigate('JobCard', {data: jobData})}>
+              <TouchableOpacity
+                style={{marginHorizontal: 16}}
+                onPress={() => navigation.navigate('JobCard', {data: jobData})}>
                 <TimerHomePage data={jobData} timer={timer} />
               </TouchableOpacity>
             )}
@@ -552,20 +594,20 @@ const HomeScreen = ({navigation, route}) => {
                 key={0}
                 data={progressJobs}
                 horizontal
-                style={{paddingHorizontal: 16,flex:1}}
+                style={{paddingHorizontal: 16, flex: 1}}
                 nestedScrollEnabled
                 showsHorizontalScrollIndicator={false}
                 renderItem={({item}) => (
                   <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    marginRight: 16,
-                  }}
-                  onPress={() =>
-                    navigation.navigate('JobCard', {data: item})
-                  }>
-                  <TaskComponent itemData={item} />
-                </TouchableOpacity>
+                    style={{
+                      flex: 1,
+                      marginRight: 16,
+                    }}
+                    onPress={() =>
+                      navigation.navigate('JobCard', {data: item})
+                    }>
+                    <TaskComponent itemData={item} />
+                  </TouchableOpacity>
                 )}
                 keyExtractor={item => item.id}
               />
@@ -633,7 +675,7 @@ const HomeScreen = ({navigation, route}) => {
                     onPress={() =>
                       navigation.navigate('NotCompleteTask', {
                         taskId: item.id,
-                        orgId: oId,
+                        orgId: globallyOrgData.id,
                       })
                     }>
                     <View style={styles.noteCardStyle}>
@@ -711,17 +753,17 @@ const HomeScreen = ({navigation, route}) => {
             organizations={orgData}
             onItemSelect={onItemSelect}
             navigation={navigation}
-            selectedOrg={selectedOrg}
+            selectedOrg={globallyOrgData}
             setOrgVisible={setOrgVisible}
           />
         </ScrollView>
       ) : (
         <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
           <View style={{}}>
-            {orgId != '' && (
+            {globallyOrgData.id != '' && (
               <CalendarStrip
                 setApprovedJobs={setApprovedJobs}
-                orgId={orgId}
+                orgId={globallyOrgData.id}
                 setPdfFileName={setPdfFileName}
               />
             )}
@@ -848,6 +890,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 12,
     color: appColors.black,
+    fontWeight: '600',
   },
   right_: {
     flex: 1,

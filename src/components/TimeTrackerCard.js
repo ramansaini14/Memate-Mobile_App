@@ -156,6 +156,7 @@ const TimeTrackerCard = ({
             </Text>
           </View>
         </View>
+        <View style={{paddingTop:8}}>
         {/* Force re-render with key */}
         {!isJobStarted ? (
           // Job not started yet, show play button to start
@@ -185,6 +186,7 @@ const TimeTrackerCard = ({
             <Text style={styles.statusText}>In Progress</Text>
           </TouchableOpacity>
         )}
+        </View>
       </View>
     </View>
   );

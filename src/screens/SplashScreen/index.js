@@ -69,7 +69,7 @@ const SplashScreen = ({navigation}) => {
           connectSocket();
           navigation.reset({
             index: 0,
-            routes: [{name: 'BottomBar'}],
+            routes: [{name: 'ChooseOrganization'}],
           });
           // navigation.reset('BottomBar');
         }
@@ -78,7 +78,7 @@ const SplashScreen = ({navigation}) => {
         connectSocket();
         navigation.reset({
           index: 0,
-          routes: [{name: 'BottomBar'}],
+          routes: [{name: 'ChooseOrganization'}],
         });
       }
     }

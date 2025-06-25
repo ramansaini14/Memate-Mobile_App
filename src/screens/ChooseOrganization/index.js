@@ -10,6 +10,9 @@ import {
 } from '../../redux/getOrganizationSlice';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setGloballyOrgData } from '../../redux/GlobalSlice';
+import CalenderIcon from '../../assets/svg/CalenderIcon';
+import SimpleCalenderIcon from '../../assets/svg/SimpleCalenderIcon';
 
 const ChooseOrganization = ({navigation}) => {
   const dispatch = useDispatch();
@@ -20,7 +23,9 @@ const ChooseOrganization = ({navigation}) => {
   const onNextClick = async itemData => {
     console.log('ORG ID ===> ', JSON.stringify(itemData.id));
 
-    await AsyncStorage.setItem('orgId', JSON.stringify(itemData.id));
+    // await AsyncStorage.setItem('orgId', JSON.stringify(itemData.id));
+
+    dispatch(setGloballyOrgData(itemData));
 
     if (itemData.terms) navigation.navigate('BottomBar', {orgId: itemData.id});
     else
@@ -32,6 +37,7 @@ const ChooseOrganization = ({navigation}) => {
   }, []);
 
   useEffect(() => {
+    console.log('responseOrg ===> ', responseOrg);
     if (responseOrg != null) {
       setOrgData(responseOrg);
       // dispatch(getOrganizationClear())
@@ -51,6 +57,12 @@ const ChooseOrganization = ({navigation}) => {
             from={1}
           />
         ))}
+
+        <TouchableOpacity style={styles.calenderButton} onPress={() => navigation.navigate('Unavailability')}>
+        <SimpleCalenderIcon />
+        <Text style={{fontSize:16,fontWeight:'700',marginLeft:8}}>Calender</Text>
+        </TouchableOpacity>
+
       <View style={{justifyContent: 'flex-end', flex: 1}}>
         <TouchableOpacity
           onPress={() => navigation.navigate('BottomBar')}
@@ -69,8 +81,7 @@ const ChooseOrganization = ({navigation}) => {
         <Text
           style={styles.termsStyle}
           onPress={() => navigation.navigate('Conditions')}>
-          {' '}
-          Terms and Conditions{' '}
+          Terms and Conditions
         </Text>
       </View>
     </SafeAreaView>
@@ -106,4 +117,18 @@ const styles = StyleSheet.create({
     fontFamily: 'SF-Pro',
     fontWeight: '700',
   },
+  calenderButton:{
+    backgroundColor: appColors.white,
+    paddingHorizontal: 24,
+    paddingVertical:16,
+    borderRadius: 8,
+    flexDirection:'row',
+    borderRadius: 32,
+    marginHorizontal: 32,
+    alignItems: 'center',
+    justifyContent:'center',
+    borderWidth:1,
+    borderColor: appColors.lightGrey,
+    marginTop:32
+  }
 });

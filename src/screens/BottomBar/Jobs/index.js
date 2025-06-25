@@ -34,6 +34,10 @@ const JobsScreen = ({navigation, route}) => {
 
   const flatListRef = useRef(null);
 
+  const gloabllyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
+
   const [active, setInActive] = useState(0);
   const [isWhitDot, setWhiteDot] = useState(0);
 
@@ -70,43 +74,43 @@ const JobsScreen = ({navigation, route}) => {
   const responseJobs = useSelector(state => state.getJobsReducer.data);
 
   const getJob = async () => {
-    const orgId = await AsyncStorage.getItem('orgId');
-    setTimeout(() => {
-      console.log('isWhitDot Id ===> ', isWhitDot);
-
-      const payload = {
-        id: orgId,
-        offset: 0,
-        status:
-          filterData[isWhitDot].status == 'p'
-            ? 'a'
-            : filterData[isWhitDot].status, // For Job In Progress, we want to filter by status 'a' (active)
-        action_status: isWhitDot == 4 ? '1,2' : '', // For Job In Progress, we want to filter by action_status 1 and 2
-      };
-      console.log(' payload Get Jobs===> ', payload);
-      dispatch(getJobs(payload));
-    }, 1500);
+    const orgId = gloabllyOrgData ? gloabllyOrgData.id : null;
+    const payload = {
+      id: orgId,
+      offset: 0,
+      status:
+        filterData[isWhitDot].status == 'p'
+          ? 'a'
+          : filterData[isWhitDot].status, // For Job In Progress, we want to filter by status 'a' (active)
+      action_status: isWhitDot == 4 ? '1,2' : '', // For Job In Progress, we want to filter by action_status 1 and 2
+    };
+    console.log(' payload Get Jobs===> ', payload);
+    dispatch(getJobs(payload));
   };
 
   useEffect(() => {
     if (isFocused) {
-      setWhiteDot(isWhiteDot);
-      setLoading(true);
-      console.log('from ===> ', from);
-      setInActive(!active);
-      // scrollToSelectedIndex(isWhitDot);
-      getJob();
+      if (from !== undefined) {
+        setWhiteDot(isWhiteDot);
+        // setLoading(true);
+        console.log('from ===> ', from);
+        // setInActive(!active);
+        // scrollToSelectedIndex(isWhitDot);
+        // getJob();
+        navigation.setParams({
+          isWhiteDot: undefined,
+          from: undefined,
+        });
+      }
     }
   }, [isFocused]);
 
   useEffect(() => {
-    if (isFocused) {
-      setLoading(true);
-      console.log('from ===> ', from);
-      setInActive(!active);
-      // scrollToSelectedIndex(isWhitDot);
-      getJob();
-    }
+    setLoading(true);
+    console.log('Loading ===> ', 'Loading');
+    // setInActive(!active);
+    // scrollToSelectedIndex(isWhitDot);
+    getJob();
   }, [isWhitDot]);
 
   useEffect(() => {
@@ -121,6 +125,11 @@ const JobsScreen = ({navigation, route}) => {
             item.status === 'a',
         );
         setJobsData(inProgressData);
+      } else if (filterData[isWhitDot].status == 'a') {
+        const comfiredJobData = responseJobs.results.filter(
+          item => item.status === 'a' && item.action_status === null,
+        );
+        setJobsData(comfiredJobData);
       } else {
         setJobsData(responseJobs.results);
       }
@@ -134,14 +143,21 @@ const JobsScreen = ({navigation, route}) => {
           //   filterItem.count = inProgressLength;
           //   console.log('Filter Item ===> ', filterItem);
           // } else {
-          filterItem.count = item.total;
+          if (filterItem.status == 'a') {
+            const comfiredJobData = responseJobs.results.filter(
+              item => item.status === 'a' && item.action_status === null,
+            );
+            filterItem.count = comfiredJobData.length;
+          } else {
+            filterItem.count = item.total;
+          }
           // }
         }
       });
 
       const totalJobs = responseJobs.summary
         .filter(item => item.name !== 'All Jobs')
-        .reduce((sum, item) => sum + (item.status == 'p' ? 0 : item.total), 0);
+        .reduce((sum, item) =>   sum + (item.status == 'p' || item.status == '4' ? 0 : item.total), 0);
 
       const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
       if (allJobsItem) {
@@ -582,6 +598,8 @@ const JobsScreen = ({navigation, route}) => {
                             ? 'Declined'
                             : item.status == 4
                             ? 'Approved'
+                            : item.status == 'a'
+                            ? 'Confirmed'
                             : ''}
                         </Text>
                       </View>

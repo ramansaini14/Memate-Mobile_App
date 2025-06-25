@@ -6,37 +6,60 @@ import {appColors} from '../../utils/appColors';
 import BackIcon from '../../assets/svg/BackIcon';
 import {useDispatch, useSelector} from 'react-redux';
 import {hitAppTerms} from '../../redux/GetAppTermsSlice';
-import {clearAcceptDeclineTerms, hitAcceptDeclineTerms} from '../../redux/AcceptDeclineTermSlice';
+import {
+  clearAcceptDeclineTerms,
+  hitAcceptDeclineTerms,
+} from '../../redux/AcceptDeclineTermSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RenderHtml from 'react-native-render-html';
+import {useWindowDimensions} from 'react-native';
 
 const TermsAndConditions = ({navigation, route}) => {
   const {from, id} = route.params;
   const dispatch = useDispatch();
   const responseTerms = useSelector(state => state.getAppTermsReducer.data);
 
-  const responseAcceptDecline = useSelector((state)=>state.acceptDeclineTermsReducer.data)
+  const {width} = useWindowDimensions();
+
+  const responseAcceptDecline = useSelector(
+    state => state.acceptDeclineTermsReducer.data,
+  );
 
   const [terms, setTerms] = useState(null);
 
   const handleClick = () => {
-    navigation.goBack();
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'ChooseOrganization'}],
+    });
   };
 
   useEffect(() => {
-    dispatch(hitAppTerms());
+    const payload = {
+      orgId: id,
+    };
+    dispatch(hitAppTerms(payload));
   }, []);
 
-  useEffect(() => {}, [responseTerms]);
+  useEffect(() => {
+    console.log('responseTerms ===> ', responseTerms);
+    if (responseTerms != null && responseTerms.status == 'OK') {
+      setTerms(responseTerms);
+    }
+  }, [responseTerms]);
 
   const onDeclineClick = () => {
     if (from == 'org') {
-      navigation.goBack();
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'ChooseOrganization'}],
+      });
     } else {
       navigation.navigate('SignInWithEmail', {from: 2});
     }
   };
 
-  const onAcceptClick = async() => {
+  const onAcceptClick = async () => {
     if (from == 'org') {
       const payload = {
         accept: 'accept',
@@ -44,17 +67,21 @@ const TermsAndConditions = ({navigation, route}) => {
       };
       dispatch(hitAcceptDeclineTerms(payload));
     } else {
-      await AsyncStorage.setItem("isAppTerm",'true')
+      await AsyncStorage.setItem('isAppTerm', 'true');
       navigation.navigate('RequireDetails');
     }
   };
 
-  useEffect(()=>{
-    if(responseAcceptDecline!=null){
-      navigation.navigate('BottomBar');
-      dispatch(clearAcceptDeclineTerms())
+  useEffect(() => {
+    if (responseAcceptDecline != null) {
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'BottomBar'}],
+      });
+      // navigation.navigate('BottomBar');
+      dispatch(clearAcceptDeclineTerms());
     }
-  },[responseAcceptDecline])
+  }, [responseAcceptDecline]);
 
   return (
     <SafeAreaView style={styles.appDesign}>
@@ -64,7 +91,16 @@ const TermsAndConditions = ({navigation, route}) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Terms and Conditions</Text>
       </View>
-      <View>
+      <View style={{padding: 16}}>
+        {terms != null && (
+          <RenderHtml
+            contentWidth={width}
+            source={{html: terms.text}}
+            baseStyle={{color: appColors.white}}
+          />
+        )}
+      </View>
+      {/* <View>
         <Text style={styles.fontColor}>Terms and Conditions</Text>
       </View>
       <Text style={styles.textStyle}>Conditions of use</Text>
@@ -81,7 +117,7 @@ const TermsAndConditions = ({navigation, route}) => {
         Before you continue using our website,we advise you to read our privacy
         policy [link to privacy policy] regarding our user data collection. It
         will help you better understand our practices.
-      </Text>
+      </Text> */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.blackBtn}

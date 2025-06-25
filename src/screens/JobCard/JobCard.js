@@ -93,6 +93,8 @@ const JobCard = ({navigation, route}) => {
     state => state.globalReducer.isPausedGlobal,
   );
   const jobDataGlobally = useSelector(state => state.globalReducer.jobData);
+  const globallyOrgData = useSelector(state => state.globalReducer.globallyOrgData);
+  
 
   // Get the job-specific timer for this job
   const jobTimer = useSelector(state => selectJobTimer(state, jobData.id));
@@ -117,7 +119,7 @@ const JobCard = ({navigation, route}) => {
   const jobStatusResponse = useSelector(state => state.jobsStatusReducer.data);
 
   const getOrgId = async () => {
-    const orgId = await AsyncStorage.getItem('orgId');
+    const orgId = globallyOrgData ? globallyOrgData.id : null;
     setOrgId(orgId);
   };
 

@@ -1,10 +1,12 @@
-import { createSlice } from '@reduxjs/toolkit';
+import {createSlice} from '@reduxjs/toolkit';
+import {clear} from 'console';
 
 const initialState = {
   profileData: null, // or an empty object: {}
-  jobData:null,
-  chatData:null,
-  isPausedGlobal:true
+  jobData: null,
+  chatData: null,
+  isPausedGlobal: true,
+  globallyOrgData: null,
 };
 
 const GlobalSlice = createSlice({
@@ -23,11 +25,34 @@ const GlobalSlice = createSlice({
     setIsPayused(state, action) {
       state.isPausedGlobal = action.payload;
     },
+    setGloballyOrgData(state, action) {
+      console.log("Setting globallyOrgData:", action.payload);
+      state.globallyOrgData = action.payload;
+    },
     clearProfileData(state) {
       state.profileData = null;
-    }
-  }
+    },
+    clearJobData(state) {
+      state.jobData = null;
+    },
+    clearChatData(state) {
+      state.chatData = null;
+    },
+    clearGloballyOrgData(state) {
+      state.globallyOrgData = null;
+    },
+  },
 });
 
-export const { setProfileData, clearProfileData,setJobDataGlobally,setChatData,setIsPayused } = GlobalSlice.actions;
+export const {
+  setProfileData,
+  clearProfileData,
+  setJobDataGlobally,
+  setChatData,
+  setIsPayused,
+  setGloballyOrgData,
+  clearJobData,
+  clearChatData,
+  clearGloballyOrgData,
+} = GlobalSlice.actions;
 export default GlobalSlice.reducer;

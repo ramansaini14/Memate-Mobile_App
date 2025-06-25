@@ -5,14 +5,20 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { appColors } from '../../utils/appColors';
 import WhiteBackIcon from '../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
 import MenuIcon from '../../assets/svg/MenuIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
+import { hitAppTerms } from '../../redux/GetAppTermsSlice';
 
 const Conditions = ({ navigation }) => {
+
+    const dispatch = useDispatch();
+
+    useEffect(() => {  dispatch(hitAppTerms());}, []);
 
     return (
         <SafeAreaView style={styles.containerStyle}>

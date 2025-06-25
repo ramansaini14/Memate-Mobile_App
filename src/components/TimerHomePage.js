@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         paddingVertical: 6,
         paddingHorizontal: 12,
-        marginBottom: 10,
       },
       statusText: {
         color: appColors.white,

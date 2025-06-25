@@ -27,6 +27,7 @@ import PlayIconCenter from '../../assets/svg/PlayIconCenter';
 import PauseIcon from '../../assets/svg/PauseIcon';
 import CenterButtonModal from '../../components/CenterButtonModal';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
@@ -44,13 +45,16 @@ const BottomBar = () => {
   const [centerButtonState, setCenterButtonState] = useState('initial'); 
   const navigation = useNavigation();
 
-  const getOrgId = async () => {
-    const id = await AsyncStorage.getItem('orgId');
-    setOrgId(id);
-  };
+  const orgData = useSelector(state => state.globalReducer.globallyOrgData);
+  console.log('orgData ===> ', orgData);
+
+  // const getOrgId = async () => {
+  //   const id = await AsyncStorage.getItem('orgId');
+  //   setOrgId(id);
+  // };
 
   useEffect(() => {
-    getOrgId();
+    setOrgId(orgData ? orgData.id : null);
   }, []);
 
   const toggleModal = () => {

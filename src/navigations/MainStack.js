@@ -43,6 +43,7 @@ import SplashScreen from '../screens/SplashScreen';
 import LoginPin from '../screens/LoginPin';
 import ResultReport from '../screens/ResultReport';
 import MainChatRoom from '../screens/BellaMeillenia/BellaMeillenia';
+import CalendarPage from '../screens/Calendar/Calendar';
 
 const Stack = createNativeStackNavigator();
 
@@ -101,6 +102,7 @@ const MainStack = () => {
       <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} />
       <Stack.Screen name="ImageCropper" component={ImageCropper} />
       <Stack.Screen name="ResultReport" component={ResultReport} />
+      <Stack.Screen name="CalendarPage" component={CalendarPage} />
     </Stack.Navigator>
   );
 };
