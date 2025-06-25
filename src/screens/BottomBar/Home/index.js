@@ -208,14 +208,16 @@ const HomeScreen = ({navigation, route}) => {
         const statusName = statusMap[item.status];
         if (item.status != '4') {
           const filterItem = updatedData.find(fd => fd.name === statusName);
-          // console.log('Filter Item ===> ', filterItem);
-          if (filterItem.status == 'a') {
-            const comfiredJobData = responseJobs.results.filter(
-              item => item.status === 'a' && item.action_status === null,
-            );
-            filterItem.count = comfiredJobData.length;
-          } else {
-            filterItem.count = item.total;
+          console.log('Filter Item ===> ', filterItem);
+          if (filterItem) {
+            if (filterItem.status == 'a') {
+              const comfiredJobData = responseJobs.results.filter(
+                item => item.status === 'a' && item.action_status === null,
+              );
+              filterItem.count = comfiredJobData.length;
+            } else {
+              filterItem.count = item.total;
+            }
           }
         }
       });
