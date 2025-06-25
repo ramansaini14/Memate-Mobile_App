@@ -26,8 +26,8 @@ import StartButton from '../../assets/svg/StartButton';
 import PlayIconCenter from '../../assets/svg/PlayIconCenter';
 import PauseIcon from '../../assets/svg/PauseIcon';
 import CenterButtonModal from '../../components/CenterButtonModal';
-import { useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {useSelector} from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
@@ -42,7 +42,7 @@ const CustomTabBarButton = ({children, onPress}) => (
 const BottomBar = () => {
   const [orgId, setOrgId] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [centerButtonState, setCenterButtonState] = useState('initial'); 
+  const [centerButtonState, setCenterButtonState] = useState('initial');
   const navigation = useNavigation();
 
   const orgData = useSelector(state => state.globalReducer.globallyOrgData);
@@ -65,7 +65,7 @@ const BottomBar = () => {
     setModalVisible(false);
   };
 
-  const handleModalStateChange = (state) => {
+  const handleModalStateChange = state => {
     setCenterButtonState(state);
   };
 
@@ -78,16 +78,18 @@ const BottomBar = () => {
     }
   };
 
-  const onAvailableClick = (position) => {
+  const onAvailableClick = position => {
     console.log('Available clicked');
-    navigation.navigate("BottomBar",{screen:'Work', params:{isWhiteDot: position, from: 0}}); // ✅ should work now
+    navigation.navigate('BottomBar', {
+      screen: 'Work',
+      params: {isWhiteDot: position, from: 0},
+    }); // ✅ should work now
   };
 
   // const onContinueClick = (position) => {
   //   console.log('onContinueClick clicked');
   //   navigation.navigate("BottomBar",{screen:'Work', params:{isWhiteDot: position, from: 0}}); // ✅ should work now
   // };
-
 
   return (
     <>
@@ -142,7 +144,7 @@ const BottomBar = () => {
         <Tab.Screen
           name="Work"
           component={JobsScreen}
-          initialParams={{isWhiteDot: 0,from:0}}
+          initialParams={{isWhiteDot: 0, from: 0}}
         />
 
         <Tab.Screen
@@ -155,10 +157,7 @@ const BottomBar = () => {
               </View>
             ),
             tabBarButton: props => (
-              <CustomTabBarButton
-                {...props}
-                onPress={toggleModal}
-              />
+              <CustomTabBarButton {...props} onPress={toggleModal} />
             ),
           }}
         />
@@ -167,9 +166,9 @@ const BottomBar = () => {
         <Tab.Screen name="Messages" component={Chat} />
       </Tab.Navigator>
 
-      <CenterButtonModal 
-        visible={modalVisible} 
-        onClose={closeModal} 
+      <CenterButtonModal
+        visible={modalVisible}
+        onClose={closeModal}
         onStateChange={handleModalStateChange}
         onAvailableClick={onAvailableClick}
         orgId={orgId}

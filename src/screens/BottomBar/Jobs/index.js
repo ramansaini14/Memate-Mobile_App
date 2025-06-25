@@ -39,7 +39,7 @@ const JobsScreen = ({navigation, route}) => {
   );
 
   const [active, setInActive] = useState(0);
-  const [isWhitDot, setWhiteDot] = useState(0);
+  const [isWhitDot, setWhiteDot] = useState(-1);
 
   const [isFiltersVisible, setFilterVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState([]);
@@ -92,8 +92,12 @@ const JobsScreen = ({navigation, route}) => {
     if (isFocused) {
       if (from !== undefined) {
         setWhiteDot(isWhiteDot);
+        console.log('isWhitDot ===> ', isWhitDot, isWhiteDot, from);
+        if (isWhitDot == isWhiteDot) {
+          getJob();
+        }
         // setLoading(true);
-        console.log('from ===> ', from);
+
         // setInActive(!active);
         // scrollToSelectedIndex(isWhitDot);
         // getJob();
@@ -101,6 +105,13 @@ const JobsScreen = ({navigation, route}) => {
           isWhiteDot: undefined,
           from: undefined,
         });
+      } else {
+        console.log('isWhitDot ===> ', isWhitDot, isWhiteDot);
+        if (isWhitDot == -1) {
+          setWhiteDot(0);
+        } else {
+          getJob();
+        }
       }
     }
   }, [isFocused]);
@@ -117,7 +128,10 @@ const JobsScreen = ({navigation, route}) => {
     if (responseJobs != null && responseJobs.status == 'OK') {
       console.log('responseJobs ===>', responseJobs);
       setLoading(false);
-      if (filterData[isWhitDot].status == 0 && isWhitDot != 0) {
+      if (
+        filterData[isWhitDot == -1 ? 0 : isWhitDot].status == 0 &&
+        isWhitDot != 0
+      ) {
         const inProgressData = responseJobs.results.filter(
           item =>
             (String(item.action_status) === '1' ||
@@ -143,13 +157,15 @@ const JobsScreen = ({navigation, route}) => {
           //   filterItem.count = inProgressLength;
           //   console.log('Filter Item ===> ', filterItem);
           // } else {
-          if (filterItem.status == 'a') {
-            const comfiredJobData = responseJobs.results.filter(
-              item => item.status === 'a' && item.action_status === null,
-            );
-            filterItem.count = comfiredJobData.length;
-          } else {
-            filterItem.count = item.total;
+          if (filterItem) {
+            if (filterItem.status == 'a') {
+              const comfiredJobData = responseJobs.results.filter(
+                item => item.status === 'a' && item.action_status === null,
+              );
+              filterItem.count = comfiredJobData.length;
+            } else {
+              filterItem.count = item.total;
+            }
           }
           // }
         }
@@ -157,7 +173,11 @@ const JobsScreen = ({navigation, route}) => {
 
       const totalJobs = responseJobs.summary
         .filter(item => item.name !== 'All Jobs')
-        .reduce((sum, item) =>   sum + (item.status == 'p' || item.status == '4' ? 0 : item.total), 0);
+        .reduce(
+          (sum, item) =>
+            sum + (item.status == 'p' || item.status == '4' ? 0 : item.total),
+          0,
+        );
 
       const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
       if (allJobsItem) {
@@ -346,7 +366,7 @@ const JobsScreen = ({navigation, route}) => {
               marginLeft: 16,
               fontFamily: 'sf-pro-text-semibold',
             }}>
-            {filterData[isWhitDot].name}
+            {filterData[isWhitDot == -1 ? 0 : isWhitDot].name}
           </Text>
           <TouchableOpacity onPress={() => setFilterVisible(true)}>
             <AllJobsIcon width={40} height={40} />
