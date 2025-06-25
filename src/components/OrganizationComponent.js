@@ -17,11 +17,11 @@ const OrganizationComponent = ({onNextClick, itemData, from}) => {
 
   console.log('From ===> ', from);
   return (
-    <LinearGradient
-      colors={['#1AB2FF', '#FFB258']}
-      start={{x: 0.2, y: 0.1}}
-      end={{x: 0.5, y: 1}}
-      style={[styles.containerStyle]}>
+    // <LinearGradient
+    //   colors={['#1AB2FF', '#FFB258']}
+    //   start={{x: 0.2, y: 0.1}}
+    //   end={{x: 0.5, y: 1}}
+    //   style={[styles.containerStyle]}>
       <View
         style={[
           styles.innerContainerStyle,
@@ -30,11 +30,12 @@ const OrganizationComponent = ({onNextClick, itemData, from}) => {
         <View style={styles.viewStyle}>
           {/* <OrgIcon /> */}
           <Image
-            source={{uri: itemData.logo}}
+            source={{uri: (itemData.logo).replace('http://', 'https://')}}
             style={{width: 80, height: 36}}
+            resizeMode="center"
           />
           <View style={styles.valueStyle}>
-            {isActive ? <BlackIconOrgSelection /> : <JobsListIcon />}
+           <BlackIconOrgSelection />
 
             <Text
               style={[
@@ -48,7 +49,7 @@ const OrganizationComponent = ({onNextClick, itemData, from}) => {
               ]}>
               {itemData.jobs}
             </Text>
-            {isActive ? <BlackListIcon /> : <ListIcon />}
+            <BlackListIcon />
             <Text
               style={[
                 styles.textStyle,
@@ -61,7 +62,7 @@ const OrganizationComponent = ({onNextClick, itemData, from}) => {
               ]}>
               {itemData.tasks}
             </Text>
-            {isActive ? <BlackChatIcon /> : <FrameIcon />}
+           <BlackChatIcon />
             <Text
               style={[
                 styles.textStyle,
@@ -86,18 +87,12 @@ const OrganizationComponent = ({onNextClick, itemData, from}) => {
         <TouchableOpacity
           style={styles.viewStyle}
           onPress={() => onNextClick(itemData)}>
-          {isActive ? (
-            <View>
-              <GreenTick />
-            </View>
-          ) : (
-            <View />
-          )}
+
           <Text style={styles.titleStyle}>{itemData.name}</Text>
           <ArrowRight />
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    // </LinearGradient>
   );
 };
 
@@ -111,8 +106,9 @@ const styles = StyleSheet.create({
   },
   innerContainerStyle: {
     backgroundColor: appColors.white,
-    margin: 2,
+    marginTop: 16,
     borderRadius: 16,
+    marginHorizontal: 16,
   },
   viewStyle: {
     flexDirection: 'row',
@@ -134,6 +130,7 @@ const styles = StyleSheet.create({
     fontFamily: 'SF-Pro',
     fontSize: 14,
     flex: 1,
+    fontWeight:'600'
   },
   greenTick: {
     borderWidth: 2,

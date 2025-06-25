@@ -26,6 +26,8 @@ import StartButton from '../../assets/svg/StartButton';
 import PlayIconCenter from '../../assets/svg/PlayIconCenter';
 import PauseIcon from '../../assets/svg/PauseIcon';
 import CenterButtonModal from '../../components/CenterButtonModal';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,14 +43,18 @@ const BottomBar = () => {
   const [orgId, setOrgId] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [centerButtonState, setCenterButtonState] = useState('initial'); 
+  const navigation = useNavigation();
 
-  const getOrgId = async () => {
-    const id = await AsyncStorage.getItem('orgId');
-    setOrgId(id);
-  };
+  const orgData = useSelector(state => state.globalReducer.globallyOrgData);
+  console.log('orgData ===> ', orgData);
+
+  // const getOrgId = async () => {
+  //   const id = await AsyncStorage.getItem('orgId');
+  //   setOrgId(id);
+  // };
 
   useEffect(() => {
-    getOrgId();
+    setOrgId(orgData ? orgData.id : null);
   }, []);
 
   const toggleModal = () => {
@@ -65,14 +71,23 @@ const BottomBar = () => {
 
   const renderCenterIcon = () => {
     switch (centerButtonState) {
-      case 'play':
-        return <PlayIconCenter width={24} height={24} />;
       case 'pause':
         return <PauseIcon width={24} height={24} />;
       default:
         return <StartButton width={44} height={24} />;
     }
   };
+
+  const onAvailableClick = (position) => {
+    console.log('Available clicked');
+    navigation.navigate("BottomBar",{screen:'Work', params:{isWhiteDot: position, from: 0}}); // ✅ should work now
+  };
+
+  // const onContinueClick = (position) => {
+  //   console.log('onContinueClick clicked');
+  //   navigation.navigate("BottomBar",{screen:'Work', params:{isWhiteDot: position, from: 0}}); // ✅ should work now
+  // };
+
 
   return (
     <>
@@ -127,7 +142,7 @@ const BottomBar = () => {
         <Tab.Screen
           name="Work"
           component={JobsScreen}
-          initialParams={{isWhiteDot: 0}}
+          initialParams={{isWhiteDot: 0,from:0}}
         />
 
         <Tab.Screen
@@ -156,6 +171,8 @@ const BottomBar = () => {
         visible={modalVisible} 
         onClose={closeModal} 
         onStateChange={handleModalStateChange}
+        onAvailableClick={onAvailableClick}
+        orgId={orgId}
       />
     </>
   );

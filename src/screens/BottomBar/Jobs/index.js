@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {use, useEffect, useRef, useState} from 'react';
 import {appColors} from '../../../utils/appColors';
 import WhiteBackIcon from '../../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../../assets/svg/CalenderIcon';
@@ -23,16 +23,20 @@ import LinearGradient from 'react-native-linear-gradient';
 import WhiteDot from '../../../assets/svg/WhiteDot';
 import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getJobs} from '../../../redux/GetJobsSlice';
+import {clearJobsData, getJobs} from '../../../redux/GetJobsSlice';
 import {useIsFocused} from '@react-navigation/native';
 import JobFilterModal from '../../../components/JobFilterModal';
 import moment from 'moment';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 
 const JobsScreen = ({navigation, route}) => {
-  const {isWhiteDot} = route.params;
+  const {isWhiteDot, from} = route.params;
 
   const flatListRef = useRef(null);
+
+  const gloabllyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
 
   const [active, setInActive] = useState(0);
   const [isWhitDot, setWhiteDot] = useState(0);
@@ -50,7 +54,7 @@ const JobsScreen = ({navigation, route}) => {
     {status: '2', name: 'Require Confirmation', count: 0},
     {status: 'a', name: 'Confirmed Jobs', count: 0},
     {status: '3', name: 'Waiting for Approval', count: 0},
-    {status: '0', name: 'Job In Progress', count: 0},
+    {status: 'p', name: 'Job In Progress', count: 0},
     {status: '1', name: 'Open Jobs', count: 0},
     // {status: '6', name: 'Declined Jobs', count: 0},
   ]);
@@ -59,7 +63,7 @@ const JobsScreen = ({navigation, route}) => {
     1: 'Open Jobs',
     2: 'Require Confirmation',
     3: 'Waiting for Approval',
-    4: 'Job In Progress',
+    p: 'Job In Progress',
     5: 'Completed',
     6: 'Declined Jobs',
     a: 'Confirmed Jobs',
@@ -70,28 +74,44 @@ const JobsScreen = ({navigation, route}) => {
   const responseJobs = useSelector(state => state.getJobsReducer.data);
 
   const getJob = async () => {
-    const orgId = await AsyncStorage.getItem('orgId');
-    setTimeout(() => {
-      console.log('isWhitDot Id ===> ', isWhitDot);
-      const payload = {
-        id: orgId,
-        offset: 0,
-        status: filterData[isWhitDot].status,
-      };
-
-      dispatch(getJobs(payload));
-    }, 1500);
+    const orgId = gloabllyOrgData ? gloabllyOrgData.id : null;
+    const payload = {
+      id: orgId,
+      offset: 0,
+      status:
+        filterData[isWhitDot].status == 'p'
+          ? 'a'
+          : filterData[isWhitDot].status, // For Job In Progress, we want to filter by status 'a' (active)
+      action_status: isWhitDot == 4 ? '1,2' : '', // For Job In Progress, we want to filter by action_status 1 and 2
+    };
+    console.log(' payload Get Jobs===> ', payload);
+    dispatch(getJobs(payload));
   };
 
   useEffect(() => {
     if (isFocused) {
-      setLoading(true);
-      setWhiteDot(isWhiteDot);
-      setInActive(!active);
-      // scrollToSelectedIndex(isWhitDot);
-      getJob();
+      if (from !== undefined) {
+        setWhiteDot(isWhiteDot);
+        // setLoading(true);
+        console.log('from ===> ', from);
+        // setInActive(!active);
+        // scrollToSelectedIndex(isWhitDot);
+        // getJob();
+        navigation.setParams({
+          isWhiteDot: undefined,
+          from: undefined,
+        });
+      }
     }
-  }, [isFocused, isWhitDot]);
+  }, [isFocused]);
+
+  useEffect(() => {
+    setLoading(true);
+    console.log('Loading ===> ', 'Loading');
+    // setInActive(!active);
+    // scrollToSelectedIndex(isWhitDot);
+    getJob();
+  }, [isWhitDot]);
 
   useEffect(() => {
     if (responseJobs != null && responseJobs.status == 'OK') {
@@ -105,6 +125,11 @@ const JobsScreen = ({navigation, route}) => {
             item.status === 'a',
         );
         setJobsData(inProgressData);
+      } else if (filterData[isWhitDot].status == 'a') {
+        const comfiredJobData = responseJobs.results.filter(
+          item => item.status === 'a' && item.action_status === null,
+        );
+        setJobsData(comfiredJobData);
       } else {
         setJobsData(responseJobs.results);
       }
@@ -113,45 +138,55 @@ const JobsScreen = ({navigation, route}) => {
       responseJobs.summary.forEach(item => {
         const statusName = statusMap[item.status];
         const filterItem = updatedData.find(fd => fd.name === statusName);
-        // console.log('Filter Item ===> ', filterItem);
-        if (filterItem.name == 'Job In Progress') {
-          filterItem.count = inProgressLength;
-          console.log('Filter Item ===> ', filterItem);
-        } else {
-          filterItem.count = item.total;
+        if (item.status != 4) {
+          // if (filterItem.name == 'Job In Progress') {
+          //   filterItem.count = inProgressLength;
+          //   console.log('Filter Item ===> ', filterItem);
+          // } else {
+          if (filterItem.status == 'a') {
+            const comfiredJobData = responseJobs.results.filter(
+              item => item.status === 'a' && item.action_status === null,
+            );
+            filterItem.count = comfiredJobData.length;
+          } else {
+            filterItem.count = item.total;
+          }
+          // }
         }
       });
 
       const totalJobs = responseJobs.summary
         .filter(item => item.name !== 'All Jobs')
-        .reduce((sum, item) => sum + item.total, 0);
+        .reduce((sum, item) =>   sum + (item.status == 'p' || item.status == '4' ? 0 : item.total), 0);
 
       const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
       if (allJobsItem) {
         allJobsItem.count = totalJobs;
       }
 
-      if (isWhitDot == 0) {
-        const inProgressData = responseJobs.results.filter(
-          item =>
-            (String(item.action_status) === '1' ||
-              String(item.action_status) === '2') &&
-            item.status === 'a',
-        );
+      // if (isWhitDot == 0) {
+      //   const inProgressData = responseJobs.results.filter(
+      //     item =>
+      //       (String(item.action_status) === '1' ||
+      //         String(item.action_status) === '2') &&
+      //       item.status === 'a',
+      //   );
 
-        const inProgressJobsItem = updatedData.find(
-          fd => fd.name === 'Job In Progress',
-        );
+      //   const inProgressJobsItem = updatedData.find(
+      //     fd => fd.name === 'Job In Progress',
+      //   );
 
-        if (inProgressJobsItem) {
-          setInProgressLength(inProgressData.length);
-          inProgressJobsItem.count = inProgressData.length;
-        }
+      //   if (inProgressJobsItem) {
+      //     setInProgressLength(inProgressData.length);
+      //     inProgressJobsItem.count = inProgressData.length;
+      //   }
 
-        // console.log('IN Progress Data ====> ', inProgressData);
-      }
+      //   // console.log('IN Progress Data ====> ', inProgressData);
+      // }
 
       setFilterData(updatedData);
+
+      dispatch(clearJobsData());
     }
   }, [responseJobs]);
 
@@ -311,14 +346,13 @@ const JobsScreen = ({navigation, route}) => {
               marginLeft: 16,
               fontFamily: 'sf-pro-text-semibold',
             }}>
-            All Jobs
+            {filterData[isWhitDot].name}
           </Text>
           <TouchableOpacity onPress={() => setFilterVisible(true)}>
             <AllJobsIcon width={40} height={40} />
           </TouchableOpacity>
         </View>
         <View style={{marginBottom: 80}}>
-          {console.log('Job Data ====> ', jobsData)}
           {loading
             ? Array.from({length: 5}).map((_, index) => (
                 <ShimmerPlaceholder
@@ -554,13 +588,19 @@ const JobsScreen = ({navigation, route}) => {
                             ? 'Require Confirmation'
                             : item.status == 3
                             ? 'Waiting for Approval'
-                            : item.status == 4
+                            : item.status == 'a' &&
+                              (item.action_status == 1 ||
+                                item.action_status == 2)
                             ? 'Job In Progress'
                             : item.status == 5
                             ? 'Completed'
                             : item.status == 6
                             ? 'Declined'
-                            : 'Confirmed'}
+                            : item.status == 4
+                            ? 'Approved'
+                            : item.status == 'a'
+                            ? 'Confirmed'
+                            : ''}
                         </Text>
                       </View>
                     </View>

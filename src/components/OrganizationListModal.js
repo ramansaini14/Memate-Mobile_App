@@ -54,7 +54,7 @@ const OrganizationListModal = ({
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setOrgVisible(false)}>
                   <Image
-                    source={{uri: selectedOrg.logo}}
+                    source={{uri: (selectedOrg.logo).replace('http://', 'https://')}}
                     style={{width: 80, height: 40}}
                   />
                 </TouchableOpacity>
@@ -96,6 +96,7 @@ const OrganizationListModal = ({
               data={organizations}
               keyExtractor={item => item.id.toString()}
               renderItem={({item}) => (
+                item.id!=selectedOrg?.id &&
                 <OrganizationComponent
                   itemData={item}
                   onNextClick={onItemSelect}
@@ -116,6 +117,7 @@ const OrganizationListModal = ({
             borderRadius: 20,
             alignItems: 'center',
             justifyContent: 'center',
+            marginTop:16
           }}
           onPress={onClose}>
           {/* <Text style={{color: appColors.black, fontSize: 20}}></Text> */}
@@ -178,5 +180,12 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     // backgroundColor: 'rgba(218, 216, 216, 0.98)'
+  },
+  smallTextStyleHeader: {
+    fontSize: 14,
+    color: appColors.black,
+    fontFamily: 'SF-Pro',
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });

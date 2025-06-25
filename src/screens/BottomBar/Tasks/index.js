@@ -28,15 +28,16 @@ const TasksScreen = ({navigation}) => {
   const isFoucsed = useIsFocused();
   const [oId, setOrgId] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  const gloabllyOrgData = useSelector(state => state.globalReducer.globallyOrgData);
 
   const [tasks, setTasks] = useState(null);
 
   const responseAllTasks = useSelector(state => state.allTaskReducer.data);
 
   const getTasks = async () => {
-    const orgId = await AsyncStorage.getItem('orgId');
+    const orgId = gloabllyOrgData ? gloabllyOrgData.id : 0;
     setOrgId(orgId);
-    setTimeout(() => {
       const payload = {
         id: orgId,
         api:
@@ -44,7 +45,6 @@ const TasksScreen = ({navigation}) => {
       };
 
       dispatch(hitAllTasks(payload));
-    }, 1500);
   };
 
   useEffect(() => {

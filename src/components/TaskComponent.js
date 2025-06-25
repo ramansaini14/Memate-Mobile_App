@@ -7,6 +7,13 @@ import StatusIcon from '../assets/svg/StatusIcon';
 import moment from 'moment';
 
 const TaskComponent = ({itemData}) => {
+
+  const breakText = (text, maxLength) => {
+    if (!text) return '';
+    const regex = new RegExp(`.{1,${maxLength}}`, 'g');
+    return text.match(regex).join('\n');
+  };
+
   return (
     <View style={styles.shiftCard}>
       <View style={styles.viewStyle}>
@@ -101,8 +108,9 @@ const TaskComponent = ({itemData}) => {
                 fontFamily: 'SF-Pro-Text-Semibold',
                 fontWeight: '600',
                 fontSize: 11,
+                flex:1
               }}>
-              {itemData.address}
+              {breakText(itemData.address, 50)}
             </Text>
           </View>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>

@@ -4,6 +4,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {appColors} from '../../utils/appColors';
 import MainLogo from '../../assets/svg/MainLogo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { connectSocket } from '../../socketService';
 
 const SplashScreen = ({navigation}) => {
   const [token, setToken] = useState(null);
@@ -64,16 +65,20 @@ const SplashScreen = ({navigation}) => {
         } else if (isNew && isRequired) {
           navigation.navigate('RequireDetails');
         } else {
+
+          connectSocket();
           navigation.reset({
             index: 0,
-            routes: [{name: 'BottomBar'}],
+            routes: [{name: 'ChooseOrganization'}],
           });
           // navigation.reset('BottomBar');
         }
       } else {
+
+        connectSocket();
         navigation.reset({
           index: 0,
-          routes: [{name: 'BottomBar'}],
+          routes: [{name: 'ChooseOrganization'}],
         });
       }
     }

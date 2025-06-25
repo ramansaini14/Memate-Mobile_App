@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {act, use, useEffect, useState} from 'react';
 import {appColors} from '../../../utils/appColors';
 import DummyUserIcon from '../../../assets/svg/DummyUserIcon';
 import NotificationIcon from '../../../assets/svg/NotificationIcon';
@@ -41,6 +41,9 @@ import LinearGradient from 'react-native-linear-gradient';
 import WhiteDot from '../../../assets/svg/WhiteDot';
 import PinkDot from '../../../assets/svg/PinkDot';
 import {hitAllTasks} from '../../../redux/AllTaskSlice';
+import {selectJobTimer} from '../../../redux/TimerSlice';
+import TimerHomePage from '../../../components/TimerHomePage';
+import {setGloballyOrgData} from '../../../redux/GlobalSlice';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -49,14 +52,31 @@ const HomeScreen = ({navigation, route}) => {
   const [orgId, setOrgId] = useState('');
   const [isResultReport, setIsResultReport] = useState(true);
 
+  const globallyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
+  console.log(
+    'globallyOrgData ===> ',
+    globallyOrgData,
+    ' isPaused: ',
+    isPaused,
+  );
+
+  const jobData = useSelector(state => state.globalReducer.jobData);
+  const isPaused = useSelector(state => state.globalReducer.isPausedGlobal);
+
+  const jobTimer = useSelector(state => selectJobTimer(state, jobData?.id));
+  const timer = jobTimer ? jobTimer.value : 0;
+
   const [approvedJobs, setApprovedJobs] = useState(null);
-   const [tasks, setTasks] = useState(null);
-  
-    const responseAllTasks = useSelector(state => state.allTaskReducer.data);
+  const [tasks, setTasks] = useState(null);
+
+  const responseAllTasks = useSelector(state => state.allTaskReducer.data);
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const reportReadData = useSelector(state => state.reportReadReducer.data);
   const responseJobs = useSelector(state => state.getJobsReducer.data);
+
   const [pdfFileName, setPdfFileName] = useState('');
   const dispatch = useDispatch();
   const [orgData, setOrgData] = useState(null);
@@ -69,7 +89,19 @@ const HomeScreen = ({navigation, route}) => {
     setOrgVisible(false);
   };
 
-  const onItemSelect = () => {};
+  const onItemSelect = itemData => {
+    console.log('Selected Organization ===> ', itemData);
+    dispatch(setGloballyOrgData(itemData));
+
+    if (!itemData.terms) {
+      navigation.navigate('TermsAndConditions', {from: 'org', id: itemData.id});
+      setTimeout(() => {
+        setOrgVisible(false);
+      }, 200);
+    } else {
+      setOrgVisible(false);
+    }
+  };
 
   const [jobs, setJobs] = useState(null);
   const [progressJobs, setProgressJobs] = useState(null);
@@ -81,7 +113,7 @@ const HomeScreen = ({navigation, route}) => {
     {status: '2', name: 'Require Confirmation', count: 0},
     {status: 'a', name: 'Confirmed Jobs', count: 0},
     {status: '3', name: 'Waiting for Approval', count: 0},
-    {status: '0', name: 'Job In Progress', count: 0},
+    {status: 'p', name: 'Job In Progress', count: 0},
     {status: '1', name: 'Open Jobs', count: 0},
     // {status: '6', name: 'Declined Jobs', count: 0},
   ]);
@@ -90,7 +122,7 @@ const HomeScreen = ({navigation, route}) => {
     1: 'Open Jobs',
     2: 'Require Confirmation',
     3: 'Waiting for Approval',
-    4: 'Job In Progress',
+    p: 'Job In Progress',
     5: 'Completed',
     6: 'Declined Jobs',
     a: 'Confirmed Jobs',
@@ -98,29 +130,27 @@ const HomeScreen = ({navigation, route}) => {
   };
 
   const getReportData = async () => {
-    const id = await AsyncStorage.getItem('orgId');
-    setTimeout(() => {
-      setOrgId(id);
-      if (isResultReport) {
-        const payload = {
-          id: id,
-        };
-        dispatch(reportRead(payload));
-      }
+    if (isResultReport) {
       const payload = {
-        id: id,
-        offset: 0,
-        status: 0,
+        id: globallyOrgData.id,
       };
+      dispatch(reportRead(payload));
+    }
 
-      dispatch(getJobs(payload));
+    const payload = {
+      id: globallyOrgData.id,
+      offset: 0,
+      status: 'a',
+      action_status: '',
+    };
 
-      const payload1 = {
-        id: id,
-        api: 'not-completed',
-      };
-      dispatch(hitAllTasks(payload1));
-    }, 1200);
+    dispatch(getJobs(payload));
+
+    const payload1 = {
+      id: globallyOrgData.id,
+      api: 'not-completed',
+    };
+    dispatch(hitAllTasks(payload1));
   };
 
   // const getJob = async () => {
@@ -132,11 +162,12 @@ const HomeScreen = ({navigation, route}) => {
   // };
 
   useEffect(() => {
-    if (isFocused) {
+    if (isFocused && globallyOrgData != null) {
+      setOrgId(globallyOrgData.id);
       dispatch(getOrganization());
       getReportData();
     }
-  }, [isFocused]);
+  }, [isFocused, jobData, globallyOrgData]);
 
   useEffect(() => {
     // clearToken()
@@ -160,7 +191,9 @@ const HomeScreen = ({navigation, route}) => {
       console.log('InProgress jobs ===>', sortProgJobs);
       setProgressJobs(sortProgJobs);
       const upJobs = responseJobs.results.filter(
-        item => item.status === 'a' && item.action_status == null,
+        item =>
+          item.status === 'a' &&
+          (item.action_status === '0' || item.action_status === null),
       );
       const sortUpJobs = upJobs.sort(
         (a, b) => parseInt(b.start_date) - parseInt(a.start_date), // descending
@@ -173,14 +206,27 @@ const HomeScreen = ({navigation, route}) => {
 
       responseJobs.summary.forEach(item => {
         const statusName = statusMap[item.status];
-        const filterItem = updatedData.find(fd => fd.name === statusName);
-        // console.log('Filter Item ===> ', filterItem);
-        filterItem.count = item.total;
+        if (item.status != '4') {
+          const filterItem = updatedData.find(fd => fd.name === statusName);
+          // console.log('Filter Item ===> ', filterItem);
+          if (filterItem.status == 'a') {
+            const comfiredJobData = responseJobs.results.filter(
+              item => item.status === 'a' && item.action_status === null,
+            );
+            filterItem.count = comfiredJobData.length;
+          } else {
+            filterItem.count = item.total;
+          }
+        }
       });
 
       const totalJobs = responseJobs.summary
         .filter(item => item.name !== 'All Jobs')
-        .reduce((sum, item) => sum + item.total, 0);
+        .reduce(
+          (sum, item) =>
+            sum + (item.status == 'p' || item.status == '4' ? 0 : item.total),
+          0,
+        );
 
       const allJobsItem = updatedData.find(fd => fd.name === 'All Jobs');
       if (allJobsItem) {
@@ -221,15 +267,22 @@ const HomeScreen = ({navigation, route}) => {
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
         {/* <DummyUserIcon /> */}
-        {selectedOrg != null &&
+        {globallyOrgData != null &&
           (isResultReport ? (
-            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               <TouchableOpacity onPress={() => setOrgVisible(true)}>
                 <DownIcon height={16} width={16} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setOrgVisible(true)}>
                 <Image
-                  source={{uri: selectedOrg.logo}}
+                  source={{
+                    uri: globallyOrgData.logo.replace('http://', 'https://'),
+                  }}
                   style={{width: 80, height: 40}}
                 />
               </TouchableOpacity>
@@ -238,7 +291,7 @@ const HomeScreen = ({navigation, route}) => {
                   style={[styles.smallTextStyleHeader, {width: 120}]}
                   numberOfLines={1}
                   ellipsizeMode="tail">
-                  {selectedOrg.name}
+                  {globallyOrgData.name}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -273,6 +326,13 @@ const HomeScreen = ({navigation, route}) => {
           showsVerticalScrollIndicator={false}
           nestedScrollEnabled>
           <View>
+            {jobData != null && (
+              <TouchableOpacity
+                style={{marginHorizontal: 16}}
+                onPress={() => navigation.navigate('JobCard', {data: jobData})}>
+                <TimerHomePage data={jobData} timer={timer} />
+              </TouchableOpacity>
+            )}
             <View style={styles.resultViewStyle}>
               <View style={[styles.row_, {justifyContent: 'space-between'}]}>
                 <View style={[styles.cardBox, {marginRight: 8}]}>
@@ -285,7 +345,7 @@ const HomeScreen = ({navigation, route}) => {
                       <HomeGreenTickSvg />
                     </View>
                   </View>
-                  <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
+                  <Text style={[styles.bigTextStyle, {fontSize: 18}]}>
                     {reportReadData != null
                       ? '$' + reportReadData.income.done
                       : '$0.00'}
@@ -308,7 +368,7 @@ const HomeScreen = ({navigation, route}) => {
                     </View>
                   </View>
 
-                  <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
+                  <Text style={[styles.bigTextStyle, {fontSize: 18}]}>
                     {reportReadData != null
                       ? reportReadData.finished.done
                       : '0.00'}
@@ -383,7 +443,7 @@ const HomeScreen = ({navigation, route}) => {
                 <TouchableOpacity
                   onPress={() => {
                     setWhiteDot(index);
-                    navigation.navigate('Work', {isWhiteDot: index});
+                    navigation.navigate('Work', {isWhiteDot: index, from: 1});
                   }}
                   style={{
                     width: 136,
@@ -460,26 +520,29 @@ const HomeScreen = ({navigation, route}) => {
                       }}>
                       {item.name}
                     </Text>
-                    <View style={{flexDirection:'row',marginTop:4}}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        marginLeft: 8,
-                        color:
-                          isWhitDot == index
-                            ? appColors.white
-                            : appColors.placeholderColor,
-                        fontSize: 12,
-                        fontFamily: 'SF-Pro',
-                        fontWeight: '400',
-                      }}>
-                      {'View Jobs '}
-                    </Text>
-                    <View style={{marginTop: 4}}>
-                        <RightArrowHome fill = {isWhitDot == index?appColors.white:"#75808A"}/>
+                    <View style={{flexDirection: 'row', marginTop: 4}}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          marginLeft: 8,
+                          color:
+                            isWhitDot == index
+                              ? appColors.white
+                              : appColors.placeholderColor,
+                          fontSize: 12,
+                          fontFamily: 'SF-Pro',
+                          fontWeight: '400',
+                        }}>
+                        {'View Jobs '}
+                      </Text>
+                      <View style={{marginTop: 4}}>
+                        <RightArrowHome
+                          fill={
+                            isWhitDot == index ? appColors.white : '#75808A'
+                          }
+                        />
                       </View>
                     </View>
-                    
                   </LinearGradient>
                 </TouchableOpacity>
               )}
@@ -487,7 +550,9 @@ const HomeScreen = ({navigation, route}) => {
           )}
 
           {active == 0 && (
-            <TouchableOpacity style={{alignItems: 'flex-end', marginTop: 16}} onPress={() =>navigation.navigate('Work', {isWhiteDot: 0})}>
+            <TouchableOpacity
+              style={{alignItems: 'flex-end', marginTop: 16}}
+              onPress={() => navigation.navigate('Work', {isWhiteDot: 0})}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -524,140 +589,163 @@ const HomeScreen = ({navigation, route}) => {
             <Text style={styles.titleStyle}>Jobs in Progress</Text>
           )}
           {active == 0 ? (
-            progressJobs!=null&&progressJobs.length>0?<FlatList
-              key={0}
-              data={progressJobs}
-              horizontal
-              style={{paddingHorizontal: 16}}
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              renderItem={({item}) => (
-                <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    marginRight: 16,
-                  }}
-                  onPress={() => navigation.navigate('JobCard', {data: item})}>
-                  <TaskComponent itemData={item} />
-                </TouchableOpacity>
-              )}
-              keyExtractor={item => item.id}
-            />:(<Text style={{alignSelf:'center',marginTop:8}}>
-              No Jobs Found
-            </Text>)
-          ):<View/>}
+            progressJobs != null && progressJobs.length > 0 ? (
+              <FlatList
+                key={0}
+                data={progressJobs}
+                horizontal
+                style={{paddingHorizontal: 16, flex: 1}}
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                renderItem={({item}) => (
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      marginRight: 16,
+                    }}
+                    onPress={() =>
+                      navigation.navigate('JobCard', {data: item})
+                    }>
+                    <TaskComponent itemData={item} />
+                  </TouchableOpacity>
+                )}
+                keyExtractor={item => item.id}
+              />
+            ) : (
+              <Text style={{alignSelf: 'center', marginTop: 8}}>
+                No Jobs Found
+              </Text>
+            )
+          ) : (
+            <View />
+          )}
           {active == 0 && (
-            <Text style={[styles.titleStyle,{marginTop:16}]}>Upcoming Deadlines</Text>
+            <Text style={[styles.titleStyle, {marginTop: 16}]}>
+              Upcoming Deadlines
+            </Text>
           )}
 
           {active == 0 ? (
-            upcoming!=null&&upcoming.length>0?<FlatList
-              key={1}
-              data={upcoming}
-              horizontal
-              style={{paddingHorizontal: 16, marginBottom: 64}}
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              renderItem={({item}) => (
-                <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    marginRight: 16,
-                  }}
-                  onPress={() => navigation.navigate('JobCard', {data: item})}>
-                  <TaskComponent itemData={item} />
-                </TouchableOpacity>
-              )}
-              keyExtractor={item => item.id}
-            />:(<Text style={{alignSelf:'center',marginTop:8}}>
-              No Jobs Found
-            </Text>)
-          ):<View/>}
-        {active == 1 && (
+            upcoming != null && upcoming.length > 0 ? (
+              <FlatList
+                key={1}
+                data={upcoming}
+                horizontal
+                style={{paddingHorizontal: 16, marginBottom: 64}}
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                renderItem={({item}) => (
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      width: '100%',
+                      marginRight: 16,
+                    }}
+                    onPress={() =>
+                      navigation.navigate('JobCard', {data: item})
+                    }>
+                    <TaskComponent itemData={item} />
+                  </TouchableOpacity>
+                )}
+                keyExtractor={item => item.id}
+              />
+            ) : (
+              <Text style={{alignSelf: 'center', marginTop: 8}}>
+                No Jobs Found
+              </Text>
+            )
+          ) : (
+            <View />
+          )}
+          {active == 1 && (
             <Text style={styles.titleStyle}>Not Complete Tasks</Text>
           )}
           {active == 1 ? (
-            tasks!=null && tasks.length>0?<FlatList
-              key={2}
-              data={tasks}
-              horizontal
-              style={{paddingHorizontal: 16, marginBottom: 64}}
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              renderItem={({item}) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() =>
-                    navigation.navigate('NotCompleteTask', {
-                      taskId: item.id,
-                      orgId: oId,
-                    })
-                  }>
-                  <View style={styles.noteCardStyle}>
-                    <View style={{flexDirection: 'row'}}>
+            tasks != null && tasks.length > 0 ? (
+              <FlatList
+                key={2}
+                data={tasks}
+                horizontal
+                style={{paddingHorizontal: 16, marginBottom: 64}}
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={false}
+                renderItem={({item}) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() =>
+                      navigation.navigate('NotCompleteTask', {
+                        taskId: item.id,
+                        orgId: globallyOrgData.id,
+                      })
+                    }>
+                    <View style={styles.noteCardStyle}>
+                      <View style={{flexDirection: 'row'}}>
+                        <Text
+                          style={{
+                            color: appColors.black,
+                            fontWeight: '600',
+                            marginBottom: 4,
+                            fontSize: 12,
+                            backgroundColor: '#FFA6D1',
+                            paddingHorizontal: 10,
+                            paddingVertical: 2,
+                            borderRadius: 14,
+                          }}>
+                          {item.finished ? 'Completed' : 'Not Complete'}
+                        </Text>
+                      </View>
                       <Text
                         style={{
                           color: appColors.black,
-                          fontWeight: '600',
-                          marginBottom: 4,
-                          fontSize: 12,
-                          backgroundColor: '#FFA6D1',
-                          paddingHorizontal: 10,
-                          paddingVertical: 2,
-                          borderRadius: 14,
+                          marginTop: 10,
+                          fontSize: 16,
+                          letterSpacing: 0.3,
                         }}>
-                        {item.finished ? 'Completed' : 'Not Complete'}
+                        {item.title}
                       </Text>
-                    </View>
-                    <Text
-                      style={{
-                        color: appColors.black,
-                        marginTop: 10,
-                        fontSize: 16,
-                        letterSpacing: 0.3,
-                      }}>
-                      {item.title}
-                    </Text>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginTop: 10,
-                      }}>
-                      <Text
+                      <View
                         style={{
-                          color: appColors.grey,
-                          fontSize: 12,
-                          fontWeight: '600',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginTop: 10,
                         }}>
-                        Created:
-                      </Text>
-                      <Text
-                        style={{
-                          paddingVertical: 4,
-                          backgroundColor: appColors.white,
-                          paddingHorizontal: 8,
-                          borderRadius: 16,
-                          color: appColors.black,
-                          fontWeight: '600',
-                          fontSize: 12,
-                          marginLeft: 6,
-                        }}>
-                        {moment
-                          .unix(parseInt(item.created, 10))
-                          .format('DD.MM.YYYY')}
-                      </Text>
+                        <Text
+                          style={{
+                            color: appColors.grey,
+                            fontSize: 12,
+                            fontWeight: '600',
+                          }}>
+                          Created:
+                        </Text>
+                        <Text
+                          style={{
+                            paddingVertical: 4,
+                            backgroundColor: appColors.white,
+                            paddingHorizontal: 8,
+                            borderRadius: 16,
+                            color: appColors.black,
+                            fontWeight: '600',
+                            fontSize: 12,
+                            marginLeft: 6,
+                          }}>
+                          {moment
+                            .unix(parseInt(item.created, 10))
+                            .format('DD.MM.YYYY')}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-              keyExtractor={item => item.id}
-            />:(<Text style={{alignSelf:'center',marginTop:24}}>
-              No Tasks Found
-            </Text>)
-          ): ''}
+                  </TouchableOpacity>
+                )}
+                keyExtractor={item => item.id}
+              />
+            ) : (
+              <Text style={{alignSelf: 'center', marginTop: 24}}>
+                No Tasks Found
+              </Text>
+            )
+          ) : (
+            ''
+          )}
 
           <OrganizationListModal
             visible={orgVisible}
@@ -665,17 +753,17 @@ const HomeScreen = ({navigation, route}) => {
             organizations={orgData}
             onItemSelect={onItemSelect}
             navigation={navigation}
-            selectedOrg={selectedOrg}
+            selectedOrg={globallyOrgData}
             setOrgVisible={setOrgVisible}
           />
         </ScrollView>
       ) : (
         <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
           <View style={{}}>
-            {orgId != '' && (
+            {globallyOrgData.id != '' && (
               <CalendarStrip
                 setApprovedJobs={setApprovedJobs}
-                orgId={orgId}
+                orgId={globallyOrgData.id}
                 setPdfFileName={setPdfFileName}
               />
             )}
@@ -691,7 +779,7 @@ const HomeScreen = ({navigation, route}) => {
                       <HomeGreenTickSvg />
                     </View>
                   </View>
-                  <Text style={[styles.bigTextStyle, {fontSize: 24}]}>
+                  <Text style={[styles.bigTextStyle, {fontSize: 18}]}>
                     {reportReadData != null
                       ? '$' + reportReadData.income.done
                       : '$0.00'}
@@ -714,7 +802,7 @@ const HomeScreen = ({navigation, route}) => {
                     </View>
                   </View>
 
-                  <Text style={[styles.bigTextStyle, {fontSize: 22}]}>
+                  <Text style={[styles.bigTextStyle, {fontSize: 18}]}>
                     {reportReadData != null
                       ? reportReadData.finished.done
                       : '0.00'}
@@ -774,7 +862,7 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.white,
     justifyContent: 'center',
     paddingVertical: 16,
-    // marginBottom: 64,
+    paddingBottom: 84,
   },
   headerStyle: {
     flexDirection: 'row',
@@ -802,6 +890,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 12,
     color: appColors.black,
+    fontWeight: '600',
   },
   right_: {
     flex: 1,
