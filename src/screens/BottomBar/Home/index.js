@@ -640,7 +640,7 @@ const HomeScreen = ({navigation, route}) => {
                   <TouchableOpacity
                     style={{
                       flex: 1,
-                      width: '100%',
+                      width: 330,
                       marginRight: 16,
                     }}
                     onPress={() =>

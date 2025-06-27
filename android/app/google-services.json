@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "791398132012",
+    "project_id": "memate-9f816",
+    "storage_bucket": "memate-9f816.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:791398132012:android:c594b2acb96923636e6489",
+        "android_client_info": {
+          "package_name": "com.memate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrjPWLzYV9KKMbK8FHUyTdQedG054qSrk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

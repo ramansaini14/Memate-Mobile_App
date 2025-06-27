@@ -3,9 +3,15 @@ import {NavigationContainer} from '@react-navigation/native';
 import MainStack from './src/navigations/MainStack';
 import {Provider} from 'react-redux';
 import store from './src/redux/store';
-import {startBackgroundTimer, loadTimerStateFromStorage} from './src/redux/TimerSlice';
+import {
+  startBackgroundTimer,
+  loadTimerStateFromStorage,
+} from './src/redux/TimerSlice';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {LogBox} from 'react-native';
+
+import firebase from '@react-native-firebase/app';
+// import crashlytics from '@react-native-firebase/crashlytics';
 
 // Ignore specific warnings
 LogBox.ignoreLogs([
@@ -18,7 +24,9 @@ console.log('App.js: Initializing app...');
 // Create a separate component to handle timer initialization
 const AppWithTimer = () => {
   useEffect(() => {
-    console.log('AppWithTimer useEffect: Initializing background timer service');
+    console.log(
+      'AppWithTimer useEffect: Initializing background timer service',
+    );
     const initTimer = async () => {
       try {
         const timerState = await loadTimerStateFromStorage(store.dispatch);
@@ -31,10 +39,10 @@ const AppWithTimer = () => {
         console.error('Error initializing timer:', error);
       }
     };
-    
+
     initTimer();
   }, []);
-  
+
   return (
     <NavigationContainer>
       <MainStack />
@@ -43,6 +51,25 @@ const AppWithTimer = () => {
 };
 
 const App = () => {
+  useEffect(() => {
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcDAFxoXTqd3GNdzWJgSCcA_0KtuVNo-s",
+      projectId: "memate-9f816",
+      appId: Platform.OS === 'ios'
+        ? "1:791398132012:ios:506472af656feaae6e6489"
+        : "1:791398132012:android:c594b2acb96923636e6489",
+    };
+    
+    console.log('Initializing Firebase...');
+
+      firebase.initializeApp(firebaseConfig);
+      console.log('Firebase initialized');
+
+          
+
+  }, []);
+  
+
   return (
     <Provider store={store}>
       <SafeAreaProvider>
