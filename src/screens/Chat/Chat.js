@@ -1,4 +1,5 @@
 import {
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,8 +20,17 @@ import YellowBagIcon from '../../assets/svg/YellowBagIcon';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {io} from 'socket.io-client';
 import {useSocket} from '../../components/useSocket';
+import ModalCreateChat from '../../components/ModalCreateChat';
 
 const Chat = ({navigation}) => {
+
+  const [visibleModal, setVisibleModal] = useState(false);
+  const onCloseClick = () => {
+    setVisibleModal(false);
+  }
+  const onCreateChatClick = () => {
+    setVisibleModal(true);
+  }
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -54,74 +64,17 @@ const Chat = ({navigation}) => {
               }}>
               Chat
             </Text>
-            <View>
+            <TouchableOpacity>
               <Text
                 style={styles.newChatButton}
-                onPress={() => navigation.navigate('MainChatRoom')}>
+                onPress={() => setVisibleModal(true)}>
                 + New Chat
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
-        <Text style={styles.personalStyle}>Personal Chat</Text>
-
-        <View
-          style={{
-            paddingBottom: 20,
-            borderColor: appColors.lightGrey,
-            borderBottomWidth: 1,
-          }}>
-          <TouchableOpacity onPress={() => navigation.navigate('MainChatRoom')}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 20,
-              }}>
-              <FrameBoy width={55} height={55} />
-              <View style={{flexDirection: 'column', flex: 1}}>
-                <Text style={{color: appColors.black}}>Imran Molla</Text>
-                <Text>Organisation Name</Text>
-                <Text
-                  style={{color: appColors.black, width: 150}}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Of course, let me know if you're on your way
-                </Text>
-              </View>
-              <View style={{flexDirection: 'column'}}>
-                <Text>17:32</Text>
-                <Text style={styles.notificationStyle}>2</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.navigate('MainChatRoom')}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 20,
-              }}>
-              <FrameBoy width={55} height={55} />
-              <View style={{flexDirection: 'column', flex: 1}}>
-                <Text style={{color: appColors.black}}>Imran Molla</Text>
-                <Text>Organisation Name</Text>
-                <Text
-                  style={{color: appColors.black, width: 150}}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Of course, let me know if you're on your way
-                </Text>
-              </View>
-              <View style={{flexDirection: 'column'}}>
-                <Text>17:32</Text>
-                <Text style={styles.notificationStyle}>2</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.personalStyle}>Organisation Chat</Text>
 
         <View
           style={{
@@ -183,85 +136,8 @@ const Chat = ({navigation}) => {
             </View>
           </TouchableOpacity>
         </View>
-
-        <View style={{marginTop: 15}}>
-          <Text
-            style={{fontSize: 18, color: appColors.black, fontWeight: '600'}}>
-            Group Job chats
-          </Text>
-
-          <TouchableOpacity onPress={() => navigation.navigate('MainChatRoom')}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                marginTop: 20,
-              }}>
-              <BagIcon width={55} height={55} />
-              <View style={{flexDirection: 'column', flex: 1}}>
-                <Text
-                  style={{color: appColors.black, width: 150, marginTop: 5}}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Business Plan Template (Elite Life Finance)
-                </Text>
-                <Text>THE-JB-113-234998 </Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    marginTop: 10,
-                    gap: 8,
-                    alignItems: 'center',
-                  }}>
-                  <GirlFrame width={30} height={30} />
-                  <GirlFrame width={30} height={30} />
-                  <GirlFrame width={30} height={30} />
-                  <GirlFrame width={30} height={30} />
-                  <Text style={{fontWeight: '600'}}> + 4</Text>
-                </View>
-              </View>
-              <View style={{flexDirection: 'column'}}>
-                <Text>17:32</Text>
-                <Text style={styles.notificationStyle}>2</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.navigate('MainChatRoom')}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'flex-start',
-                marginTop: 20,
-              }}>
-              <YellowBagIcon width={55} height={55} />
-              <View style={{flexDirection: 'column', flex: 1}}>
-                <Text
-                  style={{color: appColors.black, width: 150, marginTop: 5}}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Business Plan Template (Elite Life Finance)
-                </Text>
-                <Text>THE-JB-113-234998 </Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    marginTop: 10,
-                    gap: 8,
-                    alignItems: 'center',
-                  }}>
-                  <GirlFrame width={30} height={30} />
-                  <GirlFrame width={30} height={30} />
-                  <GirlFrame width={30} height={30} />
-                </View>
-              </View>
-              <View style={{flexDirection: 'column'}}>
-                <Text>17:32</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+      <ModalCreateChat modalVisible={visibleModal} onCloseClick={onCloseClick}/>
     </SafeAreaView>
   );
 };
