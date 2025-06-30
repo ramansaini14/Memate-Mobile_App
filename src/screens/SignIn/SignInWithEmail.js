@@ -45,14 +45,14 @@ const SignInWithEmail = ({ navigation,route }) => {
     setIsValid(isValidEmail);
 
     if(isValidEmail){
-      if(from==0){
-        navigation.navigate("LoginPin",{email:email,from:from})
-      }else{
+      // if(from==0){
+      //   navigation.navigate("LoginPin",{email:email,from:from})
+      // }else{
         const payload = {
           email:email
         }
         dispatch(hitVerifyEmail(payload))
-      }   
+      // }   
     }
     else{
       Alert.alert("MeMate","Please enter valid email")
@@ -73,7 +73,12 @@ const SignInWithEmail = ({ navigation,route }) => {
       // navigation('/ChooseOrganization');
         // Alert.alert("MeMate",responseVerifyEmail.message)
         if(responseVerifyEmail.is_agree){
+          console.log("From   ====> ",from)
+          if(from==0){
+            navigation.navigate("LoginPin",{email:email,from:from})
+          }else{
           Alert.alert('MeMate', 'Email already existed.');
+          }
         }else{
        saveEmail()
         navigation.navigate("EmailConfirmation",{email:email,from:from})

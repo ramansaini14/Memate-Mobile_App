@@ -1,10 +1,11 @@
 import {StyleSheet, Text, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {use, useEffect, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {appColors} from '../../utils/appColors';
 import MainLogo from '../../assets/svg/MainLogo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { connectSocket } from '../../socketService';
+import { useIsFocused } from '@react-navigation/native';
 
 const SplashScreen = ({navigation}) => {
   const [token, setToken] = useState(null);
@@ -13,6 +14,8 @@ const SplashScreen = ({navigation}) => {
   const [isRequired, setRequired] = useState(false);
   const [loading, setLoading] = useState(false); // new state
   const [isNew, setIsNew] = useState(false);
+
+  const isFocused = useIsFocused();
 
   const getToken = async () => {
     try {
@@ -25,9 +28,9 @@ const SplashScreen = ({navigation}) => {
 
       console.log('Token ===> ', tok);
       setToken(tok);
-      setPinCreated(!!pin);
-      setAppTerm(!!appTerm);
-      setRequired(!!required);
+      setPinCreated(pin);
+      setAppTerm(appTerm);
+      setRequired(required);
       setIsNew(newUser);
       setTimeout(() => {
         setLoading(true);
@@ -40,32 +43,36 @@ const SplashScreen = ({navigation}) => {
   };
 
   useEffect(() => {
+    if(isFocused){
     getToken();
+    }
   }, []);
 
   useEffect(() => {
     console.log('Token ===> ', token);
-    console.log(
-      'Required ===> ',
-      isRequired,
-      'isPinCreate ===> ',
-      isPinCreate,
-      ' isAppTerm ===> ',
-      isAppTerm,
-      ' New ===> ',
-      isNew,
-    );
+   
     if (loading) {
+
+      console.log(
+        'Required ===> ',
+        isRequired,
+        'isPinCreate ===> ',
+        isPinCreate,
+        ' isAppTerm ===> ',
+        isAppTerm,
+        ' New ===> ',
+        isNew,
+      );
       if (token == null) navigation.navigate('StartScreen');
-      else if (isNew == true) {
+      else if (isNew) {
         if (isNew && !isPinCreate) {
           navigation.navigate('CreatePin');
         } else if (isNew && !isAppTerm) {
           navigation.navigate('TermsAndConditions', {from: 'pin', id: 0});
         } else if (isNew && isRequired) {
+          console.log('isRequired Inner===> ', isRequired);
           navigation.navigate('RequireDetails');
         } else {
-
           connectSocket();
           navigation.reset({
             index: 0,

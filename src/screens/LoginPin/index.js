@@ -21,6 +21,7 @@ import {clearVerifyEmailSlice} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {clearLoginData, loginUser} from '../../redux/loginSlice';
 import BackIcon from '../../assets/svg/BackIcon';
+import {OtpInput} from 'react-native-otp-entry';
 
 const LoginPin = ({navigation, route}) => {
   const {email, from} = route.params;
@@ -125,7 +126,7 @@ const LoginPin = ({navigation, route}) => {
           <MainLogo width={200} />
         </View>
         <View style={styles.logoStyle}>
-          <OTPTextView
+          {/* <OTPTextView
             containerStyle={{marginTop: 72}}
             textInputStyle={styles.roundedTextInput}
             tintColor={appColors.borderLightGrey}
@@ -138,6 +139,26 @@ const LoginPin = ({navigation, route}) => {
                 Keyboard.dismiss(); // hide keyboard
               }
             }} // Update state when OTP changes
+            defaultValue={otp}
+          /> */}
+
+          <OtpInput
+            numberOfDigits={6}
+            onTextChange={text => {setOtp(text);
+              if (text.length === 6) {
+              Keyboard.dismiss(); // hide keyboard
+              }
+            }}
+            autoFocus={true}
+            blurOnFilled={true}
+            type="numeric"
+            theme={{
+              pinCodeContainerStyle:styles.roundedTextInput,
+              focusedPinCodeContainerStyle: styles.roundedTextInput,
+              pinCodeTextStyle: styles.otpTextInput,
+               focusStickStyle:{backgroundColor:appColors.borderLightGrey}
+            }     
+            }
           />
         </View>
 
@@ -153,6 +174,9 @@ const LoginPin = ({navigation, route}) => {
             }}>
             Sign In
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{marginTop: 16, alignItems: 'center'}} onPress={() => navigation.navigate('ForgotPassword')}>
+          <Text style={{color:appColors.white}}>Forgot Password</Text>
         </TouchableOpacity>
       </ScrollView>
       {/* </TouchableWithoutFeedback> */}
@@ -183,6 +207,7 @@ const styles = StyleSheet.create({
   },
   logoStyle: {
     alignItems: 'center',
+    marginTop: 64,
   },
 
   headerTextStyle: {
@@ -252,9 +277,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderBottomWidth: 1,
+    borderColor: appColors.borderLightGrey,
     height: 60,
     color: appColors.white,
     backgroundColor: appColors.inputBackground,
+  },
+  otpTextInput: {
+    color:appColors.white
   },
   container: {
     justifyContent: 'center',

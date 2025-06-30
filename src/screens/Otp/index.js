@@ -14,6 +14,7 @@ import LogoIcon from '../../assets/svg/LogoIcon';
 import OTPTextView from 'react-native-otp-textinput';
 import MainLogo from '../../assets/svg/MainLogo';
 import CheckBox from '@react-native-community/checkbox';
+import { OtpInput } from 'react-native-otp-entry';
 
 const OtpScreen = ({navigation}) => {
   const [toggleCheckBox, setToggleCheckBox] = useState(false);
@@ -27,13 +28,19 @@ const OtpScreen = ({navigation}) => {
         </View>
 
         <View style={styles.logoStyle}>
-          <OTPTextView
-            containerStyle={{marginTop: 24}}
-            textInputStyle={styles.roundedTextInput}
-            tintColor={appColors.borderLightGrey}
-            offTintColor={appColors.borderLightGrey}
-            inputCount={6}
-          />
+        <OtpInput
+          numberOfDigits={6}
+          onTextChange={text => console.log(text)}
+          autoFocus={true}
+          blurOnFilled={true}
+          type="numeric"
+          theme={{
+            pinCodeContainerStyle: styles.roundedTextInput,
+            focusedPinCodeContainerStyle: styles.roundedTextInput,
+            pinCodeTextStyle: styles.otpTextInput,
+             focusStickStyle:{backgroundColor:appColors.borderLightGrey}
+          }}
+        />
         </View>
 
         <TouchableOpacity
@@ -64,7 +71,7 @@ const OtpScreen = ({navigation}) => {
        <TouchableOpacity
               style={styles.signInStyle}
               onPress={() => {
-                navigation.navigate('SignInWithEmail');
+                navigation.navigate('SignInWithEmail',{ from: 0});
               }}>
               <Text style={{color: appColors.white, fontWeight: '700', fontSize: 18}}>
                 Sign in with Email
@@ -88,6 +95,7 @@ const styles = StyleSheet.create({
   },
   logoStyle: {
     alignItems: 'center',
+    marginTop: 64,
   },
   viewStyle: {
     flex: 3,
@@ -128,6 +136,7 @@ const styles = StyleSheet.create({
     height: 60,
     color: appColors.white,
     backgroundColor: appColors.inputBackground,
+    borderColor: appColors.borderLightGrey,
   },
   container: {
     justifyContent: 'center',
@@ -143,5 +152,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     marginVertical: 30,
+  },
+  otpTextInput: {
+    color:appColors.white
   },
 });

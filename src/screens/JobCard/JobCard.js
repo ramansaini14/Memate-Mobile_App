@@ -1031,8 +1031,7 @@ const JobCard = ({navigation, route}) => {
                 }}>
                 {new Date(jobData.start_date * 1000)
                   .toLocaleDateString('en-GB')
-                  .replace(/\//g, '.')}{' '}
-                {'  '}
+                  .replace(/\//g, '.')}
                 <Text
                   style={{
                     color: appColors.placeholderColor,
@@ -1074,8 +1073,7 @@ const JobCard = ({navigation, route}) => {
                 }}>
                 {new Date(jobData.end_date * 1000)
                   .toLocaleDateString('en-GB')
-                  .replace(/\//g, '.')}{' '}
-                {'  '}
+                  .replace(/\//g, '.')}
                 <Text
                   style={{
                     color: appColors.placeholderColor,
@@ -1186,7 +1184,7 @@ const JobCard = ({navigation, route}) => {
         {jobData != null && jobData.attachments.length > 0 && (
           <View style={{flexDirection: 'row'}}>
             <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>
-              Documents Attached{' '}
+              Documents Attached
             </Text>
             <View
               style={{

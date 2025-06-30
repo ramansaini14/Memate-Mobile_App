@@ -25,6 +25,7 @@ import upload from './uploadSlice';
 import getProfileReducer from './GetProfileSlice';
 import deleteProfileReducer from './DeleteProfileSlice';
 import globalReducer from './GlobalSlice';
+import forgotReducer from './ForgotSlice';
 
 const store = configureStore({
   reducer: {
@@ -53,7 +54,8 @@ const store = configureStore({
     upload: upload,
     getProfileReducer: getProfileReducer,
     deleteProfileReducer: deleteProfileReducer,
-    globalReducer:globalReducer
+    globalReducer:globalReducer,
+    forgotReducer:forgotReducer,
   },
 });
 

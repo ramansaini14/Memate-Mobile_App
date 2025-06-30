@@ -20,9 +20,9 @@ import {
 import {clearVerifyEmailSlice} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {clearLoginData, loginUser} from '../../redux/loginSlice';
-import { OtpInput } from 'react-native-otp-entry';
+import {OtpInput} from 'react-native-otp-entry';
 
-const EmailConfirmation = ({navigation, route}) => {
+const VerifyForgotEmail = ({navigation, route}) => {
   const {email, from} = route.params;
 
   const dispatch = useDispatch();
@@ -38,7 +38,7 @@ const EmailConfirmation = ({navigation, route}) => {
   useEffect(() => {
     if (responseVerifyCode != null) {
       // if (responseVerifyCode.data != null) {
-      navigation.navigate('CreatePin');
+      navigation.navigate('ResetPassword')
       saveToken(responseVerifyCode.access);
       // navigation.navigate('ChooseOrganization');
 
@@ -68,24 +68,25 @@ const EmailConfirmation = ({navigation, route}) => {
   };
 
   const onSubmitClick = () => {
-    if (otp.length < 6) {
-      Alert.alert('Please enter valid otp');
-    } else {
-      if (from == 0) {
-        const payload = {
-          device_id: 'Abc',
-          email: email,
-          password: otp,
-        };
-        dispatch(loginUser(payload));
+      if (otp.length < 6) {
+        Alert.alert('Please enter valid otp');
       } else {
-        const payload = {
-          email: email,
-          code: otp,
-        };
-        dispatch(hitVerifyEmailCode(payload));
+        if (from == 0) {
+          const payload = {
+            device_id: 'Abc',
+            email: email,
+            password: otp,
+          };
+          dispatch(loginUser(payload));
+        } else {
+          const payload = {
+            email: email,
+            code: otp,
+          };
+          dispatch(hitVerifyEmailCode(payload));
+        }
       }
-    }
+    // navigation.navigate('ResetPassword');
   };
 
   return (
@@ -108,7 +109,7 @@ const EmailConfirmation = ({navigation, route}) => {
         <OtpInput
           numberOfDigits={6}
           onTextChange={text => {setOtp(text);
-            if(text.length == 6){
+            if(text.length === 6) {
               Keyboard.dismiss();
             }
           }}
@@ -119,7 +120,7 @@ const EmailConfirmation = ({navigation, route}) => {
             pinCodeContainerStyle: styles.roundedTextInput,
             focusedPinCodeContainerStyle: styles.roundedTextInput,
             pinCodeTextStyle: styles.otpTextInput,
-            focusStickStyle:{backgroundColor:appColors.borderLightGrey}
+            focusStickStyle: {backgroundColor: appColors.borderLightGrey},
           }}
         />
         {/* </View> */}
@@ -146,7 +147,7 @@ const EmailConfirmation = ({navigation, route}) => {
               fontWeight: '600',
               fontSize: 16,
             }}>
-            Resend code in
+            Resend code in{' '}
             <Text
               style={{
                 color: appColors.white,
@@ -154,7 +155,7 @@ const EmailConfirmation = ({navigation, route}) => {
                 fontWeight: '600',
                 fontSize: 16,
               }}>
-              59:00
+              01:59
             </Text>
           </Text>
         </TouchableOpacity>
@@ -164,7 +165,7 @@ const EmailConfirmation = ({navigation, route}) => {
   );
 };
 
-export default EmailConfirmation;
+export default VerifyForgotEmail;
 
 const styles = StyleSheet.create({
   containerStyle: {
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
     color: appColors.white,
     backgroundColor: appColors.inputBackground,
     borderColor: appColors.borderLightGrey,
-    marginTop:32
+    marginTop: 32,
   },
   container: {
     justifyContent: 'center',
@@ -255,6 +256,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   otpTextInput: {
-    color:appColors.white
+    color: appColors.white,
   },
 });

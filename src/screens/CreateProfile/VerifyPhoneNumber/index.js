@@ -6,6 +6,7 @@ import OTPTextView from 'react-native-otp-textinput';
 import BackIcon from '../../../assets/svg/BackIcon';
 import { useDispatch, useSelector } from 'react-redux';
 import { hitVerifyPhoneCode } from '../../../redux/VerifyPhoneCodeSlice';
+import { OtpInput } from 'react-native-otp-entry';
 
 const VerifyPhoneNumber = ({ navigation,route }) => {
   const {phoneNumber} = route.params;
@@ -49,14 +50,23 @@ const VerifyPhoneNumber = ({ navigation,route }) => {
             Verify Phone Number
         </Text>
         <Text style={{color:appColors.white,fontFamily:'SF-Pro',marginTop:24,marginHorizontal:32,textAlign:'center',fontSize:17}}>A text message with a six-digit verification code has been sent to your phone number ending in {phoneNumber}</Text>
-        <OTPTextView
-              containerStyle={{ marginTop: 24 }}
-              textInputStyle={styles.roundedTextInput}
-              tintColor={appColors.borderLightGrey}
-              offTintColor={appColors.borderLightGrey}
-              inputCount={6}
-              handleTextChange={setOtp}
-            />
+        <OtpInput
+          numberOfDigits={6}
+          onTextChange={text =>{setOtp(text);
+            if(text.length==6){
+              Keyboard.dismiss();
+            }
+          }}
+          autoFocus={true}
+          blurOnFilled={true}
+          type="numeric"
+          theme={{
+            pinCodeContainerStyle: styles.roundedTextInput,
+            focusedPinCodeContainerStyle: styles.roundedTextInput,
+            pinCodeTextStyle: styles.otpTextInput,
+             focusStickStyle:{backgroundColor:appColors.borderLightGrey}
+          }}
+        />
 {/* navigation.navigate('ProfileAddress')} */}
           <TouchableOpacity style={styles.buttonStyle} onPress={() =>  onConfirmClick()}>
             <Text style={{ color: appColors.black, fontWeight: '600',fontSize:16,padding:16,fontFamily:'SF-Pro-Display-Bold', }}>Confirm</Text>
@@ -152,7 +162,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     height:60,
     color: appColors.white,
-    backgroundColor:appColors.inputBackground
+    backgroundColor:appColors.inputBackground,
+    borderColor: appColors.borderLightGrey,
   },
   container: {
     justifyContent: 'center',
@@ -161,5 +172,8 @@ const styles = StyleSheet.create({
     padding: 5,
     paddingVertical: 20,
     borderWidth: 1,
+  },
+  otpTextInput: {
+    color:appColors.white
   },
 });

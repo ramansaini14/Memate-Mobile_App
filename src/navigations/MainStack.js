@@ -44,6 +44,9 @@ import LoginPin from '../screens/LoginPin';
 import ResultReport from '../screens/ResultReport';
 import MainChatRoom from '../screens/BellaMeillenia/BellaMeillenia';
 import CalendarPage from '../screens/Calendar/Calendar';
+import ForgotPassword from '../screens/ForgotPassword';
+import VerifyForgotEmail from '../screens/ForgotPassword/VerifyForgotEmail';
+import ResetPassword from '../screens/ForgotPassword/ResetPassword';
 
 const Stack = createNativeStackNavigator();
 
@@ -63,6 +66,7 @@ const MainStack = () => {
       <Stack.Screen name="RequireDetails" component={RequireDetails} />
       <Stack.Screen name="VerifyPhoneNumber" component={VerifyPhoneNumber} />
       <Stack.Screen name="ProfileAddress" component={ProfileAddress} />
+      <Stack.Screen name="VerifyForgotEmail" component={VerifyForgotEmail} />
       <Stack.Screen
         name="ProfileAgencyContact"
         component={ProfileAgencyContact}
@@ -103,6 +107,8 @@ const MainStack = () => {
       <Stack.Screen name="ImageCropper" component={ImageCropper} />
       <Stack.Screen name="ResultReport" component={ResultReport} />
       <Stack.Screen name="CalendarPage" component={CalendarPage} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+      <Stack.Screen name="ResetPassword" component={ResetPassword} />
     </Stack.Navigator>
   );
 };

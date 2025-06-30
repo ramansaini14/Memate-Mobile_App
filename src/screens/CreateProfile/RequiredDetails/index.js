@@ -147,10 +147,17 @@ const RequiredDetails = ({navigation}) => {
     }
   };
 
+  const clearData = async () => {
+    await AsyncStorage.clear();
+    
+  }
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerView}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => {navigation.reset({ index: 0,routes:[{name:"StartScreen"}]});
+        clearData()}
+      }>
           <BackIcon />
         </TouchableOpacity>
         <Text style={styles.headerText}>Profile - Require Details</Text>

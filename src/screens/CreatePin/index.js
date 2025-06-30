@@ -18,6 +18,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {clearCreatePin, hitCreatePin} from '../../redux/CreatePinSlice';
 import {getToken} from '../../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OtpInput } from 'react-native-otp-entry';
 
 const CreatePin = ({navigation}) => {
   const dispatch = useDispatch();
@@ -32,7 +33,7 @@ const CreatePin = ({navigation}) => {
   const onCreatePinClick = () => {
     if (pin.length < 6) {
       alert('Enter Pin');
-    } else if (confirmPin < 6) {
+    } else if (confirmPin.length < 6) {
       alert('Enter correct confirm pin');
     } else if (pin != confirmPin) {
       alert('Confirm pin not matched');
@@ -63,19 +64,22 @@ const CreatePin = ({navigation}) => {
 
       <View style={styles.innerContainer}>
         <Text style={styles.textStyle}>Create 6 digit pin</Text>
-        <OTPTextView
-          containerStyle={{marginTop: 24}}
-          textInputStyle={styles.roundedTextInput}
-          tintColor={appColors.borderLightGrey}
-          offTintColor={appColors.borderLightGrey}
-          inputCount={6}
-          handleTextChange={val => {
-            setPin(val);
-            if (val.length === 6) {
-              Keyboard.dismiss(); // hide keyboard
+        <OtpInput
+          numberOfDigits={6}
+          onTextChange={text => {setPin(text);
+            if (text.length === 6) {
+              Keyboard.dismiss();
             }
           }}
-          keyboardType="number-pad"
+          autoFocus={true}
+          blurOnFilled={true}
+          type="numeric"
+          theme={{
+            pinCodeContainerStyle: styles.roundedTextInput,
+            focusedPinCodeContainerStyle: styles.roundedTextInput,
+            pinCodeTextStyle: styles.otpTextInput,
+             focusStickStyle:{backgroundColor:appColors.borderLightGrey}
+          }}
         />
 
         <View
@@ -88,21 +92,24 @@ const CreatePin = ({navigation}) => {
           }}
         />
         <Text style={[styles.textStyle, {marginTop: 48}]}>Confirm Pin</Text>
-        <OTPTextView
-          containerStyle={{marginTop: 24}}
-          textInputStyle={styles.roundedTextInput}
-          tintColor={appColors.borderLightGrey}
-          offTintColor={appColors.borderLightGrey}
-          inputCount={6}
-          handleTextChange={val => {
-            setConfirmPin(val);
-            if (val.length === 6) {
-              Keyboard.dismiss(); // hide keyboard
+        <OtpInput
+          numberOfDigits={6}
+          onTextChange={text => {setConfirmPin(text);
+            if (text.length === 6) {
+              Keyboard.dismiss();
             }
+          }
+          }
+          autoFocus={true}
+          blurOnFilled={true}
+          type="numeric"
+          theme={{
+            pinCodeContainerStyle: styles.roundedTextInput,
+            focusedPinCodeContainerStyle: styles.roundedTextInput,
+            pinCodeTextStyle: styles.otpTextInput,
+             focusStickStyle:{backgroundColor:appColors.borderLightGrey}
           }}
-          keyboardType="number-pad"
         />
-
         <TouchableOpacity
           style={styles.buttonStyle}
           onPress={() => onCreatePinClick()}>
@@ -202,6 +209,8 @@ const styles = StyleSheet.create({
     height: 60,
     color: appColors.white,
     backgroundColor: appColors.inputBackground,
+    borderColor: appColors.borderLightGrey,
+    marginTop:16
   },
   container: {
     justifyContent: 'center',
@@ -210,5 +219,8 @@ const styles = StyleSheet.create({
     padding: 5,
     paddingVertical: 20,
     borderWidth: 1,
+  },
+  otpTextInput: {
+    color:appColors.white
   },
 });
