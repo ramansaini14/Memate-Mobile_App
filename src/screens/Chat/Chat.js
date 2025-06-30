@@ -21,15 +21,32 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {io} from 'socket.io-client';
 import {useSocket} from '../../components/useSocket';
 import ModalCreateChat from '../../components/ModalCreateChat';
+import { useSelector } from 'react-redux';
+import { emitSocket } from '../../socketService';
 
 const Chat = ({navigation}) => {
 
+  const globallyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
+
+  const [managers, setManagers] = useState([]);
+
+  useEffect(()=>{
+    console.log('globallyOrgData managers===> ', globallyOrgData.managers);
+    setManagers(globallyOrgData.managers || []);
+  },[])
   const [visibleModal, setVisibleModal] = useState(false);
   const onCloseClick = () => {
     setVisibleModal(false);
   }
   const onCreateChatClick = () => {
     setVisibleModal(true);
+  }
+
+  const onCreateClick = (payload) => {
+    emitSocket(create_chat_group, payload);
+    setVisibleModal(false);
   }
 
   return (
@@ -137,7 +154,7 @@ const Chat = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <ModalCreateChat modalVisible={visibleModal} onCloseClick={onCloseClick}/>
+      <ModalCreateChat modalVisible={visibleModal} onCloseClick={onCloseClick} onCreateClick={onCreateClick} managers={managers}/>
     </SafeAreaView>
   );
 };

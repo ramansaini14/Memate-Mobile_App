@@ -1,11 +1,11 @@
 import {
   Alert,
+  Keyboard,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
@@ -42,7 +42,10 @@ const LoginPin = ({navigation, route}) => {
         saveToken(responseVerifyCode.access);
         dispatch(clearVerifyEmailSlice());
         dispatch(clearVerifyEmailCodeSlice());
-        navigation.navigate('ChooseOrganization');
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'ChooseOrganization'}],
+        });
         dispatch(clearVerifyEmailCodeSlice());
       }
     }
@@ -56,7 +59,10 @@ const LoginPin = ({navigation, route}) => {
       return;
     } else if (responseLogin != null) {
       saveToken(responseLogin.access);
-      navigation.navigate('ChooseOrganization');
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'ChooseOrganization'}],
+      });
       dispatch(clearVerifyEmailSlice());
       dispatch(clearVerifyEmailCodeSlice());
       dispatch(clearVerifyEmailCodeSlice());
@@ -96,7 +102,7 @@ const LoginPin = ({navigation, route}) => {
       Alert.alert('MeMate', error.error);
     } else if (error?.detail) {
       Alert.alert('MeMate', error.detail);
-    } 
+    }
     dispatch(clearVerifyEmailSlice());
   }, [error]);
 
@@ -125,7 +131,13 @@ const LoginPin = ({navigation, route}) => {
             tintColor={appColors.borderLightGrey}
             offTintColor={appColors.borderLightGrey}
             inputCount={6}
-            handleTextChange={setOtp} // Update state when OTP changes
+            keyboardType="number-pad"
+            handleTextChange={val => {
+              setOtp(val);
+              if (val.length === 6) {
+                Keyboard.dismiss(); // hide keyboard
+              }
+            }} // Update state when OTP changes
           />
         </View>
 

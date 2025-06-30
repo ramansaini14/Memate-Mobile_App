@@ -121,7 +121,7 @@ const SignInWithEmail = ({ navigation,route }) => {
           placeholder="email@email.com"
           placeholderTextColor={appColors.placeholderColor}
           onChangeText={e => { handleEmailChange(e); }}
-          keyboardType='default'
+          keyboardType='email-address'
           autoCapitalize="none"
         />
         <TouchableOpacity style={styles.buttonStyle} onPress={() => { onLoginClick(); }}>

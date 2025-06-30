@@ -535,7 +535,7 @@ const HomeScreen = ({navigation, route}) => {
                           fontFamily: 'SF-Pro',
                           fontWeight: '400',
                         }}>
-                        {'View Jobs '}
+                        View Jobs
                       </Text>
                       <View style={{marginTop: 4}}>
                         <RightArrowHome

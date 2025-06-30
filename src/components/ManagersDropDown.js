@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
   import { StyleSheet, Text, View } from 'react-native';
   import { Dropdown } from 'react-native-element-dropdown';
 
@@ -13,35 +13,39 @@ import React, { useState } from 'react';
     { label: 'Item 8', value: '8' },
   ];
 
-  const ManagersDropDown = () => {
+  const ManagersDropDown = ({managers}) => {
     const [value, setValue] = useState(null);
     const [isFocus, setIsFocus] = useState(false);
 
     const renderLabel = () => {
       if (value || isFocus) {
         return (
-          <Text style={[styles.label, isFocus && { color: 'blue' }]}>
-            Dropdown label
+          <Text style={[styles.label, isFocus && { color: 'black' }]}>
+           Managers List
           </Text>
         );
       }
       return null;
     };
 
+    useEffect(() => {
+      setIsFocus(false);
+    }, [value]);
+
     return (
       <View style={styles.container}>
         {renderLabel()}
         <Dropdown
-          style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
+          style={[styles.dropdown, isFocus && { borderColor: 'black' }]}
           placeholderStyle={styles.placeholderStyle}
           selectedTextStyle={styles.selectedTextStyle}
           inputSearchStyle={styles.inputSearchStyle}
           iconStyle={styles.iconStyle}
-          data={data}
+          data={managers}
           search
           maxHeight={300}
-          labelField="label"
-          valueField="value"
+          labelField="name"
+          valueField="id"
           placeholder={!isFocus ? 'Select item' : '...'}
           searchPlaceholder="Search..."
           value={value}
@@ -49,7 +53,6 @@ import React, { useState } from 'react';
           onBlur={() => setIsFocus(false)}
           onChange={item => {
             setValue(item.value);
-            setIsFocus(false);
           }}
       
         />
@@ -63,6 +66,7 @@ import React, { useState } from 'react';
     container: {
       backgroundColor: 'white',
       padding: 16,
+      width:300
     },
     dropdown: {
       height: 50,

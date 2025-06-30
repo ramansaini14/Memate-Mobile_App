@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,20 @@ const ModalCreateChat = ({
 }) => {
   const [loading, setLoading] = useState(true);
 
+  console.log("Modal Managers ===> ", managers);
+
+  const onCreate = () => {
+    const payload = {
+      user_id: 1, // Replace with actual user ID
+      name: 'New Chat', // Replace with actual chat name
+      participants:[],
+      organization_id: 1, // Replace with actual organization ID
+      project_id: 1, // Replace with actual project ID
+      task_id: 1, // Replace with actual task ID
+    }
+    onCreateClick(payload);
+  }
+
   return (
     <Modal
       animationType="slide"
@@ -36,7 +50,7 @@ const ModalCreateChat = ({
             <Text style={styles.modalTitle}>Create Chat</Text>
             <View style={{flex:1}}>
 
-            <ManagersDropDown/>
+            <ManagersDropDown managers={managers}/>
             </View>
 
             {/* Close Button */}
@@ -65,7 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
-    height:"80%",
+    height:"50%",
   },
   modalContent: {
     flex:1,
