@@ -8,10 +8,10 @@ import PauseJobIcon from '../assets/svg/PauseJobIcon';
 import StartJobPlayIcon from '../assets/svg/StartJobPlayIcon';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  increment, 
-  startTimer, 
+  increment,
+  startTimer,
   resumeTimer,
-  selectJobTimer
+  selectJobTimer,
 } from '../redux/TimerSlice';
 import {useDispatch, useSelector} from 'react-redux';
 
@@ -29,32 +29,43 @@ const TimeTrackerCard = ({
   // console.log('isJobStarted', isJobStarted)
 
   const dispatch = useDispatch();
-  
+
   // Get job-specific timer info from Redux
   const jobTimer = useSelector(state => selectJobTimer(state, data.id));
   const activeJobId = useSelector(state => state.timer.activeJobId);
-  
+
   // Log props for debugging
   useEffect(() => {
     console.log(`TimeTrackerCard render for job ${data.id} - props:`, {
-      isJobStarted, 
-      isPaused, 
-      showTracker, 
+      isJobStarted,
+      isPaused,
+      showTracker,
       timer,
       jobTimerValue: jobTimer ? jobTimer.value : 'not available',
-      isActive: activeJobId === data.id
+      isActive: activeJobId === data.id,
     });
-  }, [isJobStarted, isPaused, showTracker, timer, jobTimer, activeJobId, data.id]);
+  }, [
+    isJobStarted,
+    isPaused,
+    showTracker,
+    timer,
+    jobTimer,
+    activeJobId,
+    data.id,
+  ]);
 
   // Add useEffect to log when isPaused changes
   useEffect(() => {
-    console.log(`TimeTrackerCard job ${data.id}: isPaused state changed to:`, isPaused);
+    console.log(
+      `TimeTrackerCard job ${data.id}: isPaused state changed to:`,
+      isPaused,
+    );
   }, [isPaused, data.id]);
 
   const setLocalTimer = async () => {
     console.log(`Storing timer for job ${data.id}:`, timer);
     await AsyncStorage.setItem(`timer_${data.id}`, timer.toString());
-  }
+  };
 
   const formatTime = seconds => {
     const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
@@ -65,16 +76,18 @@ const TimeTrackerCard = ({
 
   const handlePauseButtonPress = () => {
     console.log(`Pause button pressed in TimeTrackerCard for job ${data.id}`);
-    
+
     // If job isn't started yet, start it first
     if (!isJobStarted) {
-      console.log(`TimeTrackerCard: Job ${data.id} not started, starting it first`);
+      console.log(
+        `TimeTrackerCard: Job ${data.id} not started, starting it first`,
+      );
       if (handleStartStop) {
         handleStartStop();
       }
       return;
     }
-    
+
     if (handlePause) {
       console.log(`Pausing job ${data.id}`);
       handlePause();
@@ -99,10 +112,7 @@ const TimeTrackerCard = ({
         <JobStartedTimeIcon />
       </View>
       <View style={styles.header}>
-        <Text style={styles.jobId}>THE-JB-{data.number}</Text>
-        {/* <Text style={styles.jobStatus}>
-          {isJobStarted ? (isPaused ? "Paused" : "Active") : "Ready"}
-        </Text> */}
+        <Text style={styles.jobId}>{data.number}</Text>
       </View>
 
       <Text style={styles.title}>{data.short_description}</Text>
@@ -156,36 +166,35 @@ const TimeTrackerCard = ({
             </Text>
           </View>
         </View>
-        <View style={{paddingTop:8}}>
-        {/* Force re-render with key */}
-        {!isJobStarted ? (
-          // Job not started yet, show play button to start
-          <TouchableOpacity
-            key={`start-button-${data.id}`}
-            style={styles.statusButton}
-            onPress={handleStartStop}>
-            <WhitePlayIcon height={16} width={16}/>
-            <Text style={styles.statusText}>Start Job</Text>
-          </TouchableOpacity>
-        ) : isPaused ? (
-          // Job is paused, show play button to resume
-          <TouchableOpacity
-            key={`paused-button-${data.id}`}
-            style={styles.statusButton}
-            onPress={handleResumeButtonPress}>
-            <WhitePlayIcon height={16} width={16}/>
-            <Text style={styles.statusText}>Resume Job</Text>
-          </TouchableOpacity>
-        ) : (
-          // Job is running, show pause button
-          <TouchableOpacity
-            key={`in-progress-button-${data.id}`}
-            style={styles.statusButton}
-            onPress={handlePauseButtonPress}>
-            <PauseJobIcon height={16} width={16}/>
-            <Text style={styles.statusText}>In Progress</Text>
-          </TouchableOpacity>
-        )}
+        <View style={{paddingTop: 8}}>
+          {!isJobStarted ? (
+            // Job not started yet, show play button to start
+            <TouchableOpacity
+              key={data.id}
+              style={styles.statusButton}
+              onPress={handleStartStop}>
+              <WhitePlayIcon height={16} width={16} />
+              <Text style={styles.statusText}>Start Job</Text>
+            </TouchableOpacity>
+          ) : isPaused ? (
+            // Job is paused, show play button to resume
+            <TouchableOpacity
+              key={data.id}
+              style={styles.statusButton}
+              onPress={handleResumeButtonPress}>
+              <WhitePlayIcon height={16} width={16} />
+              <Text style={styles.statusText}>Resume Job</Text>
+            </TouchableOpacity>
+          ) : (
+            // Job is running, show pause button
+            <TouchableOpacity
+              key={data.id}
+              style={styles.statusButton}
+              onPress={handlePauseButtonPress}>
+              <PauseJobIcon height={16} width={16} />
+              <Text style={styles.statusText}>In Progress</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>

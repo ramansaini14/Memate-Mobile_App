@@ -47,7 +47,7 @@ const LocationTracker = ({
   timer,
   onCompleteJob,
   isCompleted,
-  jobCompleteLoad
+  jobCompleteLoad,
 }) => {
   const dispatch = useDispatch();
   const [isStopped, setStopped] = useState(false);
@@ -423,79 +423,44 @@ const LocationTracker = ({
       {isJobStarted || data.action_status == 1 || data.action_status == 2 ? (
         <View style={styles.containerInner}>
           <View style={{flex: 1}}>
-
-          <SwipeButton
-            title="Swipe to Complete"
-            titleStyles={{
-              fontWeight: '700',
-              marginLeft: 30,
-              fontSize: 16,
-              color:'#FFFFFF'
-            }}
-            thumbIconBackgroundColor="#DAFD90"
-            thumbIconWidth={56}
-            thumbIconBorderColor="transparent"
-            railBackgroundColor={appColors.black}
-            railFillBackgroundColor={appColors.black}
-            railFillBorderColor={appColors.black}
-            railBorderColor={appColors.black}
-            disabledRailBackgroundColor={true}
-            thumbIconComponent={RightArrowJobStart}
-            titleColor={appColors.black}
-            titleFontSize={16}
-            height={56}
-            disabled={false}
-            disableResetOnTap={true}
-            shouldResetAfterSuccess={true}
-            thumbIconStyles={{
-              borderRadius: 100,
-              width: 56,
-              height: 56,
-            }}
-            railStyles={{
-              backgroundColor: appColors.black,
-              height: 56,
-              justifyContent: 'center',
-              borderRadius: 100,
-              paddingHorizontal: 1,
-            }}
-            onSwipeSuccess={() => onCompleteJob()}
-          />
-            
-            {/* <SwipeButton
+            <SwipeButton
               title="Swipe to Complete"
               titleStyles={{
                 fontWeight: '700',
                 marginLeft: 30,
+                fontSize: 16,
+                color: '#FFFFFF',
               }}
-              thumbIconBackgroundColor={appColors.jobLightGreen}
-              thumbIconWidth={50}
+              thumbIconBackgroundColor="#DAFD90"
+              thumbIconWidth={56}
               thumbIconBorderColor="transparent"
               railBackgroundColor={appColors.black}
               railFillBackgroundColor={appColors.black}
               railFillBorderColor={appColors.black}
               railBorderColor={appColors.black}
               disabledRailBackgroundColor={true}
-              // resetAfterSuccessAnimDelay={1000}
               thumbIconComponent={RightArrowJobStart}
-              titleColor={appColors.white}
+              titleColor={appColors.black}
               titleFontSize={16}
+              height={56}
+              disabled={false}
+              disableResetOnTap={true}
+              shouldResetAfterSuccess={true}
               thumbIconStyles={{
-                borderRadius: 50,
+                borderRadius: 100,
+                width: 56,
+                height: 56,
               }}
               railStyles={{
                 backgroundColor: appColors.black,
-                flex: 1,
+                height: 56,
                 justifyContent: 'center',
+                borderRadius: 100,
+                paddingHorizontal: 1,
               }}
-              onSwipeSuccess={() => {
-                onCompleteJob();
-                handleStart();
-              }}
-            /> */}
+              onSwipeSuccess={() => onCompleteJob()}
+            />
           </View>
-
-          {/* Force re-render of the correct icon using key */}
           {isPaused ? (
             // Job is paused - show play button
             <TouchableOpacity
@@ -503,9 +468,6 @@ const LocationTracker = ({
               style={styles.pauseIcon}
               onPress={handleResumeButtonPress}>
               <StartJobPlayIcon />
-              <View style={{alignItems: 'center'}}>
-                {/* <Text style={styles.iconText}>Play</Text> */}
-              </View>
             </TouchableOpacity>
           ) : (
             // Job is running - show pause button
@@ -514,12 +476,8 @@ const LocationTracker = ({
               style={styles.pauseIcon}
               onPress={handlePauseButtonPress}>
               <PauseJobIcon />
-              <View style={{alignItems: 'center'}}>
-                {/* <Text style={styles.iconText}>Pause</Text> */}
-              </View>
             </TouchableOpacity>
           )}
-          {/* <Tracker onStop={handleStop} /> */}
         </View>
       ) : (
         <TouchableOpacity

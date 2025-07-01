@@ -93,8 +93,9 @@ const JobCard = ({navigation, route}) => {
     state => state.globalReducer.isPausedGlobal,
   );
   const jobDataGlobally = useSelector(state => state.globalReducer.jobData);
-  const globallyOrgData = useSelector(state => state.globalReducer.globallyOrgData);
-  
+  const globallyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
 
   // Get the job-specific timer for this job
   const jobTimer = useSelector(state => selectJobTimer(state, jobData.id));
@@ -150,7 +151,7 @@ const JobCard = ({navigation, route}) => {
 
     getOrgId();
 
-    if(jobDataGlobally!=null) {
+    if (jobDataGlobally != null) {
       console.log(`Setting job ${jobData.id} started from action_status=1`);
       setIsJobStarted(true);
       setIsPaused(true); // Start in paused state
@@ -164,19 +165,18 @@ const JobCard = ({navigation, route}) => {
         startBackgroundTimer(dispatch);
         startLocationTracking();
       }, 500);
-      
-    }
-    else{
-      console.log(`JobCard mounted for job ID: ${jobData.id}, no global job data`);
+    } else {
+      console.log(
+        `JobCard mounted for job ID: ${jobData.id}, no global job data`,
+      );
       setIsJobStarted(false);
       setIsPaused(false);
       setShowTracker(false); // Initially hide tracker
     }
 
-
     // Force start the job immediately if action_status is 1
     // if (jobData.action_status === 1) {
-     
+
     // } else if (jobData.action_status === 2) {
     //   if (jobDataGlobally) {
     //     clearInterval(intervalRef.current);
@@ -254,7 +254,7 @@ const JobCard = ({navigation, route}) => {
           date: currentDate,
         };
 
-        // Send to API 
+        // Send to API
         const payload = {
           orgId,
           jobId: jobData.id,
@@ -601,8 +601,8 @@ const JobCard = ({navigation, route}) => {
         if (!isPaused) {
           setIsJobStarted(true);
         }
-        if(isSwipeCompleted) {
-          isSwipeCompleted(false)
+        if (isSwipeCompleted) {
+          isSwipeCompleted(false);
         }
 
         if (jobData.action_status == 3) {
@@ -1090,13 +1090,11 @@ const JobCard = ({navigation, route}) => {
         <View style={styles.blackCardStyle}>
           <View>
             <Text style={styles.timePaymentStyle}>Time</Text>
-            <Text style={styles.cardHoursStyle}>
-              {jobData.duration}h{/* {data.type_text === 'Hours' ? 'h' : ''} */}
-            </Text>
+            <Text style={styles.cardHoursStyle}>{jobData.duration + 'h'}</Text>
           </View>
           <View>
             <Text style={styles.timePaymentStyle}>Payment</Text>
-            <Text style={styles.cardHoursStyle}>${jobData.cost}</Text>
+            <Text style={styles.cardHoursStyle}>{'$' + jobData.cost}</Text>
           </View>
           {/* <View>
             <Text style={styles.timePaymentStyle}>Variations</Text>

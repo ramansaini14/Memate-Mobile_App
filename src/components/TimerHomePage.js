@@ -2,15 +2,18 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
 import JobStartedTimeIcon from '../assets/svg/JobStartedTimeIcon';
 import PauseJobIcon from '../assets/svg/PauseJobIcon';
-import WhitePlayIcon from '../assets/svg/WhitePlayIcon';
 import {appColors} from '../utils/appColors';
 
 const TimerHomePage = ({data, timer}) => {
   const formatTime = seconds => {
-    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-    const secs = String(seconds % 60).padStart(2, '0');
-    return `${hrs}:${mins}:${secs}`;
+    console.log('Timer ===> ', seconds);
+    if (seconds != null && seconds != 0 && seconds != undefined) {
+      const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      console.log('Hrs ===> ', hrs, ' mins ===> ', mins, ' secs ===> ', secs);
+      return `${hrs}:${mins}:${secs}`;
+    }
   };
 
   return (
@@ -73,7 +76,6 @@ const TimerHomePage = ({data, timer}) => {
             </Text>
           </View>
         </View>
-        // Job is running, show pause button
         <View key={data.id} style={styles.statusButton}>
           <PauseJobIcon height={16} width={16} />
           <Text style={styles.statusText}>In Progress</Text>
