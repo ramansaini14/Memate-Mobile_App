@@ -101,7 +101,7 @@ import { clearForgotSlice, hitForgotApi } from '../../redux/ForgotSlice';
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <BackIcon />
           </TouchableOpacity>
-          <Text style={styles.headerTextStyle}>Forgot Password- Email</Text>
+          <Text style={styles.headerTextStyle}>Forgot Pin- Email</Text>
         </View>
         <View style={styles.logoStyle}>
           <MainLogo width={200} />

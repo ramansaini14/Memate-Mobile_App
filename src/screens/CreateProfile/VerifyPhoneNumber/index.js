@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
     color: appColors.white,
     backgroundColor:appColors.inputBackground,
     borderColor: appColors.borderLightGrey,
+    marginTop:32
   },
   container: {
     justifyContent: 'center',

@@ -40,7 +40,7 @@ const RequiredDetails = ({navigation}) => {
   const {statusCode, error, isLoading,data } = useSelector(state => state.verifyPhoneCodeReducer);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');

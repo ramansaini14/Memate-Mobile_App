@@ -35,6 +35,7 @@ const SignInWithEmail = ({ navigation,route }) => {
   const [email, setEmail] = useState('');
   const [isValid, setIsValid] = useState(false);
 
+
   const loginSuccess = useSelector(state => state.loginReducer.data);
   const responseVerifyEmail = useSelector(state => state.verifyEmailReducer.data);
    const {statusCode, error, isLoading,data } = useSelector(state => state.verifyEmailReducer);
@@ -59,6 +60,8 @@ const SignInWithEmail = ({ navigation,route }) => {
     }
   };
 
+
+
   const handleEmailChange = e => {
     setEmail(e);
   };
@@ -81,7 +84,7 @@ const SignInWithEmail = ({ navigation,route }) => {
           }
         }else{
        saveEmail()
-        navigation.navigate("EmailConfirmation",{email:email,from:from})
+        navigation.navigate("EmailConfirmation",{email:email,from:2})
         }
         dispatch(clearVerifyEmailSlice())
     } else if (responseVerifyEmail != null) {

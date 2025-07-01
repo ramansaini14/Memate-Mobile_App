@@ -176,7 +176,7 @@ const LoginPin = ({navigation, route}) => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={{marginTop: 16, alignItems: 'center'}} onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={{color:appColors.white}}>Forgot Password</Text>
+          <Text style={{color:appColors.white}}>Forgot Pin</Text>
         </TouchableOpacity>
       </ScrollView>
       {/* </TouchableWithoutFeedback> */}

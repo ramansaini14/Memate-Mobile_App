@@ -3,7 +3,7 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
 import {ApiBaseUrl, verifyEmailCode} from '../utils/Constants';
 
-export const hitVerifyEmailCode = createAsyncThunk('hitVerifyEmailCode', async payload => {
+export const hitVerifyEmailCode = createAsyncThunk('hitVerifyEmailCode', async (payload, { rejectWithValue }) => {
   try {
     const config = {
       headers: {
@@ -15,10 +15,16 @@ export const hitVerifyEmailCode = createAsyncThunk('hitVerifyEmailCode', async p
     const url = ApiBaseUrl+verifyEmailCode
     console.log('url ===> ', url);
     const response = await axios.post(url, payload, config);
-    return response.data;
+    return {
+      data: response.data,
+      status: response.status,
+    };
   } catch (error) {
     console.log('Error  ===> ', error.response.data);
-    throw error.response.data;
+    return rejectWithValue({
+      status: error.response?.status,
+      message: error.response?.data || 'Something went wrong',
+    });
   }
 });
 
@@ -28,28 +34,36 @@ const VerifyEmailCodeSlice = createSlice({
   initialState: {
     isLoading: false,
     data: null,
+    statusCode: null,
+    error: null,
   },
   reducers: {
     clearVerifyEmailCodeSlice: state => {
       // Reset the data property to an empty array
       state.data = null;
       state.isAuthenticated = false;
+      state.statusCode = null;
+      state.error = null;
     },
   },
   extraReducers: builder => {
     builder
       .addCase(hitVerifyEmailCode.pending, state => {
-        console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.statusCode = null;
+        state.error = null;
       })
       .addCase(hitVerifyEmailCode.fulfilled, (state, action) => {
-        console.log('Response  ===> ', state);
         state.isLoading = false;
-        state.data = action.payload;
+        state.data = action.payload.data;
+        state.statusCode = action.payload.status;
       })
       .addCase(hitVerifyEmailCode.rejected, (state, action) => {
         console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.isLoading = false;
+        state.statusCode = action.payload?.status;
+      
+        state.error = action.payload?.message;
       });
   },
 });

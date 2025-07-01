@@ -17,7 +17,7 @@ import {
   clearVerifyEmailCodeSlice,
   hitVerifyEmailCode,
 } from '../../redux/VerifyEmailCodeSlice';
-import {clearVerifyEmailSlice} from '../../redux/VerifyEmailSlice';
+import {clearVerifyEmailSlice, hitVerifyEmail} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {clearLoginData, loginUser} from '../../redux/loginSlice';
 import { OtpInput } from 'react-native-otp-entry';
@@ -32,12 +32,28 @@ const EmailConfirmation = ({navigation, route}) => {
   );
 
   const responseLogin = useSelector(state => state.loginReducer.data);
+  const error = useSelector(state => state.verifyEmailCodeReducer.error);
+  const status = useSelector(state => state.verifyEmailCodeReducer.status);
 
   const [otp, setOtp] = useState('');
+
+    const [isSignupClicked, setIsSignupClicked] = useState(false);
+    const [timer, setTimer] = useState(60);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+          if (timer > 0) {
+            setTimer(timer - 1);
+          }
+        }, 1000);
+        return () => clearInterval(interval);
+      
+    }, [timer, isSignupClicked]);
 
   useEffect(() => {
     if (responseVerifyCode != null) {
       // if (responseVerifyCode.data != null) {
+
       navigation.navigate('CreatePin');
       saveToken(responseVerifyCode.access);
       // navigation.navigate('ChooseOrganization');
@@ -45,11 +61,20 @@ const EmailConfirmation = ({navigation, route}) => {
       dispatch(clearVerifyEmailSlice());
       dispatch(clearVerifyEmailCodeSlice());
       dispatch(clearVerifyEmailCodeSlice());
+      }
       // } else {
       //   Alert.alert('MeMate', 'Email already existed.');
       // }
-    }
+  
   }, [responseVerifyCode]);
+
+  useEffect(() => {
+    console.log("error ===> ",error);
+    console.log("status ===> ",status); 
+    if (error != null) {
+    Alert.alert('MeMate', error.error);
+    }
+  }, [error,status]);
 
   // useEffect(() => {
   //   if (responseLogin != null) {
@@ -138,7 +163,19 @@ const EmailConfirmation = ({navigation, route}) => {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.timerBackground}>
+        <TouchableOpacity style={styles.timerBackground} onPress={() => {
+          if (timer <= 0) {
+            // setIsSignupClicked(true);
+            setTimer(60);
+            const payload = {
+              email: email,
+            };
+            dispatch(hitVerifyEmail(payload));
+          } else {
+            Alert.alert('MeMate', 'Please wait for the timer to finish');
+          }
+        }
+        }>
           <Text
             style={{
               color: appColors.borderLightGrey,
@@ -146,16 +183,16 @@ const EmailConfirmation = ({navigation, route}) => {
               fontWeight: '600',
               fontSize: 16,
             }}>
-            Resend code in
-            <Text
+            Resend code in {' '}
+            {timer>0&&<Text
               style={{
                 color: appColors.white,
                 padding: 16,
                 fontWeight: '600',
                 fontSize: 16,
               }}>
-              59:00
-            </Text>
+              00:{timer < 10 ? `0${timer}` : timer}
+            </Text>}
           </Text>
         </TouchableOpacity>
       </ScrollView>
