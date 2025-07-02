@@ -1,6 +1,7 @@
 // src/features/timer/timerSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch } from 'react-redux';
 
 // Initialize a background timer variable
 let backgroundTimerInterval = null;
@@ -24,8 +25,9 @@ const safeAsyncStorage = {
   }
 };
 
+
 const TimerSlice = createSlice({
-  name: 'timer',
+  name: 'timer',  
   initialState: {
     value: 0,
     isRunning: false,
@@ -97,12 +99,15 @@ const TimerSlice = createSlice({
       }
     },
     setTimer: (state, action) => {
+   
       const { jobId, value } = action.payload;
       
       // Update global timer if this is the active job
       if (jobId === state.activeJobId) {
         state.value = value;
       }
+
+      console.log('setTimer action called with payload:',jobId, " value ===>",value );
       
       // Always update job-specific timer
       if (!state.jobs[jobId]) {
@@ -118,8 +123,8 @@ const TimerSlice = createSlice({
       state.jobs[jobId].lastUpdateTime = Date.now();
       
       // Persist values
-      safeAsyncStorage.setItem(`timer_${jobId}`, value.toString());
-      safeAsyncStorage.setItem('timerJobs', JSON.stringify(state.jobs));
+      // safeAsyncStorage.setItem(`timer_${jobId}`, value.toString());
+      // safeAsyncStorage.setItem('timerJobs', JSON.stringify(state.jobs));
       
       console.log(`Timer set for job ${jobId}:`, value);
     },

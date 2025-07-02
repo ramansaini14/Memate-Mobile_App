@@ -4,8 +4,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {appColors} from '../../utils/appColors';
 import MainLogo from '../../assets/svg/MainLogo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { connectSocket } from '../../socketService';
-import { useIsFocused } from '@react-navigation/native';
+import {connectSocket} from '../../socketService';
+import {useIsFocused} from '@react-navigation/native';
 
 const SplashScreen = ({navigation}) => {
   const [token, setToken] = useState(null);
@@ -43,16 +43,15 @@ const SplashScreen = ({navigation}) => {
   };
 
   useEffect(() => {
-    if(isFocused){
-    getToken();
+    if (isFocused) {
+      getToken();
     }
   }, []);
 
   useEffect(() => {
     console.log('Token ===> ', token);
-   
-    if (loading) {
 
+    if (loading) {
       console.log(
         'Required ===> ',
         isRequired,
@@ -63,8 +62,9 @@ const SplashScreen = ({navigation}) => {
         ' New ===> ',
         isNew,
       );
-      if (token == null) navigation.navigate('StartScreen');
-      else if (isNew) {
+      if (token == null) {
+        navigation.navigate('StartScreen');
+      } else if (isNew === 'true') {
         if (isNew && !isPinCreate) {
           navigation.navigate('CreatePin');
         } else if (isNew && !isAppTerm) {
@@ -81,7 +81,6 @@ const SplashScreen = ({navigation}) => {
           // navigation.reset('BottomBar');
         }
       } else {
-
         connectSocket();
         navigation.reset({
           index: 0,
@@ -89,8 +88,7 @@ const SplashScreen = ({navigation}) => {
         });
       }
     }
-  }),
-    [loading];
+  }, [loading]);
 
   return (
     <SafeAreaView style={styles.container}>

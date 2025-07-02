@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -28,6 +29,7 @@ import {useIsFocused} from '@react-navigation/native';
 import JobFilterModal from '../../../components/JobFilterModal';
 import moment from 'moment';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const JobsScreen = ({navigation, route}) => {
   const {isWhiteDot, from} = route.params;
@@ -48,6 +50,8 @@ const JobsScreen = ({navigation, route}) => {
   const [loading, setLoading] = useState(true);
 
   const isFocused = useIsFocused();
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextUrl, setNextUrl] = useState('');
 
   const [filterData, setFilterData] = useState([
     {status: '0', name: 'All Jobs', count: 0},
@@ -127,6 +131,7 @@ const JobsScreen = ({navigation, route}) => {
   useEffect(() => {
     if (responseJobs != null && responseJobs.status == 'OK') {
       console.log('responseJobs ===>', responseJobs);
+      setNextUrl(responseJobs.next);
       setLoading(false);
       if (
         filterData[isWhitDot == -1 ? 0 : isWhitDot].status == 0 &&
@@ -138,14 +143,29 @@ const JobsScreen = ({navigation, route}) => {
               String(item.action_status) === '2') &&
             item.status === 'a',
         );
+        if (loadingMore) {
+          setJobsData(prevData => [...prevData, ...inProgressData]);
+        }else {
         setJobsData(inProgressData);
+        }
+        setLoadingMore(false);
       } else if (filterData[isWhitDot].status == 'a') {
         const comfiredJobData = responseJobs.results.filter(
           item => item.status === 'a' && item.action_status === null,
         );
+        if (loadingMore) {
+          setJobsData(prevData => [...prevData, ...comfiredJobData]);
+        }else {
         setJobsData(comfiredJobData);
+        }
+        setLoadingMore(false);
       } else {
+        if (loadingMore) {
+          setJobsData(prevData => [...prevData, ...responseJobs.results]);
+        }else {
         setJobsData(responseJobs.results);
+        }
+        setLoadingMore(false);
       }
       const updatedData = filterData.map(item => ({...item, count: 0}));
 
@@ -263,94 +283,95 @@ const JobsScreen = ({navigation, route}) => {
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        <Text style={styles.headStyle}>Jobs</Text>
-
-        <FlatList
-          ref={flatListRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={filterData}
-          keyExtractor={item => item.id}
-          renderItem={({item, index}) => (
-            <TouchableOpacity
-              onPress={() => setWhiteDot(index)}
+      <Text style={styles.headStyle}>Jobs</Text>
+      <View>
+      <FlatList
+        ref={flatListRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={filterData}
+        keyExtractor={item => item.id}
+        renderItem={({item, index}) => (
+          <TouchableOpacity
+            onPress={() => setWhiteDot(index)}
+            style={{
+              width: 136,
+              height: 106,
+              justifyContent: 'center',
+              marginLeft: 4,
+            }}>
+            <LinearGradient
+              colors={
+                isWhitDot == index
+                  ? ['#1AB2FF', '#FFB258']
+                  : [appColors.white, appColors.white]
+              } // Define gradient colors
+              start={{x: 0, y: 0}} // Top-left corner
+              end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
               style={{
-                width: 136,
-                height: 106,
-                justifyContent: 'center',
-                marginLeft: 4,
+                flex: 1,
+                borderRadius: 25,
+                // paddingHorizontal: 16,
+                // paddingVertical: 16,
+                borderWidth: 1,
+                borderColor: appColors.lightGrey,
+                // justifyContent: 'center',
               }}>
-              <LinearGradient
-                colors={
-                  isWhitDot == index
-                    ? ['#1AB2FF', '#FFB258']
-                    : [appColors.white, appColors.white]
-                } // Define gradient colors
-                start={{x: 0, y: 0}} // Top-left corner
-                end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
-                style={{
-                  flex: 1,
-                  borderRadius: 25,
-                  // paddingHorizontal: 16,
-                  // paddingVertical: 16,
-                  borderWidth: 1,
-                  borderColor: appColors.lightGrey,
-                  // justifyContent: 'center',
-                }}>
-                <View style={{flexDirection: 'row'}}>
-                  <Text
-                    style={{
-                      color:
-                        isWhitDot == index ? appColors.white : appColors.black,
-                      paddingRight: 10,
-                      fontSize: 24,
-                      fontWeight: '500',
-                      paddingLeft: 10,
-                      paddingTop: 16,
-                    }}>
-                    {item.count}
-                  </Text>
-                  {isWhitDot == index ? (
-                    <View
-                      style={{
-                        flex: 1,
-                        alignItems: 'flex-end',
-                        padding: 16,
-                      }}>
-                      <WhiteDot height={6} width={6} />
-                    </View>
-                  ) : (
-                    <View
-                      style={{
-                        flex: 1,
-                        alignItems: 'flex-end',
-                        padding: 16,
-                      }}>
-                      <PinkDot height={6} width={6} />
-                    </View>
-                  )}
-                </View>
-
+              <View style={{flexDirection: 'row'}}>
                 <Text
                   style={{
-                    fontSize: 14,
-                    marginTop: 7,
-                    fontFamily: 'sf-pro-text-semibold',
-                    fontWeight: 600,
-
                     color:
                       isWhitDot == index ? appColors.white : appColors.black,
-                    // width: "70%"
-                    paddingHorizontal: 8,
+                    paddingRight: 10,
+                    fontSize: 24,
+                    fontWeight: '500',
+                    paddingLeft: 10,
+                    paddingTop: 16,
                   }}>
-                  {item.name}
+                  {item.count}
                 </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-        />
+                {isWhitDot == index ? (
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'flex-end',
+                      padding: 16,
+                    }}>
+                    <WhiteDot height={6} width={6} />
+                  </View>
+                ) : (
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'flex-end',
+                      padding: 16,
+                    }}>
+                    <PinkDot height={6} width={6} />
+                  </View>
+                )}
+              </View>
 
+              <Text
+                style={{
+                  fontSize: 14,
+                  marginTop: 7,
+                  fontFamily: 'sf-pro-text-semibold',
+                  fontWeight: 600,
+
+                  color: isWhitDot == index ? appColors.white : appColors.black,
+                  // width: "70%"
+                  paddingHorizontal: 8,
+                }}>
+                {item.name}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+      />
+      </View>
+     
+
+      <View style={{flex: 1}}>
         <View
           style={{
             marginTop: 15,
@@ -372,7 +393,7 @@ const JobsScreen = ({navigation, route}) => {
             <AllJobsIcon width={40} height={40} />
           </TouchableOpacity>
         </View>
-        <View style={{marginBottom: 80}}>
+        <View style={{marginBottom: 120}}>
           {loading
             ? Array.from({length: 5}).map((_, index) => (
                 <ShimmerPlaceholder
@@ -399,234 +420,273 @@ const JobsScreen = ({navigation, route}) => {
                   }}
                 />
               ))
-            : jobsData != null &&
-              jobsData.map((item, index) => (
-                <TouchableOpacity
-                  style={styles.shiftCard}
-                  onPress={() => navigation.navigate('JobCard', {data: item})}>
-                  <View style={styles.viewStyle}>
-                    <View style={styles.headerViewStyle}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          backgroundColor: appColors.lightGreen,
-                          alignItems: 'center',
-                          borderRadius: 16,
-                          borderRadius: 16,
-                          marginTop: 8,
-                        }}>
-                        <Text
-                          style={{
-                            paddingLeft: 8,
-                            paddingVertical: 3,
-                            color: appColors.black,
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            borderRadius: 16,
-                            fontSize: 11,
-                            fontWeight: '600',
-                          }}>
-                          {item.time_type_text}
-                        </Text>
-                        <View
-                          style={{
-                            backgroundColor: appColors.white,
-                            marginLeft: 4,
-                            marginRight: 1,
-                            borderTopRightRadius: 8,
-                            borderBottomRightRadius: 8,
-                            paddingVertical: 2,
-                            paddingHorizontal: 6,
-                          }}>
-                          <Text
+            : jobsData != null && (
+                <FlatList
+                showsVerticalScrollIndicator={false}
+                  data={jobsData}
+                  keyExtractor={(item, index) =>
+                    item.id?.toString() ?? index.toString()
+                  }
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.shiftCard}
+                      onPress={() =>
+                        navigation.navigate('JobCard', {data: item})
+                      }>
+                      <View style={styles.viewStyle}>
+                        <View style={styles.headerViewStyle}>
+                          <View
                             style={{
-                              fontSize: 11,
-                              fontFamily: 'SF-Pro-Text-Semibold',
-                              fontWeight: '600',
+                              flexDirection: 'row',
+                              backgroundColor:
+                                item.time_type == '1'
+                                  ? appColors.lightGreen
+                                  : item.time_type == 'T'
+                                  ? appColors.yellow
+                                  : appColors.lightPurple,
+                              alignItems: 'center',
+                              borderRadius: 16,
+                              borderRadius: 16,
+                              marginTop: 8,
                             }}>
-                            {item.type_text}
-                          </Text>
-                        </View>
-                      </View>
-                      <View
-                        style={{
-                          flex: 1,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'flex-end',
-                        }}>
-                        <View style={{marginRight: 4}}>
-                          <ClockIcon />
-                        </View>
-                        <Text style={styles.headerTextStyle}>
-                          {item.duration}h
-                        </Text>
-                        <Text style={[styles.headerTextStyle, {marginLeft: 8}]}>
-                          ${item.cost}
-                        </Text>
-                      </View>
-                    </View>
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: appColors.lightGrey,
-                        marginHorizontal: 16,
-                      }}
-                    />
-                    <View style={{padding: 16}}>
-                      <Text
-                        style={{
-                          color: appColors.black,
-                          fontSize: 10,
-                          fontFamily: 'SF-Pro-Text-Semibold',
-                          fontWeight: '600',
-                        }}>
-                        {item.number}
-                      </Text>
-                      <Text style={[styles.headerTextStyle, {marginTop: 8}]}>
-                        {item.short_description}
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          marginTop: 8,
-                          alignItems: 'center',
-                        }}>
-                        <MapMarkerIcon />
-                        <Text
-                          style={{
-                            color: appColors.placeholderColor,
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            fontWeight: '600',
-                            fontSize: 11,
-                          }}>
-                          {item.address}
-                        </Text>
-                      </View>
-                      <View
-                        style={{flexDirection: 'row', alignItems: 'center'}}>
-                        <View
-                          style={{
-                            borderRadius: 12,
-                            backgroundColor: appColors.white,
-                            marginTop: 8,
-                            flexDirection: 'row',
-                          }}>
-                          <Text
+                            <Text
+                              style={{
+                                paddingLeft: 8,
+                                paddingVertical: 3,
+                                color: appColors.black,
+                                fontFamily: 'SF-Pro-Text-Semibold',
+                                borderRadius: 16,
+                                fontSize: 11,
+                                fontWeight: '600',
+                              }}>
+                              {item.time_type_text}
+                            </Text>
+                            <View
+                              style={{
+                                backgroundColor: appColors.white,
+                                marginLeft: 4,
+                                marginRight: 1,
+                                borderTopRightRadius: 8,
+                                borderBottomRightRadius: 8,
+                                paddingVertical: 2,
+                                paddingHorizontal: 6,
+                              }}>
+                              <Text
+                                style={{
+                                  fontSize: 11,
+                                  fontFamily: 'SF-Pro-Text-Semibold',
+                                  fontWeight: '600',
+                                }}>
+                                {item.type_text}
+                              </Text>
+                            </View>
+                          </View>
+                          <View
                             style={{
-                              paddingVertical: 4,
-                              paddingHorizontal: 8,
-                              color: appColors.black,
-                              fontWeight: '600',
-                              fontFamily: 'SF-Pro-Text-Semibold',
-                              fontSize: 11,
+                              flex: 1,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
                             }}>
-                            {moment
-                              .unix(parseInt(item.start_date, 10))
-                              .format('DD.MM.YYYY')}
-                          </Text>
-                          <Text
-                            style={{
-                              paddingVertical: 4,
-                              paddingRight: 8,
-                              color: appColors.placeholderColor,
-                              fontWeight: '600',
-                              fontFamily: 'SF-Pro-Text-Semibold',
-                              fontSize: 11,
-                            }}>
-                            {moment
-                              .unix(parseInt(item.start_date, 10))
-                              .format('HH:mm')}
-                          </Text>
+                            <View style={{marginRight: 4}}>
+                              <ClockIcon />
+                            </View>
+                            <Text style={styles.headerTextStyle}>
+                              {item.duration}h
+                            </Text>
+                            <Text
+                              style={[styles.headerTextStyle, {marginLeft: 8}]}>
+                              ${item.cost}
+                            </Text>
+                          </View>
                         </View>
                         <View
                           style={{
-                            width: 10,
-                            backgroundColor: appColors.placeholderColor,
                             height: 1,
-                            marginHorizontal: 5,
-                            marginTop: 8,
+                            backgroundColor: appColors.lightGrey,
+                            marginHorizontal: 16,
                           }}
                         />
-                        <View
-                          style={{
-                            borderRadius: 12,
-                            backgroundColor: appColors.white,
-                            marginTop: 8,
-                            flexDirection: 'row',
-                          }}>
+                        <View style={{padding: 16}}>
                           <Text
                             style={{
-                              paddingVertical: 4,
-                              paddingHorizontal: 8,
                               color: appColors.black,
-                              fontWeight: '600',
+                              fontSize: 10,
                               fontFamily: 'SF-Pro-Text-Semibold',
-                              fontSize: 12,
+                              fontWeight: '600',
                             }}>
-                            {moment
-                              .unix(parseInt(item.end_date, 10))
-                              .format('DD.MM.YYYY')}
+                            {item.number}
                           </Text>
                           <Text
-                            style={{
-                              paddingVertical: 4,
-                              paddingRight: 8,
-                              color: appColors.placeholderColor,
-                              fontWeight: '600',
-                              fontFamily: 'SF-Pro-Text-Semibold',
-                              fontSize: 11,
-                            }}>
-                            {moment
-                              .unix(parseInt(item.end_date, 10))
-                              .format('HH:mm')}
+                            style={[styles.headerTextStyle, {marginTop: 8}]}>
+                            {item.short_description}
                           </Text>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              marginTop: 8,
+                              alignItems: 'center',
+                            }}>
+                            <MapMarkerIcon />
+                            <Text
+                              style={{
+                                color: appColors.placeholderColor,
+                                fontFamily: 'SF-Pro-Text-Semibold',
+                                fontWeight: '600',
+                                fontSize: 11,
+                              }}>
+                              {item.address}
+                            </Text>
+                          </View>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                            }}>
+                            <View
+                              style={{
+                                borderRadius: 12,
+                                backgroundColor: appColors.white,
+                                marginTop: 8,
+                                flexDirection: 'row',
+                              }}>
+                              <Text
+                                style={{
+                                  paddingVertical: 4,
+                                  paddingHorizontal: 8,
+                                  color: appColors.black,
+                                  fontWeight: '600',
+                                  fontFamily: 'SF-Pro-Text-Semibold',
+                                  fontSize: 11,
+                                }}>
+                                {moment
+                                  .unix(parseInt(item.start_date, 10))
+                                  .format('DD.MM.YYYY')}
+                              </Text>
+                              <Text
+                                style={{
+                                  paddingVertical: 4,
+                                  paddingRight: 8,
+                                  color: appColors.placeholderColor,
+                                  fontWeight: '600',
+                                  fontFamily: 'SF-Pro-Text-Semibold',
+                                  fontSize: 11,
+                                }}>
+                                {moment
+                                  .unix(parseInt(item.start_date, 10))
+                                  .format('HH:mm')}
+                              </Text>
+                            </View>
+                            <View
+                              style={{
+                                width: 10,
+                                backgroundColor: appColors.placeholderColor,
+                                height: 1,
+                                marginHorizontal: 5,
+                                marginTop: 8,
+                              }}
+                            />
+                            <View
+                              style={{
+                                borderRadius: 12,
+                                backgroundColor: appColors.white,
+                                marginTop: 8,
+                                flexDirection: 'row',
+                              }}>
+                              <Text
+                                style={{
+                                  paddingVertical: 4,
+                                  paddingHorizontal: 8,
+                                  color: appColors.black,
+                                  fontWeight: '600',
+                                  fontFamily: 'SF-Pro-Text-Semibold',
+                                  fontSize: 12,
+                                }}>
+                                {moment
+                                  .unix(parseInt(item.end_date, 10))
+                                  .format('DD.MM.YYYY')}
+                              </Text>
+                              <Text
+                                style={{
+                                  paddingVertical: 4,
+                                  paddingRight: 8,
+                                  color: appColors.placeholderColor,
+                                  fontWeight: '600',
+                                  fontFamily: 'SF-Pro-Text-Semibold',
+                                  fontSize: 11,
+                                }}>
+                                {moment
+                                  .unix(parseInt(item.end_date, 10))
+                                  .format('HH:mm')}
+                              </Text>
+                            </View>
+                          </View>
+                          <View
+                            style={{
+                              height: 1,
+                              backgroundColor: appColors.lightGrey,
+                              marginTop: 16,
+                            }}
+                          />
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              marginTop: 16,
+                              alignItems: 'center',
+                            }}>
+                            <StatusIcon />
+                            <Text
+                              style={{
+                                marginLeft: 8,
+                                color: appColors.black,
+                                fontFamily: 'SF-Pro-Text-Semibold',
+                                fontSize: 12,
+                                fontWeight: '600',
+                              }}>
+                              {item.status == 2
+                                ? 'Require Confirmation'
+                                : item.status == 3
+                                ? 'Waiting for Approval'
+                                : item.status == 'a' &&
+                                  (item.action_status == 1 ||
+                                    item.action_status == 2)
+                                ? 'Job In Progress'
+                                : item.status == 5
+                                ? 'Completed'
+                                : item.status == 6
+                                ? 'Declined'
+                                : item.status == 4
+                                ? 'Approved'
+                                : item.status == 'a'
+                                ? 'Confirmed'
+                                : ''}
+                            </Text>
+                          </View>
                         </View>
                       </View>
-                      <View
-                        style={{
-                          height: 1,
-                          backgroundColor: appColors.lightGrey,
-                          marginTop: 16,
-                        }}
-                      />
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          marginTop: 16,
-                          alignItems: 'center',
-                        }}>
-                        <StatusIcon />
-                        <Text
-                          style={{
-                            marginLeft: 8,
-                            color: appColors.black,
-                            fontFamily: 'SF-Pro-Text-Semibold',
-                            fontSize: 12,
-                            fontWeight: '600',
-                          }}>
-                          {item.status == 2
-                            ? 'Require Confirmation'
-                            : item.status == 3
-                            ? 'Waiting for Approval'
-                            : item.status == 'a' &&
-                              (item.action_status == 1 ||
-                                item.action_status == 2)
-                            ? 'Job In Progress'
-                            : item.status == 5
-                            ? 'Completed'
-                            : item.status == 6
-                            ? 'Declined'
-                            : item.status == 4
-                            ? 'Approved'
-                            : item.status == 'a'
-                            ? 'Confirmed'
-                            : ''}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                    </TouchableOpacity>
+                  )}
+                  onEndReached={() => {
+                    if (!loadingMore) {
+                      if (!nextUrl) {
+                        return; // No more data to load
+                      }
+                      setLoadingMore(true);
+                      // fetchJobs(page + 1);
+                      const payload = {
+                        url:nextUrl
+                      }
+                      console.log('payload ===> ', payload);
+                      dispatch(getJobs(payload));
+                    }
+                  }}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={() =>
+                    loadingMore ? <ActivityIndicator size="small" color={appColors.primary} style={{marginVertical: 16}} /> : null
+                  }
+                />
+              )}
         </View>
 
         <JobFilterModal
@@ -636,7 +696,7 @@ const JobsScreen = ({navigation, route}) => {
           onItemSelect={onItemSelect}
           selectedFilter={selectedFilter}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };

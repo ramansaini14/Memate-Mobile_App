@@ -7,7 +7,6 @@ import StatusIcon from '../assets/svg/StatusIcon';
 import moment from 'moment';
 
 const TaskComponent = ({itemData}) => {
-
   const breakText = (text, maxLength) => {
     if (!text) return '';
     const regex = new RegExp(`.{1,${maxLength}}`, 'g');
@@ -21,7 +20,12 @@ const TaskComponent = ({itemData}) => {
           <View
             style={{
               flexDirection: 'row',
-              backgroundColor: appColors.lightGreen,
+              backgroundColor:
+                itemData.time_type == '1'
+                  ? appColors.lightGreen
+                  : itemData.time_type == 'T'
+                  ? appColors.yellow
+                  : appColors.lightPurple,
               alignItems: 'center',
               borderRadius: 16,
               borderRadius: 16,
@@ -108,7 +112,7 @@ const TaskComponent = ({itemData}) => {
                 fontFamily: 'SF-Pro-Text-Semibold',
                 fontWeight: '600',
                 fontSize: 11,
-                flex:1
+                flex: 1,
               }}>
               {breakText(itemData.address, 50)}
             </Text>
@@ -130,9 +134,7 @@ const TaskComponent = ({itemData}) => {
                   fontFamily: 'SF-Pro-Text-Semibold',
                   fontSize: 11,
                 }}>
-                {moment
-                  .unix(parseInt(itemData.start_date, 10))
-                  .format('DD.MM.YYYY')}
+                {moment.unix(parseInt(itemData.start_date, 10)).format('DD.MM.YYYY')}
               </Text>
               <Text
                 style={{
@@ -171,9 +173,7 @@ const TaskComponent = ({itemData}) => {
                   fontFamily: 'SF-Pro-Text-Semibold',
                   fontSize: 12,
                 }}>
-                {moment
-                  .unix(parseInt(itemData.end_date, 10))
-                  .format('DD.MM.YYYY')}
+                {moment.unix(parseInt(itemData.end_date, 10)).format('DD.MM.YYYY')}
               </Text>
               <Text
                 style={{

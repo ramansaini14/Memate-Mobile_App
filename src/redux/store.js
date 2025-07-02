@@ -26,6 +26,9 @@ import getProfileReducer from './GetProfileSlice';
 import deleteProfileReducer from './DeleteProfileSlice';
 import globalReducer from './GlobalSlice';
 import forgotReducer from './ForgotSlice';
+import jobPauseReducer from './PauseJobSlice';
+import jobsStartReducer from './StartJobSlice';
+import jobFinishReducer from './FinishJobSlice';
 
 const store = configureStore({
   reducer: {
@@ -56,6 +59,9 @@ const store = configureStore({
     deleteProfileReducer: deleteProfileReducer,
     globalReducer:globalReducer,
     forgotReducer:forgotReducer,
+    jobPauseReducer:jobPauseReducer,
+    jobsStartReducer:jobsStartReducer,
+    jobFinishReducer:jobFinishReducer,
   },
 });
 

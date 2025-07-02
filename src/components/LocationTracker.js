@@ -57,6 +57,7 @@ const LocationTracker = ({
   const activeJobId = useSelector(state => state.timer.activeJobId);
 
   const responseApi = useSelector(state => state.jobsStatusReducer.data);
+  const {error, status} = useSelector(state => state.jobsStatusReducer);
   // console.log('responseApi', responseApi.timer);
 
   const handleStart = () => setShowTracker(false);
@@ -284,15 +285,15 @@ const LocationTracker = ({
   const onStartPress = () => {
     console.log(`onStartPress for job ${data.id}`);
 
-    if (handleStartStop) {
-      handleStartStop(); // Use the provided handler
-      return;
-    }
+    // if (handleStartStop) {
+    //   handleStartStop(); // Use the provided handler
+    //   return;
+    // }
 
     // Fall back to original behavior if handler not provided
-    setIsJobStarted(true);
-    setShowTracker(true);
-    setStopped(false);
+    // setIsJobStarted(true);
+    // setShowTracker(true);
+    // setStopped(false);
     const currentDate = new Date().toISOString();
 
     // Use latest location data if available
@@ -302,7 +303,7 @@ const LocationTracker = ({
       date: currentDate,
     };
 
-    if (location && location.length > 0) {
+    if (location) {
       locationToSend = {
         latitude: location[0]?.latitude.toString() || '0',
         longitude: location[0]?.longitude.toString() || '0',
@@ -317,25 +318,27 @@ const LocationTracker = ({
     };
 
     // Start the timer for this specific job
-    dispatch(startTimer(data.id));
+    // dispatch(startTimer(data.id));
     dispatch(hitJobStart(payload));
   };
 
   useEffect(() => {
+    console.log('Status ===> ', status);
     if (
+      status === 200 &&
       responseApi != null &&
-      responseApi.hasOwnProperty('timer') &&
-      responseApi.jobId === data.id // Only process for this job
+      responseApi.hasOwnProperty('timer')
     ) {
-      if (!isStopped) {
         // setTimer(Math.floor(responseApi.timer));
         setIsJobStarted(true);
         setShowTracker(true);
         startTracking();
-      }
+    }
+    else if (status === 400) {
+      Alert.alert("MeMate","Another job in progress")
     }
     // Only clear if this response is for our job
-    if (responseApi && responseApi.jobId === data.id) {
+    if (responseApi) {
       dispatch(clearJobStatus());
     }
   }, [responseApi]);
@@ -411,11 +414,11 @@ const LocationTracker = ({
     console.log(
       `Start Job button pressed in LocationTracker for job ${data.id}`,
     );
-    if (handleStartStop) {
-      handleStartStop();
-    } else {
-      onStartPress();
-    }
+    // if (handleStartStop) {
+    //   handleStartStop();
+    // } else {
+    onStartPress();
+    // }
   };
 
   return (

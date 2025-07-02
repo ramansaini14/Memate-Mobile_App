@@ -44,6 +44,7 @@ import {hitAllTasks} from '../../../redux/AllTaskSlice';
 import {selectJobTimer} from '../../../redux/TimerSlice';
 import TimerHomePage from '../../../components/TimerHomePage';
 import {setGloballyOrgData} from '../../../redux/GlobalSlice';
+import moment from 'moment';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -55,12 +56,12 @@ const HomeScreen = ({navigation, route}) => {
   const globallyOrgData = useSelector(
     state => state.globalReducer.globallyOrgData,
   );
-  console.log(
-    'globallyOrgData ===> ',
-    globallyOrgData,
-    ' isPaused: ',
-    isPaused,
-  );
+  // console.log(
+  //   'globallyOrgData ===> ',
+  //   globallyOrgData,
+  //   ' isPaused: ',
+  //   isPaused,
+  // );
 
   const jobData = useSelector(state => state.globalReducer.jobData);
   const isPaused = useSelector(state => state.globalReducer.isPausedGlobal);

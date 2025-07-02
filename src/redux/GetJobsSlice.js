@@ -14,7 +14,8 @@ export const getJobs = createAsyncThunk('getJobs', async payload => {
       },
     };
 
-    const url =
+   
+    const url =payload.url ?payload.url :
       ApiBaseUrl +
       jobs +
       payload.id +

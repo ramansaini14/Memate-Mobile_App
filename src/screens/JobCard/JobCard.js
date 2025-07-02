@@ -12,7 +12,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState, useRef, use} from 'react';
 import {appColors} from '../../utils/appColors';
 import WhiteBackIcon from '../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
@@ -39,7 +39,7 @@ import CrossCloseIcon from '../../assets/svg/CrossCloseIcon';
 import TimeTrackerCard from '../../components/TimeTrackerCard';
 import moment from 'moment';
 import ChatIconJob from '../../assets/svg/ChatIconJob';
-import {increment} from '../../redux/TimerSlice';
+import {increment, setTimer, stopBackgroundTimer} from '../../redux/TimerSlice';
 import {
   hitJobStart,
   hitJobPause,
@@ -68,7 +68,13 @@ import {uploadImageToS3} from '../../redux/uploadSlice';
 
 import RNFS from 'react-native-fs';
 import {PermissionsAndroid, Platform} from 'react-native';
-import {setIsPayused, setJobDataGlobally} from '../../redux/GlobalSlice';
+import {
+  setGloballyOrgData,
+  setIsPayused,
+  setJobDataGlobally,
+} from '../../redux/GlobalSlice';
+import {clearStartStatus, hitStartJob} from '../../redux/StartJobSlice';
+import {clearPauseStatus, hitPauseJob} from '../../redux/PauseJobSlice';
 
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
@@ -118,6 +124,14 @@ const JobCard = ({navigation, route}) => {
   );
 
   const jobStatusResponse = useSelector(state => state.jobsStatusReducer.data);
+  const {errorStartJob, statusStartJob} = useSelector(
+    state => state.jobsStartReducer,
+  );
+  const responseJobStart = useSelector(state => state.jobsStartReducer.data);
+  const {errorJobPause, statusJobPause} = useSelector(
+    state => state.jobPauseReducer,
+  );
+  const responseJobPause = useSelector(state => state.jobPauseReducer.data);
 
   const getOrgId = async () => {
     const orgId = globallyOrgData ? globallyOrgData.id : null;
@@ -151,20 +165,53 @@ const JobCard = ({navigation, route}) => {
 
     getOrgId();
 
-    if (jobDataGlobally != null) {
-      console.log(`Setting job ${jobData.id} started from action_status=1`);
-      setIsJobStarted(true);
-      setIsPaused(true); // Start in paused state
+    console.log('jobDataGlobally inner ===> ', jobData);
 
-      // Need to manually trigger the Redux state as well
-      setTimeout(() => {
-        console.log(
-          `Dispatching startTimer for initial job start for job ${jobData.id}`,
-        );
-        dispatch(startTimer(jobData.id));
-        startBackgroundTimer(dispatch);
-        startLocationTracking();
-      }, 500);
+    if (jobData != null) {
+      if (jobData.action_status == '2') {
+        console.log('Inner Job Data');
+        setIsJobStarted(true);
+        setIsPaused(true); // Start in paused state
+        dispatch(stopTimer(jobData.id)); // Ensure timer is stopped
+        const payload = {
+          jobId: jobData.id,
+          value: jobData.time_spent, // Use jobData.time_spent if available
+        };
+        dispatch(setTimer(payload));
+
+        // Need to manually trigger the Redux state as well
+        setTimeout(() => {
+          console.log(
+            `Dispatching startTimer for initial job start for job ${jobData.id}`,
+          );
+          // dispatch(startTimer(jobData.id));
+          // startBackgroundTimer(dispatch);
+          // startLocationTracking();
+        }, 500);
+      } else if (jobData.action_status == 1) {
+        setIsJobStarted(true);
+        setIsPaused(false); // Start in running state
+        const payload = {
+          jobId: jobData.id,
+          value: jobData.time_spent, // Use jobData.time_spent if available
+        };
+        // dispatch(setTimer(payload));
+        dispatch(resumeTimer(jobData.id)); // Ensure timer is resumed
+
+        // Need to manually trigger the Redux state as well
+        setTimeout(() => {
+          console.log(
+            `Dispatching startTimer for initial job start for job ${jobData.id}`,
+          );
+          dispatch(startTimer(jobData.id));
+          startBackgroundTimer(dispatch);
+          startLocationTracking();
+        }, 500);
+      } else if (jobData.action_status == null) {
+        setIsJobStarted(false);
+        setIsPaused(false);
+        setShowTracker(false); // Initially hide tracker
+      }
     } else {
       console.log(
         `JobCard mounted for job ID: ${jobData.id}, no global job data`,
@@ -174,50 +221,37 @@ const JobCard = ({navigation, route}) => {
       setShowTracker(false); // Initially hide tracker
     }
 
-    // Force start the job immediately if action_status is 1
-    // if (jobData.action_status === 1) {
-
-    // } else if (jobData.action_status === 2) {
-    //   if (jobDataGlobally) {
-    //     clearInterval(intervalRef.current);
-    //     intervalRef.current = null;
-    //     console.log('Location tracking interval cleared');
-    //     dispatch(setIsPayused(true)); // Reset completed state when stopping tracking
-    //     dispatch(setJobDataGlobally(null));
-    //   }
-    // }
-
     // Check if this specific job is already running
-    loadTimerStateFromStorage(dispatch).then(({jobs, activeJobId}) => {
-      console.log(`Checking stored timer state for job ${jobData.id}`, {
-        hasJobData: jobs && jobs[jobData.id] ? true : false,
-        activeJobId,
-      });
+    // loadTimerStateFromStorage(dispatch).then(({jobs, activeJobId}) => {
+    //   console.log(`Checking stored timer state for job ${jobData.id}`, {
+    //     hasJobData: jobs && jobs[jobData.id] ? true : false,
+    //     activeJobId,
+    //   });
 
-      if (jobs && jobs[jobData.id]) {
-        const jobState = jobs[jobData.id];
-        console.log(`Found stored state for job ${jobData.id}:`, jobState);
+    // if (jobs && jobs[jobData.id]) {
+    //   const jobState = jobs[jobData.id];
+    //   console.log(`Found stored state for job ${jobData.id}:`, jobState);
 
-        // Set local state based on the job's stored state
-        setIsJobStarted(jobState.isRunning);
-        // setIsPaused(jobState.isPaused);
+    // Set local state based on the job's stored state
+    // setIsJobStarted(jobState.isRunning);
+    // setIsPaused(jobState.isPaused);
 
-        // If the job is running and not paused, start location tracking
-        if (jobState.isRunning && !jobState.isPaused) {
-          console.log(
-            `Starting location tracking for job ${jobData.id} from loaded state`,
-          );
-          startLocationTracking();
-        }
-      }
-    });
+    // If the job is running and not paused, start location tracking
+    // if (jobState.isRunning && !jobState.isPaused) {
+    //   console.log(
+    //     `Starting location tracking for job ${jobData.id} from loaded state`,
+    //   );
+    //   startLocationTracking();
+    // }
+    // }
+    // });
 
     if (jobData.action_status == 3) {
       setIsCompleted(true);
     }
 
     // Make sure the background timer starts if needed
-    startBackgroundTimer(dispatch);
+    // startBackgroundTimer(dispatch);
 
     // Clean up function
     return () => {
@@ -227,6 +261,50 @@ const JobCard = ({navigation, route}) => {
       // stopLocationTracking();
     };
   }, [jobData.id]);
+
+  useEffect(() => {
+    console.log('statusStartJob ===> ', statusStartJob);
+    if (responseJobStart != null) {
+      dispatch(startTimer(jobData.id));
+      startBackgroundTimer(dispatch);
+      startLocationTracking();
+      setIsJobStarted(true);
+      setIsPaused(false); // Start in running state
+
+      const tempJob = {
+        ...jobData,
+        action_status: '1',
+        action_status_text: 'started',
+      };
+
+      dispatch(setJobDataGlobally(tempJob)); // Update global job data
+      dispatch(clearJobStatus());
+      dispatch(clearStartStatus());
+      dispatch(clearPauseStatus());
+    } else if (statusStartJob > 399) {
+      Alert.alert('MeMate', errorStartJob.message);
+      dispatch(clearStartStatus());
+    }
+  }, [responseJobStart, errorStartJob, statusStartJob]);
+  useEffect(() => {
+    if (responseJobPause != null) {
+      console.log('responseJobPause ===> ', responseJobPause);
+      dispatch(pauseTimer(jobData.id));
+      stopBackgroundTimer(dispatch);
+      stopLocationTracking();
+      setIsJobStarted(false);
+      setIsPaused(true); // Start in running state
+      dispatch(clearJobStatus());
+      dispatch(clearStartStatus());
+      dispatch(clearPauseStatus());
+      dispatch(setGloballyOrgData(null));
+    } else if (statusJobPause == 400) {
+      Alert.alert(
+        'MeMate',
+        errorJobPause || 'Failed to start job. Please try again.',
+      );
+    }
+  }, [errorJobPause, statusJobPause, responseJobPause]);
 
   // Function to start location tracking
   const startLocationTracking = () => {
@@ -241,39 +319,8 @@ const JobCard = ({navigation, route}) => {
     if (!intervalRef.current) {
       intervalRef.current = setInterval(() => {
         getCurrentLocation();
-      }, 30000); // Every 30 seconds
+      }, 60000); // Every 30 seconds
     }
-
-    Geolocation.getCurrentPosition(
-      position => {
-        const {latitude, longitude} = position.coords;
-        const currentDate = new Date().toISOString();
-        const locationData = {
-          latitude: latitude.toString(),
-          longitude: longitude.toString(),
-          date: currentDate,
-        };
-
-        // Send to API
-        const payload = {
-          orgId,
-          jobId: jobData.id,
-          data: [locationData],
-        };
-
-        if (isJobStarted && !isPaused) {
-          dispatch(hitJobStart(payload));
-        }
-      },
-      error => {
-        console.error('Location error:', error.message);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000,
-      },
-    );
   };
 
   useEffect(() => {
@@ -281,8 +328,8 @@ const JobCard = ({navigation, route}) => {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
       console.log('Location tracking interval cleared');
-      dispatch(setIsPayused(true)); // Reset completed state when stopping tracking
-      dispatch(setJobDataGlobally(null));
+      // dispatch(setIsPayused(true)); // Reset completed state when stopping tracking
+      // dispatch(setJobDataGlobally(null));
     }
   }, [jobDataGlobally]);
 
@@ -298,114 +345,203 @@ const JobCard = ({navigation, route}) => {
     }
   };
 
-  // Fix the direct pause handler
-  const handleDirectPause = () => {
-    // First check if we need to start the job
-    if (!isJobStarted) {
-      console.log('Job not started yet, starting it first');
-      handleStartStop();
-      return;
-    }
+  /**
+   * Handles the pause action for the job.
+   */
+  const onPauseClick = () => {
+    stopLocationTracking();
+    // Update Redux timer state to paused
+    dispatch(pauseTimer(jobData.id));
 
-    // Only if we're in a running state
-    if (isJobStarted && !isPaused) {
-      console.log(`Pausing job ${jobData.id}`);
+    // Prepare and send API call with properly formatted data
+    console.log('Making pause API call');
 
-      // Update local state immediately to ensure UI responds
-      // setIsPaused(true);
-      setShowTracker(false);
+    // Get the locations for this specific job
+    const locationsKey = `locations_${jobData.id}`;
+    AsyncStorage.getItem(locationsKey)
+      .then(locationsStr => {
+        let locationsData = [];
 
-      // Explicitly stop location tracking
-      stopLocationTracking();
-      console.log('Location tracking stopped due to pause');
-
-      // Update Redux timer state to paused
-      dispatch(pauseTimer(jobData.id));
-
-      // Prepare and send API call with properly formatted data
-      console.log('Making pause API call');
-
-      // Get the locations for this specific job
-      const locationsKey = `locations_${jobData.id}`;
-      AsyncStorage.getItem(locationsKey)
-        .then(locationsStr => {
-          let locationsData = [];
-
-          try {
-            if (locationsStr) {
-              locationsData = JSON.parse(locationsStr);
-              console.log(
-                `Found ${locationsData.length} location points for pause API call`,
-              );
+        try {
+          if (locationsStr) {
+            locationsData = JSON.parse(locationsStr);
+            console.log(
+              `Found ${locationsData.length} location points for pause API call`,
+            );
+          } else {
+            console.log('No stored locations, using current location');
+            // Fallback to current location if available
+            if (location && location.length > 0) {
+              locationsData = location;
             } else {
-              console.log('No stored locations, using current location');
-              // Fallback to current location if available
-              if (location && location.length > 0) {
-                locationsData = location;
-              } else {
-                // Create a minimal valid location entry
-                const currentDate = new Date().toISOString();
-                locationsData = [
-                  {
-                    latitude: '0',
-                    longitude: '0',
-                    date: currentDate,
-                  },
-                ];
-              }
+              // Create a minimal valid location entry
+              const currentDate = new Date().toISOString();
+              locationsData = [
+                {
+                  latitude: '0',
+                  longitude: '0',
+                  date: currentDate,
+                },
+              ];
             }
-          } catch (error) {
-            console.error('Error parsing locations:', error);
-            // Fallback to a minimal valid location
-            const currentDate = new Date().toISOString();
-            locationsData = [
-              {
-                latitude: '0',
-                longitude: '0',
-                date: currentDate,
-              },
-            ];
           }
-
-          // Ensure the payload is correctly formatted
-          const payload = {
-            orgId,
-            jobId: jobData.id,
-            data: locationsData,
-          };
-
-          console.log(`Sending pause payload for job ${jobData.id}:`, payload);
-          dispatch(hitJobPause(payload));
-          console.log('Pause API call completed');
-        })
-        .catch(err => {
-          console.error('Error loading locations:', err);
-          // Even on error, send minimal data to avoid API errors
+        } catch (error) {
+          console.error('Error parsing locations:', error);
+          // Fallback to a minimal valid location
           const currentDate = new Date().toISOString();
-          const fallbackData = [
+          locationsData = [
             {
               latitude: '0',
               longitude: '0',
               date: currentDate,
             },
           ];
+        }
 
-          dispatch(
-            hitJobPause({
-              orgId,
-              jobId: jobData.id,
-              data: fallbackData,
-            }),
-          );
-        });
-    } else {
-      console.log('Cannot pause: job not started or already paused', {
-        isJobStarted,
-        isPaused,
+        // Ensure the payload is correctly formatted
+        const payload = {
+          orgId,
+          jobId: jobData.id,
+          data: locationsData,
+        };
+
+        console.log(`Sending pause payload for job ${jobData.id}:`, payload);
+        dispatch(hitPauseJob(payload));
+        console.log('Pause API call completed');
+      })
+      .catch(err => {
+        console.error('Error loading locations:', err);
+        // Even on error, send minimal data to avoid API errors
+        const currentDate = new Date().toISOString();
+        const fallbackData = [
+          {
+            latitude: '0',
+            longitude: '0',
+            date: currentDate,
+          },
+        ];
+
+        dispatch(
+          hitJobPause({
+            orgId,
+            jobId: jobData.id,
+            data: fallbackData,
+          }),
+        );
       });
-    }
   };
 
+  // // Fix the direct pause handler
+  // const handleDirectPause = () => {
+  //   // First check if we need to start the job
+  //   if (!isJobStarted) {
+  //     console.log('Job not started yet, starting it first');
+  //     handleStartStop();
+  //     return;
+  //   }
+
+  //   // Only if we're in a running state
+  //   if (isJobStarted && !isPaused) {
+  //     console.log(`Pausing job ${jobData.id}`);
+
+  //     // Update local state immediately to ensure UI responds
+  //     // setIsPaused(true);
+  //     setShowTracker(false);
+
+  //     // Explicitly stop location tracking
+  //     stopLocationTracking();
+  //     console.log('Location tracking stopped due to pause');
+
+  //     // Update Redux timer state to paused
+  //     dispatch(pauseTimer(jobData.id));
+
+  //     // Prepare and send API call with properly formatted data
+  //     console.log('Making pause API call');
+
+  //     // Get the locations for this specific job
+  //     const locationsKey = `locations_${jobData.id}`;
+  //     AsyncStorage.getItem(locationsKey)
+  //       .then(locationsStr => {
+  //         let locationsData = [];
+
+  //         try {
+  //           if (locationsStr) {
+  //             locationsData = JSON.parse(locationsStr);
+  //             console.log(
+  //               `Found ${locationsData.length} location points for pause API call`,
+  //             );
+  //           } else {
+  //             console.log('No stored locations, using current location');
+  //             // Fallback to current location if available
+  //             if (location && location.length > 0) {
+  //               locationsData = location;
+  //             } else {
+  //               // Create a minimal valid location entry
+  //               const currentDate = new Date().toISOString();
+  //               locationsData = [
+  //                 {
+  //                   latitude: '0',
+  //                   longitude: '0',
+  //                   date: currentDate,
+  //                 },
+  //               ];
+  //             }
+  //           }
+  //         } catch (error) {
+  //           console.error('Error parsing locations:', error);
+  //           // Fallback to a minimal valid location
+  //           const currentDate = new Date().toISOString();
+  //           locationsData = [
+  //             {
+  //               latitude: '0',
+  //               longitude: '0',
+  //               date: currentDate,
+  //             },
+  //           ];
+  //         }
+
+  //         // Ensure the payload is correctly formatted
+  //         const payload = {
+  //           orgId,
+  //           jobId: jobData.id,
+  //           data: locationsData,
+  //         };
+
+  //         console.log(`Sending pause payload for job ${jobData.id}:`, payload);
+  //         dispatch(hitJobPause(payload));
+  //         console.log('Pause API call completed');
+  //       })
+  //       .catch(err => {
+  //         console.error('Error loading locations:', err);
+  //         // Even on error, send minimal data to avoid API errors
+  //         const currentDate = new Date().toISOString();
+  //         const fallbackData = [
+  //           {
+  //             latitude: '0',
+  //             longitude: '0',
+  //             date: currentDate,
+  //           },
+  //         ];
+
+  //         dispatch(
+  //           hitJobPause({
+  //             orgId,
+  //             jobId: jobData.id,
+  //             data: fallbackData,
+  //           }),
+  //         );
+  //       });
+  //   } else {
+  //     console.log('Cannot pause: job not started or already paused', {
+  //       isJobStarted,
+  //       isPaused,
+  //     });
+  //   }
+  // };
+
+  /**
+   * Function to complete the job
+   */
   const onCompleteJob = async () => {
     console.log(`Completing job ${jobData.id}`);
 
@@ -499,98 +635,129 @@ const JobCard = ({navigation, route}) => {
   };
 
   // Fix the direct resume handler
-  const handleDirectResume = () => {
-    console.log(`Direct resume called for job ${jobData.id}, current state:`, {
-      isJobStarted,
-      isPaused,
-      timer,
-      activeJobId,
-    });
+  // const handleDirectResume = () => {
+  //   console.log(`Direct resume called for job ${jobData.id}, current state:`, {
+  //     isJobStarted,
+  //     isPaused,
+  //     timer,
+  //     activeJobId,
+  //   });
 
-    // Only if we're in a paused state
-    if (isJobStarted && isPaused) {
-      console.log(`Resuming job ${jobData.id}`);
+  //   // Only if we're in a paused state
+  //   if (isJobStarted && isPaused) {
+  //     console.log(`Resuming job ${jobData.id}`);
 
-      // Update local state
-      setIsPaused(false);
-      setShowTracker(true);
+  //     // Update local state
+  //     setIsPaused(false);
+  //     setShowTracker(true);
 
-      // Update Redux timer state to resumed
-      dispatch(resumeTimer(jobData.id));
+  //     // Update Redux timer state to resumed
+  //     dispatch(resumeTimer(jobData.id));
 
-      // Make sure background timer is running and this job is active
-      dispatch(startTimer(jobData.id)); // Ensure this job becomes the active job
-      startBackgroundTimer(dispatch);
+  //     // Make sure background timer is running and this job is active
+  //     dispatch(startTimer(jobData.id)); // Ensure this job becomes the active job
+  //     startBackgroundTimer(dispatch);
 
-      // Explicitly restart location tracking
-      startLocationTracking();
-      console.log('Location tracking restarted for resumed job');
+  //     // Explicitly restart location tracking
+  //     startLocationTracking();
+  //     console.log('Location tracking restarted for resumed job');
 
-      // API call
-      console.log('Making resume API call');
-      getCurrentLocation();
-    } else {
-      console.log('Cannot resume: job not started or not paused', {
-        isJobStarted,
-        isPaused,
-      });
-    }
-  };
+  //     // API call
+  //     console.log('Making resume API call');
+  //     getCurrentLocation();
+  //   } else {
+  //     console.log('Cannot resume: job not started or not paused', {
+  //       isJobStarted,
+  //       isPaused,
+  //     });
+  //   }
+  // };
 
-  const handleStartStop = () => {
-    console.log(
-      `handleStartStop called for job ${jobData.id}, current state:`,
+  const onStartClick = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        const currentDate = new Date().toISOString();
+        const locationData = {
+          latitude: latitude.toString(),
+          longitude: longitude.toString(),
+          date: currentDate,
+        };
+
+        // Send to API
+        const payload = {
+          orgId,
+          jobId: jobData.id,
+          data: [locationData],
+        };
+
+        dispatch(hitStartJob(payload));
+      },
+      error => {
+        console.error('Location error:', error.message);
+      },
       {
-        isJobStarted,
-        isPaused,
-        timer,
-        activeJobId,
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000,
       },
     );
-
-    if (!isJobStarted) {
-      console.log(`Starting job ${jobData.id}`);
-
-      // Starting the job
-      setIsJobStarted(true);
-      setIsPaused(false);
-      setShowTracker(true);
-
-      // Update Redux timer state to started
-      dispatch(startTimer(jobData.id));
-
-      // Make sure background timer is running
-      startBackgroundTimer(dispatch);
-
-      // Start location tracking
-      startLocationTracking();
-
-      // Start job API
-      getCurrentLocation();
-
-      // Update UI immediately, don't wait for state updates
-      console.log('Job started successfully');
-      return true;
-    } else if (isJobStarted && !isPaused) {
-      // If job is running, pause it
-      console.log('Job is running, pausing it');
-      handleDirectPause();
-      return true;
-    } else if (isJobStarted && isPaused) {
-      // If job is paused, resume it
-      console.log('Job is paused, resuming it');
-      handleDirectResume();
-      return true;
-    }
-
-    return false;
   };
+
+  // const handleStartStop = () => {
+  //   console.log(
+  //     `handleStartStop called for job ${jobData.id}, current state:`,
+  //     {
+  //       isJobStarted,
+  //       isPaused,
+  //       timer,
+  //       activeJobId,
+  //     },
+  //   );
+
+  //   if (!isJobStarted) {
+  //     console.log(`Starting job ${jobData.id}`);
+
+  //     // Starting the job
+  //     setIsJobStarted(true);
+  //     setIsPaused(false);
+  //     setShowTracker(true);
+
+  //     // Update Redux timer state to started
+  //     dispatch(startTimer(jobData.id));
+
+  //     // Make sure background timer is running
+  //     startBackgroundTimer(dispatch);
+
+  //     // Start location tracking
+  //     startLocationTracking();
+
+  //     // Start job API
+  //     getCurrentLocation();
+
+  //     // Update UI immediately, don't wait for state updates
+  //     console.log('Job started successfully');
+  //     return true;
+  //   } else if (isJobStarted && !isPaused) {
+  //     // If job is running, pause it
+  //     console.log('Job is running, pausing it');
+  //     handleDirectPause();
+  //     return true;
+  //   } else if (isJobStarted && isPaused) {
+  //     // If job is paused, resume it
+  //     console.log('Job is paused, resuming it');
+  //     handleDirectResume();
+  //     return true;
+  //   }
+
+  //   return false;
+  // };
 
   // Add this function to directly start the job (called from UI components)
-  const startJob = () => {
-    console.log(`startJob called directly for job ${jobData.id}`);
-    handleStartStop();
-  };
+  // const startJob = () => {
+  //   console.log(`startJob called directly for job ${jobData.id}`);
+  //   handleStartStop();
+  // };
 
   // Monitor job status response
   useEffect(() => {
@@ -661,27 +828,27 @@ const JobCard = ({navigation, route}) => {
   }, [responseAccDec, jobData.id]);
 
   // Add useEffect to synchronize component state with Redux job-specific state
-  useEffect(() => {
-    if (jobTimer) {
-      const shouldUpdateRunning = jobTimer.isRunning !== isJobStarted;
-      const shouldUpdatePaused = jobTimer.isPaused !== isPaused;
+  // useEffect(() => {
+  //   if (jobTimer) {
+  //     const shouldUpdateRunning = jobTimer.isRunning !== isJobStarted;
+  //     const shouldUpdatePaused = jobTimer.isPaused !== isPaused;
 
-      if (shouldUpdateRunning || shouldUpdatePaused) {
-        console.log(
-          `Synchronizing job ${jobData.id} state with Redux timer state:`,
-          {
-            reduxIsRunning: jobTimer.isRunning,
-            reduxIsPaused: jobTimer.isPaused,
-            componentIsRunning: isJobStarted,
-            componentIsPaused: isPaused,
-          },
-        );
+  //     if (shouldUpdateRunning || shouldUpdatePaused) {
+  //       console.log(
+  //         `Synchronizing job ${jobData.id} state with Redux timer state:`,
+  //         {
+  //           reduxIsRunning: jobTimer.isRunning,
+  //           reduxIsPaused: jobTimer.isPaused,
+  //           componentIsRunning: isJobStarted,
+  //           componentIsPaused: isPaused,
+  //         },
+  //       );
 
-        setIsJobStarted(jobTimer.isRunning);
-        setIsPaused(jobTimer.isPaused);
-      }
-    }
-  }, [jobTimer, jobData.id]);
+  //       setIsJobStarted(jobTimer.isRunning);
+  //       setIsPaused(jobTimer.isPaused);
+  //     }
+  //   }
+  // }, [jobTimer, jobData.id]);
 
   // Update to force proper rerendering of child components when state changes
   useEffect(() => {
@@ -843,6 +1010,13 @@ const JobCard = ({navigation, route}) => {
     }
   };
 
+  // useEffect(() => {
+  //   console.log("ACTION STATUS ===> ", jobData.action_status);
+  //   if(jobData.action_status == 1 ){
+  //     resumeTimer(jobData.time_progress);
+  //   }
+  // },[])
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
@@ -866,39 +1040,40 @@ const JobCard = ({navigation, route}) => {
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
-        {jobData.status == 'a' ||
-        jobData.action_status == 1 ||
-        jobData.action_status == 2 ? (
-          <LocationTracker
-            setIsJobStarted={setIsJobStarted}
-            isJobStarted={isJobStarted}
-            isPaused={isPaused}
-            handlePause={handleDirectPause}
-            handleResume={handleDirectResume}
-            handleStartStop={handleStartStop}
-            data={jobData}
-            orgId={orgId}
-            showTracker={showTracker}
-            setShowTracker={setShowTracker}
-            timer={timer}
-            onCompleteJob={onCompleteJob}
-            isCompleted={isCompleted}
-            jobCompleteLoad={jobCompleteLoad}
-          />
+
+      {jobData.status == 'a' ||
+      jobData.action_status == 1 ||
+      jobData.action_status == 2 ? (
+        <LocationTracker
+          setIsJobStarted={setIsJobStarted}
+          isJobStarted={isJobStarted}
+          isPaused={isPaused}
+          handlePause={onPauseClick}
+          handleResume={onStartClick}
+          handleStartStop={onPauseClick}
+          data={jobData}
+          orgId={orgId}
+          showTracker={showTracker}
+          setShowTracker={setShowTracker}
+          timer={timer}
+          onCompleteJob={onCompleteJob}
+          isCompleted={isCompleted}
+          jobCompleteLoad={jobCompleteLoad}
+        />
+      ) : (
+        jobData.action_status != null &&
+        (!isSwipeCompleted ? (
+          <View style={styles.doneButton}>
+            <DoneTickButton />
+            <Text style={styles.doneButtonText}>Done</Text>
+          </View>
         ) : (
-          jobData.action_status != null &&
-          (!isSwipeCompleted ? (
-            <View style={styles.doneButton}>
-              <DoneTickButton />
-              <Text style={styles.doneButtonText}>Done</Text>
-            </View>
-          ) : (
-            <View>
-              <ActivityIndicator color={appColors.black} />
-            </View>
-          ))
-        )}
+          <View>
+            <ActivityIndicator color={appColors.black} />
+          </View>
+        ))
+      )}
+      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
         {isJobStarted ||
         jobData.action_status == 1 ||
         jobData.action_status == 2 ? (
@@ -907,9 +1082,9 @@ const JobCard = ({navigation, route}) => {
             setIsJobStarted={setIsJobStarted}
             isJobStarted={isJobStarted}
             isPaused={isPaused}
-            handlePause={handleDirectPause}
-            handleResume={handleDirectResume}
-            handleStartStop={startJob}
+            handlePause={onPauseClick}
+            handleResume={onStartClick}
+            handleStartStop={onStartClick}
             showTracker={showTracker}
             timer={timer}
           />
@@ -918,7 +1093,12 @@ const JobCard = ({navigation, route}) => {
             <View
               style={{
                 flexDirection: 'row',
-                backgroundColor: appColors.yellow,
+                backgroundColor:
+                  jobData.time_type == '1'
+                    ? appColors.lightGreen
+                    : jobData.time_type == 'T'
+                    ? appColors.yellow
+                    : appColors.lightPurple,
                 alignItems: 'center',
                 borderRadius: 16,
                 paddingHorizontal: 1,
@@ -1651,7 +1831,7 @@ const styles = StyleSheet.create({
     color: appColors.black,
     fontSize: 16,
     fontWeight: '600',
-    flex: 1,
+
     textAlign: 'center',
     padding: 12,
     borderRadius: 20,
@@ -1659,6 +1839,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 32,
+    marginBottom:8,
     gap: 4,
   },
   doneButtonText: {

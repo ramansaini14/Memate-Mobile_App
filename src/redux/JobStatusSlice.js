@@ -4,7 +4,7 @@ import axios from 'axios';
 import {ApiBaseUrl, jobPause, jobStart, jobStop} from '../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const hitJobStart = createAsyncThunk('hitJobStart', async payload => {
+export const hitJobStart = createAsyncThunk('hitJobStart',async (payload, { rejectWithValue }) => {
   try {
     const token = await AsyncStorage.getItem("token")
     const config = {
@@ -29,11 +29,14 @@ export const hitJobStart = createAsyncThunk('hitJobStart', async payload => {
     return response.data;
   } catch (error) {
     console.log('Error  ===> ', error.response.data);
-    throw error.response.data;
+    return rejectWithValue({
+      status: error.response?.status,
+      message: error.response?.data || 'Something went wrong',
+    });
   }
 });
 
-export const hitJobPause = createAsyncThunk('hitJobPause', async payload => {
+export const hitJobPause = createAsyncThunk('hitJobPause',async (payload, { rejectWithValue }) => {
     try {
         const token = await AsyncStorage.getItem("token")
       const config = {
@@ -52,11 +55,14 @@ export const hitJobPause = createAsyncThunk('hitJobPause', async payload => {
       return response.data;
     } catch (error) {
       console.log('Error  ===> ', error.response.data);
-      throw error.response.data;
+      return rejectWithValue({
+        status: error.response?.status,
+        message: error.response?.data || 'Something went wrong',
+      });
     }
   });
   
-export const hitJobStop = createAsyncThunk('hitJobStop', async payload => {
+export const hitJobStop = createAsyncThunk('hitJobStop',async (payload, { rejectWithValue }) => {
     try {
         const token = await AsyncStorage.getItem("token")
         const config = {
@@ -75,7 +81,10 @@ export const hitJobStop = createAsyncThunk('hitJobStop', async payload => {
       return response.data;
     } catch (error) {
       console.log('Error  ===> ', error.response.data);
-      throw error.response.data;
+      return rejectWithValue({
+        status: error.response?.status,
+        message: error.response?.data || 'Something went wrong',
+      });
     }
   });
   
@@ -86,12 +95,16 @@ const JobsStatusSlice = createSlice({
   initialState: {
     isLoading: false,
     data: null,
+    status: null,
+    error: null,
   },
   reducers: {
     clearJobStatus: state => {
       // Reset the data property to an empty array
       state.data = null;
       state.isAuthenticated = false;
+      state.status = null;
+      state.error = null;
     },
   },
   extraReducers: builder => {
@@ -99,41 +112,54 @@ const JobsStatusSlice = createSlice({
       .addCase(hitJobStart.pending, state => {
         console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.status = null;
+        state.error = null;
       })
       .addCase(hitJobStart.fulfilled, (state, action) => {
         console.log('Response  ===> ', state);
         state.isLoading = false;
         state.data = action.payload;
+        state.status = action.payload.status;
+        
       })
       .addCase(hitJobStart.rejected, (state, action) => {
         console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.error = action.payload?.message;
+        state.status = action.payload?.status; 
       })
       .addCase(hitJobPause.pending, state => {
         console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.status = null;
+        state.error = null;
       })
       .addCase(hitJobPause.fulfilled, (state, action) => {
         console.log('Response  ===> ', state);
         state.isLoading = false;
         state.data = action.payload;
+        state.status = action.payload.status;
       })
       .addCase(hitJobPause.rejected, (state, action) => {
         console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.error = action.payload?.message;
+        state.status = action.payload?.status;
       })
       .addCase(hitJobStop.pending, state => {
         console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.status = null;
+        state.error = null;
       })
       .addCase(hitJobStop.fulfilled, (state, action) => {
         console.log('Response  ===> ', action);
         state.isLoading = false;
         state.data = action.payload;
+        state.status = action.payload.status;
       })
       .addCase(hitJobStop.rejected, (state, action) => {
         console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.error = action.payload?.message;
+        state.status = action.payload?.status;
       });
   },
 });

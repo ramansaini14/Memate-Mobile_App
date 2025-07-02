@@ -15,7 +15,7 @@ import AllJobsIcon from '../../../assets/svg/AllJobsIcon';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import {useIsFocused} from '@react-navigation/native';
-import {hitAllTasks} from '../../../redux/AllTaskSlice';
+import {clearAllTasks, hitAllTasks} from '../../../redux/AllTaskSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import ShimmerPlaceHolder from 'react-native-shimmer-placeholder';
@@ -58,6 +58,7 @@ const TasksScreen = ({navigation}) => {
       setTasks(responseAllTasks);
       setLoading(false);
     }
+    dispatch(clearAllTasks());
   }, [responseAllTasks]);
 
   return (
