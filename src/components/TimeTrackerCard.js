@@ -122,7 +122,12 @@ const TimeTrackerCard = ({
         <View
           style={{
             flexDirection: 'row',
-            backgroundColor: appColors.yellow,
+            backgroundColor:
+              data.time_type == '1'
+                ? appColors.lightGreen
+                : data.time_type == 'T'
+                ? appColors.yellow
+                : appColors.lightPurple,
             alignItems: 'center',
             borderRadius: 16,
             paddingHorizontal: 1,

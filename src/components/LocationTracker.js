@@ -469,7 +469,7 @@ const LocationTracker = ({
             <TouchableOpacity
               key="resume-button"
               style={styles.pauseIcon}
-              onPress={handleResumeButtonPress}>
+              onPress={handleResume}>
               <StartJobPlayIcon />
             </TouchableOpacity>
           ) : (
@@ -489,7 +489,7 @@ const LocationTracker = ({
           <Text
             style={[
               styles.confirmButton,
-              {paddingVertical: 14, borderRadius: 32},
+              {borderRadius: 32},
             ]}>
             Start the Job
           </Text>
@@ -526,10 +526,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     borderWidth: 1,
     borderColor: appColors.black,
-    flex: 1,
+    // flex: 1,
     textAlign: 'center',
     padding: 12,
-    borderRadius: 20,
+    borderRadius: 100,
     overflow: 'hidden',
   },
   iconText: {

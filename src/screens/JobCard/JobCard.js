@@ -69,7 +69,6 @@ import {uploadImageToS3} from '../../redux/uploadSlice';
 import RNFS from 'react-native-fs';
 import {PermissionsAndroid, Platform} from 'react-native';
 import {
-  setGloballyOrgData,
   setIsPayused,
   setJobDataGlobally,
 } from '../../redux/GlobalSlice';
@@ -278,6 +277,7 @@ const JobCard = ({navigation, route}) => {
       };
 
       dispatch(setJobDataGlobally(tempJob)); // Update global job data
+      setJobData(tempJob); // Update local job data
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());
       dispatch(clearPauseStatus());
@@ -297,7 +297,7 @@ const JobCard = ({navigation, route}) => {
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());
       dispatch(clearPauseStatus());
-      dispatch(setGloballyOrgData(null));
+      dispatch(setJobDataGlobally(null));
     } else if (statusJobPause == 400) {
       Alert.alert(
         'MeMate',
@@ -1831,10 +1831,9 @@ const styles = StyleSheet.create({
     color: appColors.black,
     fontSize: 16,
     fontWeight: '600',
-
     textAlign: 'center',
-    padding: 12,
-    borderRadius: 20,
+    paddingVertical: 12,
+    borderRadius: 100,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
