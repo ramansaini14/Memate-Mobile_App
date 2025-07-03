@@ -43,7 +43,7 @@ import PinkDot from '../../../assets/svg/PinkDot';
 import {hitAllTasks} from '../../../redux/AllTaskSlice';
 import {selectJobTimer} from '../../../redux/TimerSlice';
 import TimerHomePage from '../../../components/TimerHomePage';
-import {setGloballyOrgData} from '../../../redux/GlobalSlice';
+import {setGloballyOrgData, setJobDataGlobally} from '../../../redux/GlobalSlice';
 import moment from 'moment';
 
 // const { height, width } = Dimensions.get("window");
@@ -199,6 +199,15 @@ const HomeScreen = ({navigation, route}) => {
       const sortUpJobs = upJobs.sort(
         (a, b) => parseInt(b.start_date) - parseInt(a.start_date), // descending
       );
+
+      const startedJobs = responseJobs.results.filter(
+        item => (item.action_status === '1')
+      );
+
+      if (startedJobs.length > 0) {
+        dispatch(setJobDataGlobally(startedJobs[0]));
+      }
+
 
       console.log('Upcoming jobs ===>', sortUpJobs);
       setUpcomingJobs(sortUpJobs);
