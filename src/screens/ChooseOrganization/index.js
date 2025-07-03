@@ -14,12 +14,15 @@ import {setGloballyOrgData} from '../../redux/GlobalSlice';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
 import SimpleCalenderIcon from '../../assets/svg/SimpleCalenderIcon';
 import { emitSocket } from '../../socketService';
+import { useIsFocused } from '@react-navigation/native';
 
 const ChooseOrganization = ({navigation}) => {
   const dispatch = useDispatch();
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const [orgData, setOrgData] = useState(null);
+
+  const isFocused= useIsFocused();
 
   const onNextClick = async itemData => {
     console.log('ORG ID ===> ', JSON.stringify(itemData.id));
@@ -39,8 +42,11 @@ const ChooseOrganization = ({navigation}) => {
   };
 
   useEffect(() => {
-    dispatch(getOrganization());
-  }, []);
+    if (isFocused) {
+      dispatch(getOrganization());
+    }
+    
+  }, [isFocused]);
 
   useEffect(() => {
     console.log('responseOrg ===> ', responseOrg);

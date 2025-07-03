@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import {SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView, ScrollView, StyleSheet, Text, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {TouchableOpacity, TextInput} from 'react-native';
 import {appColors} from '../../utils/appColors';
@@ -74,10 +74,11 @@ const TermsAndConditions = ({navigation, route}) => {
 
   useEffect(() => {
     if (responseAcceptDecline != null) {
-      navigation.reset({
-        index: 0,
-        routes: [{name: 'BottomBar'}],
-      });
+      // navigation.reset({
+      //   index: 0,
+      //   routes: [{name: 'BottomBar'}],
+      // });
+      navigation.goBack();
       // navigation.navigate('BottomBar');
       dispatch(clearAcceptDeclineTerms());
     }
@@ -91,7 +92,7 @@ const TermsAndConditions = ({navigation, route}) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Terms and Conditions</Text>
       </View>
-      <View style={{padding: 16}}>
+      <ScrollView style={{padding: 16,marginBottom:16}} showsVerticalScrollIndicator={false}>
         {terms != null && (
           <RenderHtml
             contentWidth={width}
@@ -99,7 +100,7 @@ const TermsAndConditions = ({navigation, route}) => {
             baseStyle={{color: appColors.white}}
           />
         )}
-      </View>
+      </ScrollView>
       {/* <View>
         <Text style={styles.fontColor}>Terms and Conditions</Text>
       </View>
@@ -127,9 +128,8 @@ const TermsAndConditions = ({navigation, route}) => {
               color: appColors.white,
               fontWeight: '600',
               fontSize: 16,
-              padding: 14,
-              textAlign: 'center',
-              flex: 1,
+              paddingVertical: 14,
+       
             }}>
             Decline
           </Text>
@@ -201,21 +201,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     marginBottom: 16,
-    width: 151,
+    flex: 1,
   },
   blackBtn: {
     color: appColors.white,
     backgroundColor: appColors.black,
     borderRadius: 24,
     alignItems: 'center',
-    flexDirection: 'row',
     paddingHorizontal: 16,
     // paddingVertical: 8,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: appColors.white,
-    width: 151,
-    gap: 10,
+    flex:1
   },
   paragraphStyles: {
     color: 'white',
@@ -236,10 +234,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonContainer: {
-    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
     paddingHorizontal: 40,
+    gap: 10,
   },
 });

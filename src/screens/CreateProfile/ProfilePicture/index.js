@@ -56,10 +56,12 @@ const ProfilePicture = ({navigation, route}) => {
       cropping: true,
       cropperToolbarTitle: 'Crop your profile picture',
       cropperCircleOverlay: true,
+      compressImageFormat: 'jpg',
       compressImageQuality: 0.8,
       mediaType: 'photo',
     })
       .then(img => {
+        console.log('Selected image: ', img);
         setImage(img);
       })
       .catch(err => {
@@ -89,7 +91,11 @@ const ProfilePicture = ({navigation, route}) => {
     await AsyncStorage.removeItem("isRequired")
     await AsyncStorage.removeItem("isAppTerm")
     await AsyncStorage.removeItem("isNew")
-    navigation.navigate('ChooseOrganization');
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'ChooseOrganization'}],
+    });
+    // navigation.navigate('ChooseOrganization');
   }
 
   useEffect(()=>{

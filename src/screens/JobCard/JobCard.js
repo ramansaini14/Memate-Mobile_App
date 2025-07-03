@@ -118,6 +118,9 @@ const JobCard = ({navigation, route}) => {
   const responseAccDec = useSelector(
     state => state.jobsAcceptDeclineReducer.data,
   );
+  const {error} = useSelector(
+    state => state.jobsAcceptDeclineReducer,
+  );
   const attachmentResponse = useSelector(
     state => state.attachmentFileUrlReducer.data,
   );
@@ -826,6 +829,15 @@ const JobCard = ({navigation, route}) => {
       }
     }
   }, [responseAccDec, jobData.id]);
+
+  useEffect(() => {
+    console.log('Response error', error);
+    if(error!=null){
+      Alert.alert('MeMate', error.detail);
+      dispatch(clearJobsAcceptDecline());
+    }
+   
+  }, [error]);
 
   // Add useEffect to synchronize component state with Redux job-specific state
   // useEffect(() => {

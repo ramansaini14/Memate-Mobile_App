@@ -485,7 +485,7 @@ const LocationTracker = ({
       ) : (
         <TouchableOpacity
           style={{paddingHorizontal: 32}}
-          onPress={handleStartJobPress}>
+          onPress={handleResume}>
           <Text
             style={[
               styles.confirmButton,

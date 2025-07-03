@@ -16,6 +16,7 @@ export const hitVerifyPhoneCode = createAsyncThunk('hitVerifyPhoneCode', async (
     };
 
   
+    console.log("Payload phone verification===> ", payload)
     const url = ApiBaseUrl + verifyPhoneCode;
     console.log("url ===> ",url)
     const response = await axios.post(url, payload, config);

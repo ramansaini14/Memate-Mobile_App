@@ -3,8 +3,9 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import axios from 'axios';
 import {ApiBaseUrl, jobsAccept, jobsDecline, verifyEmailCode} from '../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { error } from 'console';
 
-export const hitAcceptJobs = createAsyncThunk('hitAcceptJobs', async payload => {
+export const hitAcceptJobs = createAsyncThunk('hitAcceptJobs', async (payload, {rejectWithValue}) => {
   try {
     const token = await AsyncStorage.getItem("token")
     const config = {
@@ -25,11 +26,14 @@ export const hitAcceptJobs = createAsyncThunk('hitAcceptJobs', async payload => 
     return response.data;
   } catch (error) {
     console.log('Error  ===> ', error.response.data);
-    throw error.response.data;
+    return rejectWithValue({
+      status: error.response?.status,
+      message: error.response?.data || 'Something went wrong',
+    });
   }
 });
 
-export const hitDeclineJobs = createAsyncThunk('hitDeclineJobs', async payload => {
+export const hitDeclineJobs = createAsyncThunk('hitDeclineJobs', async (payload, {rejectWithValue})=> {
     try {
       const token = await AsyncStorage.getItem("token")
       const config = {
@@ -50,7 +54,10 @@ export const hitDeclineJobs = createAsyncThunk('hitDeclineJobs', async payload =
       return response.data;
     } catch (error) {
       console.log('Error  ===> ', error.response.data);
-      throw error.response.data;
+      return rejectWithValue({
+        status: error.response?.status,
+        message: error.response?.data || 'Something went wrong',
+      });
     }
   });
   
@@ -61,12 +68,16 @@ const JobsAcceptDeclineSlice = createSlice({
   initialState: {
     isLoading: false,
     data: null,
+    status:null,
+    error: null,
   },
   reducers: {
     clearJobsAcceptDecline: state => {
       // Reset the data property to an empty array
       state.data = null;
       state.isAuthenticated = false;
+      state.status = null;
+      state.error = null;
     },
   },
   extraReducers: builder => {
@@ -74,28 +85,36 @@ const JobsAcceptDeclineSlice = createSlice({
       .addCase(hitAcceptJobs.pending, state => {
         console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.status = null;
+        state.error = null;
       })
       .addCase(hitAcceptJobs.fulfilled, (state, action) => {
         console.log('Response aaaddd ===> ', state);
         state.isLoading = false;
         state.data = action.payload;
+        state.status = action.payload.status;
       })
       .addCase(hitAcceptJobs.rejected, (state, action) => {
         console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.error = action.payload?.message;
+        state.status = action.payload?.status;
       })
       .addCase(hitDeclineJobs.pending, state => {
         console.log('Loading  ===> ', state);
         state.isLoading = true;
+        state.status = null;
+        state.error = null;
       })
       .addCase(hitDeclineJobs.fulfilled, (state, action) => {
         console.log('Response  ===> ', state);
         state.isLoading = false;
         state.data = action.payload;
+        state.status = action.payload.status;
       })
       .addCase(hitDeclineJobs.rejected, (state, action) => {
         console.log('Errorrrrrr  ===> ', state);
-        state.isError = false;
+        state.error = action.payload?.message;
+        state.status = action.payload?.status;
       });
   },
 });
