@@ -484,7 +484,7 @@ const LocationTracker = ({
         </View>
       ) : (
         <TouchableOpacity
-          style={{paddingHorizontal: 32}}
+          style={{paddingHorizontal: 32,paddingBottom:8}}
           onPress={handleResume}>
           <Text
             style={[

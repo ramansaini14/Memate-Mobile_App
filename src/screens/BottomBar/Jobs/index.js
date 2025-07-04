@@ -172,23 +172,14 @@ const JobsScreen = ({navigation, route}) => {
       responseJobs.summary.forEach(item => {
         const statusName = statusMap[item.status];
         const filterItem = updatedData.find(fd => fd.name === statusName);
-        if (item.status != 4) {
-          // if (filterItem.name == 'Job In Progress') {
-          //   filterItem.count = inProgressLength;
-          //   console.log('Filter Item ===> ', filterItem);
-          // } else {
           if (filterItem) {
             if (filterItem.status == 'a') {
-              const comfiredJobData = responseJobs.results.filter(
-                item => item.status === 'a' && item.action_status === null,
-              );
-              filterItem.count = comfiredJobData.length;
+              const cmfLength = responseJobs.summary[4].total-responseJobs.summary[5].total;
+              filterItem.count = cmfLength;
             } else {
               filterItem.count = item.total;
             }
           }
-          // }
-        }
       });
 
       const totalJobs = responseJobs.summary
@@ -385,13 +376,14 @@ const JobsScreen = ({navigation, route}) => {
               fontWeight: '600',
               color: appColors.black,
               marginLeft: 16,
+              paddingBottom:8,
               fontFamily: 'sf-pro-text-semibold',
             }}>
             {filterData[isWhitDot == -1 ? 0 : isWhitDot].name}
           </Text>
-          <TouchableOpacity onPress={() => setFilterVisible(true)}>
+          {/* <TouchableOpacity onPress={() => setFilterVisible(true)}>
             <AllJobsIcon width={40} height={40} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
         <View style={{marginBottom: 120}}>
           {loading

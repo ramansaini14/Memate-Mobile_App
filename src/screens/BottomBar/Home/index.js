@@ -221,14 +221,22 @@ const HomeScreen = ({navigation, route}) => {
           console.log('Filter Item ===> ', filterItem);
           if (filterItem) {
             if (filterItem.status == 'a') {
-              const comfiredJobData = responseJobs.results.filter(
-                item => item.status === 'a' && item.action_status === null,
-              );
-              filterItem.count = comfiredJobData.length;
+              const cmfLength = responseJobs.summary[4].total-responseJobs.summary[5].total;
+              filterItem.count = cmfLength;
             } else {
               filterItem.count = item.total;
             }
           }
+          // if (filterItem) {
+          //   if (filterItem.status == 'a') {
+          //     const comfiredJobData = responseJobs.results.filter(
+          //       item => item.status === 'a' && item.action_status === null,
+          //     );
+          //     filterItem.count = comfiredJobData.length;
+          //   } else {
+          //     filterItem.count = item.total;
+          //   }
+          // }
         }
       });
 

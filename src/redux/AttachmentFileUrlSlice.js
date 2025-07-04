@@ -18,6 +18,7 @@ export const hitAttachmentFileUrl = createAsyncThunk(
 
     const params = {
       filename: payload.filename,
+      type: payload.type,
     };
 
     try {

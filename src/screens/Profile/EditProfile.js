@@ -3,6 +3,8 @@ import {
   Button,
   Image,
   Modal,
+  PermissionsAndroid,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,9 +29,11 @@ import StateModal from '../../components/StateModal';
 import WhiteDownArrow from '../../assets/svg/WhiteDownArrow';
 import {hitGetCities} from '../../redux/GetCitiesSlice';
 import moment from 'moment';
-import {hitUpdateProfile} from '../../redux/UpdateProfileSlice';
+import ImagePicker from 'react-native-image-crop-picker';
 import WhiteCalender from '../../assets/svg/WhiteCalender';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import EditIcon from '../../assets/svg/EditIcon';
+import { clearUpdateProfileInner, hitUpdateProfileInner } from '../../redux/UpdateProfileInnerSlice';
 
 const EditProfile = ({navigation, route}) => {
   const {
@@ -41,11 +45,10 @@ const EditProfile = ({navigation, route}) => {
     state,
     city,
     profileEmail,
-    profilePhone,
   } = route.params;
   const [profile, setProfile] = useState(null);
 
-    const {statusCode,data} = useSelector((state)=>state.updateProfileReducer)
+  const {statusCode, data} = useSelector(state => state.updateProfileInnerReducer);
 
   const dispatch = useDispatch();
   const phoneRef = useRef(null);
@@ -55,6 +58,7 @@ const EditProfile = ({navigation, route}) => {
   const [countryCode, setCountryCode] = useState('AU'); // Assuming default country is Aus
   const [emgPhoneNumber, setEmgPhoneNumber] = useState('');
   const [emgCountryCode, setEmgCountryCode] = useState('AU'); // Assuming default country is Aus
+  const [image, setImage] = useState(null);
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
 
@@ -75,15 +79,15 @@ const EditProfile = ({navigation, route}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const [email, setEmail] = useState('');
-  const [dob, setDob] = useState('');
+  const [dob, setDob] = useState(new Date());
   const [abn, setAbn] = useState('');
   const [street, setStreet] = useState('');
   const [postcode, setPostcode] = useState('');
   const [emgNumber, setEmgNumber] = useState('');
   const [emgName, setEmgName] = useState('');
 
-   const [showDatePicker, setShowDatePicker] = useState(false);
-    const [tempDate, setTempDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
 
   const toggleCountryPicker = () => {
     setCountryPickerVisible(!countryPickerVisible);
@@ -103,9 +107,15 @@ const EditProfile = ({navigation, route}) => {
     setCity(city);
     setEmail(profileEmail);
     setAbn(profileData.abn || '');
-    setDob(
-      moment(profileData.date_of_birth * 1000).format('DD MMM, YYYY') || '',
-    );
+
+    const formattedDate = profileData?.date_of_birth
+  ? new Date(parseInt(profileData.date_of_birth) * 1000)
+      .toISOString()
+      .split('T')[0]
+  : '';
+
+    
+    setDob(formattedDate);
     setStreet(profileData.street_address || '');
     setPostcode(profileData.postcode || '');
     setEmgName(profileData.emergency_name || '');
@@ -144,35 +154,85 @@ const EditProfile = ({navigation, route}) => {
   }, [responseCities]);
 
   const onUpdate = () => {
+
     const profileData = {
       firstName: profile.first_name,
       lastName: profile.last_name,
       email: email,
-      countryCode: countryCode == 'AU' ? 61 : countryCode,
+      countryCode: countryCode == 'AU' ?  61 : countryCode,
       phoneNumber: phoneNumber.substring(countryCode.length),
       dob: dob,
       abn: abn,
-      city:selectedCity.id,
+      city: selectedCity.id,
       streetAddress: street,
       postcode: postcode,
       emgCountryCode: emgCountryCode == 'AU' ? 61 : emgCountryCode,
       emgPhoneNumber: emgPhoneNumber.substring(emgCountryCode.length),
-      emgName: emgName,
+      name: emgName,
     };
+  
+    console.log("profile data ===> ", profileData);
 
     const payload = {
-      image:null,
+      image: image,
       profileData,
     };
 
-    dispatch(hitUpdateProfile(payload));
+    dispatch(hitUpdateProfileInner(payload));
   };
-  useEffect(()=>{
-    if(statusCode == 200) {
+  useEffect(() => {
+    if (statusCode == 200) {
       Alert.alert('Profile updated successfully');
       navigation.goBack();
+      dispatch(clearUpdateProfileInner())
     }
-  },[data])
+  }, [data]);
+
+  const requestPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ]);
+        return Object.values(granted).every(val => val === 'granted');
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const pickImage = async () => {
+    const hasPermission = await requestPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Please grant permission to continue');
+      return;
+    }
+
+    ImagePicker.openPicker({
+      width: 300,
+      height: 300,
+      cropping: true,
+      cropperToolbarTitle: 'Crop your profile picture',
+      cropperCircleOverlay: true,
+      compressImageFormat: 'jpg',
+      compressImageQuality: 0.8,
+      mediaType: 'photo',
+    })
+      .then(img => {
+        console.log('Selected image: ', img);
+        setImage(img);
+      })
+      .catch(err => {
+        if (err.code !== 'E_PICKER_CANCELLED') {
+          Alert.alert('Error', 'Failed to pick image');
+          console.error('Image picker error: ', err);
+        }
+      });
+  };
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -201,14 +261,18 @@ const EditProfile = ({navigation, route}) => {
               {profile != null &&
                 (profile.has_photo ? (
                   <Image
-                    source={{uri: profile.photo}}
+                    source={{uri: image==null?profile.photo:image.path}}
                     style={styles.avatar_}
                     resizeMode="contain"
                   />
                 ) : (
                   <ProfileDummy width={120} height={120} />
                 ))}
+              <TouchableOpacity style={{marginTop: -30,alignItems:'flex-end'}} onPress={() => pickImage()}>
+                <EditIcon />
+              </TouchableOpacity>
             </View>
+
             <Text style={styles.userName}>
               {profile.first_name + ' ' + profile.last_name}
             </Text>
@@ -274,20 +338,20 @@ const EditProfile = ({navigation, route}) => {
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>DOB</Text>
               <View style={styles.inputViewStyle}>
-            <TextInput
-              style={styles.inputStyle}
-              editable={false}
-              placeholder="21 Aug 2021"
-              placeholderTextColor={appColors.placeholderColor}
-              keyboardType="email-address"
-              value={moment(dob, "YYYY-MM-DD").format("DD MMM, YYYY")}
-            />
-            <TouchableOpacity
-              style={{marginRight: 16}}
-              onPress={() => setShowDatePicker(true)}>
-              <WhiteCalender />
-            </TouchableOpacity>
-          </View>
+                <TextInput
+                  style={styles.inputStyle}
+                  editable={false}
+                  placeholder="21 Aug 2021"
+                  placeholderTextColor={appColors.placeholderColor}
+                  keyboardType="email-address"
+                  value={moment(dob, 'YYYY-MM-DD').format('DD MMM, YYYY')}
+                />
+                <TouchableOpacity
+                  style={{marginRight: 16}}
+                  onPress={() => setShowDatePicker(true)}>
+                  <WhiteCalender />
+                </TouchableOpacity>
+              </View>
             </View>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>ABN</Text>
@@ -481,12 +545,12 @@ const EditProfile = ({navigation, route}) => {
                 borderBottomWidth: 1,
               }}>
               <Text style={styles.addressStyle}>Security Options</Text>
-              <View style={{flexDirection: 'row'}}>
+              <View style={{flexDirection: 'row',alignItems: 'center'}}>
                 <View style={{width: 30, height: 30}}>
                   <KeyIcon />
                 </View>
                 <Text style={{color: appColors.white, fontSize: 16}}>
-                  Reset the Password
+                  Reset Pin
                 </Text>
               </View>
             </View>
@@ -500,13 +564,15 @@ const EditProfile = ({navigation, route}) => {
             </View>
             <View>
               <Text style={{color: appColors.lightRed, fontSize: 15}}>
-                Delete the Account
+                Delete Account
               </Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={{alignItems: 'center', flex: 1}} onPress={()=> onUpdate()}>
-            <Text style={styles.saveChangeButton}>Save changes</Text>
+          <TouchableOpacity
+            style={{alignItems: 'center', flex: 1}}
+            onPress={() => onUpdate()}>
+            <Text style={styles.saveChangeButton}>Update Profile</Text>
           </TouchableOpacity>
           <StateModal
             title={isState ? 'Select State' : 'Select City'}
@@ -517,17 +583,22 @@ const EditProfile = ({navigation, route}) => {
             items={isState ? states : cities}
           />
 
-{showDatePicker  && (
+          {showDatePicker && (
             <Modal transparent={true} animationType="slide">
-              <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#00000088' }}>
-                <View style={{ backgroundColor: 'white', padding: 16 }}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'flex-end',
+                  backgroundColor: '#00000088',
+                }}>
+                <View style={{backgroundColor: 'white', padding: 16}}>
                   <DateTimePicker
                     value={tempDate}
                     mode="date"
                     display="spinner"
                     onChange={(event, selectedDate) => {
                       if (selectedDate) {
-                        console.log("Selected Date ====> ",selectedDate)
+                        console.log('Selected Date ====> ', selectedDate);
                         setTempDate(selectedDate); // Store temporarily until OK is pressed
                       }
                     }}
@@ -536,8 +607,11 @@ const EditProfile = ({navigation, route}) => {
                     title="OK"
                     onPress={() => {
                       setShowDatePicker(false);
+                      console.log('Temp Date ====> ', tempDate);
                       if (tempDate) {
-                        const formattedDate = tempDate.toISOString().split('T')[0];
+                        const formattedDate = tempDate
+                          .toISOString()
+                          .split('T')[0];
                         setDob(formattedDate);
                       }
                     }}
@@ -545,7 +619,7 @@ const EditProfile = ({navigation, route}) => {
                 </View>
               </View>
             </Modal>
-          )} 
+          )}
         </ScrollView>
       )}
     </SafeAreaView>

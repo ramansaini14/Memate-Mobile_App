@@ -2,24 +2,32 @@ import * as React from "react"
 import Svg, { Rect, Path } from "react-native-svg"
 
 const EditIcon = (props) => (
-    <Svg xmlns="http://www.w3.org/2000/svg" fill="none" {...props}>
-        <Rect width={39} height={39} x={0.5} y={0.5} stroke="#E9EBEE" rx={19.5} />
-        <Path
-            stroke="#191C1F"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeMiterlimit={10}
-            strokeWidth={1.5}
-            d="m21.991 13.271-7.88 7.88c-.3.3-.6.89-.66 1.32l-.43 3.01c-.16 1.09.61 1.85 1.7 1.7l3.01-.43c.42-.06 1.01-.36 1.32-.66l7.88-7.88c1.36-1.36 2-2.94 0-4.94-2-2-3.58-1.36-4.94 0Z"
-        />
-        <Path
-            stroke="#191C1F"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeMiterlimit={10}
-            strokeWidth={1.5}
-            d="M20.861 14.401a7.144 7.144 0 0 0 4.94 4.94"
-        />
-    </Svg>
+ <Svg
+    width={40}
+    height={40}
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <Rect width={40} height={40} rx={20} fill="white" />
+    <Path
+      d="M21.9911 14.2712L14.1111 22.1512C13.8111 22.4512 13.5111 23.0412 13.4511 23.4712L13.0211 26.4812C12.8611 27.5712 13.6311 28.3312 14.7211 28.1812L17.7311 27.7512C18.1511 27.6912 18.7411 27.3912 19.0511 27.0912L26.9311 19.2112C28.2911 17.8512 28.9311 16.2712 26.9311 14.2712C24.9311 12.2712 23.3511 12.9112 21.9911 14.2712Z"
+      stroke="#191C1F"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M20.8613 15.4014C21.5313 17.7914 23.4013 19.6614 25.8013 20.3414"
+      stroke="#191C1F"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+
 )
 export default EditIcon

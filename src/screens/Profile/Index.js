@@ -19,6 +19,7 @@ import CircularProgress from '../../components/CircularProgress';
 import {clearGetCountries, hitGetCounties} from '../../redux/GetCountriesSlice';
 import {clearGetState, hitGetState} from '../../redux/GetStateSlice';
 import {clearGetCity, hitGetCities} from '../../redux/GetCitiesSlice';
+import { useIsFocused } from '@react-navigation/native';
 
 // const { height, width } = Dimensions.get("window");
 
@@ -26,6 +27,8 @@ const Profile = ({navigation}) => {
   const dispatch = useDispatch();
 
   const profileResponse = useSelector(state => state.getProfileReducer.data);
+
+  const isFocused = useIsFocused();
 
   const responseCountries = useSelector(
     state => state.getCountriesReducer.data,
@@ -44,7 +47,7 @@ const Profile = ({navigation}) => {
 
   useEffect(() => {
     dispatch(hitGetCounties());
-  }, []);
+  }, [isFocused]);
 
   useEffect(() => {
     console.log('Response Countries ===>', responseCountries);
@@ -160,25 +163,25 @@ const Profile = ({navigation}) => {
             <Text style={styles.userDetailStyle}>User Details</Text>
             <View style={{marginBottom: 8}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>Email</Text>
-              <Text style={{color: appColors.white, fontSize: 15}}>
+              <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                 {profile.email}
               </Text>
             </View>
             <View style={{marginBottom: 8}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>Phone</Text>
-              <Text style={{color: appColors.white, fontSize: 15}}>
+              <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                 +{profile.country_code + profile.phone}
               </Text>
             </View>
             <View style={{marginBottom: 8}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>DOB</Text>
-              <Text style={{color: appColors.white, fontSize: 15}}>
+              <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                 {timeStampToDate(profile.date_of_birth)}
               </Text>
             </View>
             <View style={{marginBottom: 8}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>ABN</Text>
-              <Text style={{color: appColors.white, fontSize: 15}}>
+              <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                 {profile.abn}
               </Text>
             </View>
@@ -187,7 +190,7 @@ const Profile = ({navigation}) => {
               {selectedCity != null &&
                 selectedState != null &&
                 selectedCountry != null && (
-                  <Text style={{color: appColors.white, fontSize: 15}}>
+                  <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                     {profile.street_address +
                       ', ' +
                       selectedCity.name +
@@ -208,15 +211,15 @@ const Profile = ({navigation}) => {
                 Contact Name
               </Text>
               <Text
-                style={{color: appColors.white, fontSize: 15, marginBottom: 8}}>
+                style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                 {profile.emergency_name}
               </Text>
             </View>
             {profile.emergency != null && (
               <View style={{marginBottom: 15}}>
                 <Text style={{color: appColors.grey, fontSize: 13}}>Phone</Text>
-                <Text style={{color: appColors.white, fontSize: 15}}>
-                  {profile.emergency}
+                <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
+                  {profile.emergency_country_code+profile.emergency}
                 </Text>
               </View>
             )}
@@ -282,6 +285,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 17,
     marginBottom: 15,
+    marginTop:8
   },
   userDetailStyle: {
     color: appColors.white,

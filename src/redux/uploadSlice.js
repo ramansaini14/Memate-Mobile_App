@@ -2,11 +2,21 @@ import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import axios from 'axios';
 import RNFS from 'react-native-fs';
 import {Buffer} from 'buffer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const uploadImageToS3 = createAsyncThunk(
   'upload/uploadImageToS3',
   async ({localFilePath, presignedUrl}, {rejectWithValue}) => {
     try {
+
+      const token = await AsyncStorage.getItem('token');
+
+      // const config = {
+      //     headers: {
+      //        'Content-Type': 'text/plain',
+      //     },
+      // };
+
       // Read the image file as base64
       const base64 = await RNFS.readFile(localFilePath, 'base64');
 

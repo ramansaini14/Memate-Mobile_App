@@ -16,63 +16,15 @@ export const hitUpdateProfile = createAsyncThunk(
         Authorization: 'Bearer ' + token,
       },
     };
-    console.log('payload ===> ', payload);
 
     const formData = new FormData();
 
-    if (payload.image === null || payload.image === undefined) {
-
      
-      
-      formData.append(
-        'first_name',
-        payload.profileData.firstName,
-      );
-      
-      formData.append(
-        'last_name',
-        payload.profileData.lastName,
-      );
-
-      console.log("First Name ===> ", payload.profileData.firstName);
-      console.log("Last Name ===> ", payload.profileData.lastName);
-      formData.append(
-        'country_code',
-        payload.profileData.countryCode,
-      );
-     
-      formData.append('phone', payload.profileData.phoneNumber);
-      formData.append('date_of_birth', payload.profileData.dob);
-      formData.append('abn', payload.profileData.abn);
-      formData.append('city', payload.profileData.city);
-      formData.append(
-        'street_address',
-        payload.profileData.streetAddress,
-      );
-      formData.append(
-        'postcode',
-        payload.profileData.postcode,
-      );
-      formData.append(
-        'emergency_country_code',
-        payload.profileData.countryCode,
-      );
-      formData.append(
-        'emergency',
-        payload.profileData.phoneNumber,
-      );
-      formData.append('emergency_name', payload.profileData.name);
-
-
-    
-
-    } else {
-     
-
+      console.log("Payload with Image ===> ", payload);
       formData.append('photo', {
         uri: payload.image.path,
-        name: payload.image.filename,
-        type: 'image/jpeg',
+        name: payload.image?.filename,
+        type: 'image/jpg',
       });
 
       formData.append(
@@ -108,8 +60,7 @@ export const hitUpdateProfile = createAsyncThunk(
         payload.profileData.emergencyData.phoneNumber,
       );
       formData.append('emergency_name', payload.profileData.emergencyData.name);
-    
-    }
+  
     console.log('FormData ===> ', formData);
     try {
       const url = ApiBaseUrl + updateProfile;
@@ -154,7 +105,7 @@ const UpdateProfileSlice = createSlice({
         state.statusCode = action.payload.status;
       })
       .addCase(hitUpdateProfile.rejected, (state, action) => {
-        console.log('Upload Image Error ===> ', action.payload);
+        console.log('Upload Image Error ===> ', state);
         state.loading = 'idle';
         state.statusCode = action.payload?.status;
         state.error = action.error.message;

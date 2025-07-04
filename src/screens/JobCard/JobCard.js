@@ -11,6 +11,7 @@ import {
   ToastAndroid,
   FlatList,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import React, {useEffect, useState, useRef, use} from 'react';
 import {appColors} from '../../utils/appColors';
@@ -21,6 +22,7 @@ import NotificationIcon from '../../assets/svg/NotificationIcon';
 import SettingIcon from '../../assets/svg/SettingIcon';
 import CopyIcon from '../../assets/svg/CopyIcon';
 import ExpandIcon from '../../assets/svg/ExpandIcon';
+import {Buffer} from 'buffer';
 // import Map2 from '../../assets/svg/Map2';
 import DocumentIcon from '../../assets/svg/DocumentIcon';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -64,16 +66,15 @@ import {
   clearAttachmentFileUrl,
   hitAttachmentFileUrl,
 } from '../../redux/AttachmentFileUrlSlice';
-import {uploadImageToS3} from '../../redux/uploadSlice';
+// import {uploadImageToS3} from '../../redux/uploadSlice';
 
 import RNFS from 'react-native-fs';
 import {PermissionsAndroid, Platform} from 'react-native';
-import {
-  setIsPayused,
-  setJobDataGlobally,
-} from '../../redux/GlobalSlice';
+import {setIsPayused, setJobDataGlobally} from '../../redux/GlobalSlice';
 import {clearStartStatus, hitStartJob} from '../../redux/StartJobSlice';
 import {clearPauseStatus, hitPauseJob} from '../../redux/PauseJobSlice';
+import ImagePicker from 'react-native-image-crop-picker';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 
 const JobCard = ({navigation, route}) => {
   const [showTracker, setShowTracker] = useState(true);
@@ -118,9 +119,7 @@ const JobCard = ({navigation, route}) => {
   const responseAccDec = useSelector(
     state => state.jobsAcceptDeclineReducer.data,
   );
-  const {error} = useSelector(
-    state => state.jobsAcceptDeclineReducer,
-  );
+  const {error} = useSelector(state => state.jobsAcceptDeclineReducer);
   const attachmentResponse = useSelector(
     state => state.attachmentFileUrlReducer.data,
   );
@@ -798,6 +797,45 @@ const JobCard = ({navigation, route}) => {
     }
   }, [attachmentResponse]);
 
+  const uploadImageToS3 = createAsyncThunk(
+    'upload/uploadImageToS3',
+    async ({localFilePath, presignedUrl}, {rejectWithValue}) => {
+      try {
+  
+        // Read file as base64 and convert to binary buffer
+        const base64 = await RNFS.readFile(localFilePath, 'base64');
+        const buffer = Buffer.from(base64, 'base64');
+  
+        console.log('🟡 Uploading to:', presignedUrl);
+        console.log('📄 File path:', localFilePath);
+        console.log('➡️ Request Body Length (bytes):', buffer.length);
+  
+        // Send PUT request using fetch (no Content-Type)
+        const response = await fetch(presignedUrl, {
+          method: 'PUT',
+          body: buffer,
+          headers: {
+            // Do not set 'Content-Type' – presigned URL already defines it
+          },
+        });
+  
+        console.log('🟢 Upload status:', response.status);
+  
+        if (response.ok) {
+          console.log('✅ Upload successful!');
+          return '✅ Upload successful!';
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Upload failed:', response.status, errorText);
+          return rejectWithValue(`Upload failed with status ${response.status}`);
+        }
+      } catch (error) {
+        console.error('❌ Upload error:', error);
+        return rejectWithValue(error?.message || 'Unknown error');
+      }
+    }
+  );
+
   const handleCopy = () => {
     Clipboard.setString(text);
     if (Platform.OS === 'android') {
@@ -832,11 +870,10 @@ const JobCard = ({navigation, route}) => {
 
   useEffect(() => {
     console.log('Response error', error);
-    if(error!=null){
+    if (error != null) {
       Alert.alert('MeMate', error.detail);
       dispatch(clearJobsAcceptDecline());
     }
-   
   }, [error]);
 
   // Add useEffect to synchronize component state with Redux job-specific state
@@ -963,6 +1000,7 @@ const JobCard = ({navigation, route}) => {
           jobId: jobData.id,
           filename: result.assets[0].fileName,
         };
+        console.log('Payload for attachment file URL:', payload);
         dispatch(hitAttachmentFileUrl(payload));
       }
     } catch (err) {
@@ -970,8 +1008,30 @@ const JobCard = ({navigation, route}) => {
     }
   };
 
+  async function requestGalleryPermission() {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+        {
+          title: 'Storage Permission',
+          message: 'App needs access to your photos',
+          buttonPositive: 'OK',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  }
   const onGalleryClick = async () => {
     console.log('Open Gallery');
+
+    const permissionGranted = await requestGalleryPermission();
+
+    if (!permissionGranted) {
+      console.log('Gallery permission denied');
+      return;
+    }
+
     try {
       const result = await launchImageLibrary(options);
       if (result.didCancel) {
@@ -980,6 +1040,15 @@ const JobCard = ({navigation, route}) => {
         console.log('Gallery Error: ', result.errorMessage);
       } else {
         console.log('Gallery Image: ', result.assets[0]);
+        setSelectedImage(result.assets[0]);
+        const payload = {
+          orgId: orgId,
+          jobId: jobData.id,
+          filename: result.assets[0].fileName,
+          type:"before"
+        };
+        console.log('Payload for attachment file URL:', payload);
+        dispatch(hitAttachmentFileUrl(payload));
       }
     } catch (err) {
       console.log('Gallery launch error', err);
@@ -1021,6 +1090,81 @@ const JobCard = ({navigation, route}) => {
       Alert.alert('Download error', error.message);
     }
   };
+
+  const uploadToS3 = async (file, url) => {
+    try {
+      const response = await axios.put(url, file, {
+        headers: {
+          'Content-Type': '',
+        },
+        onUploadProgress: progressEvent => {
+          const progress = Math.round(
+            (progressEvent.loaded / progressEvent.total) * 100,
+          );
+          setFiles(prevFiles => {
+            return prevFiles.map(f =>
+              f.name === file.name ? Object.assign(f, {progress, url}) : f,
+            );
+          });
+        },
+      });
+
+      // Mark as successfully uploaded
+      setFiles(prevFiles => {
+        return prevFiles.map(f =>
+          f.name === file.name
+            ? Object.assign(f, {progress: 100, uploaded: true})
+            : f,
+        );
+      });
+
+      return response;
+    } catch (err) {
+      // Handle specific error types
+      let errorMessage = 'Upload failed';
+
+      if (err.response) {
+        if (err.response.status === 403) {
+          errorMessage = 'Permission denied (403 Forbidden)';
+        } else {
+          errorMessage = `Server error: ${err.response.status}`;
+        }
+      } else if (err.request) {
+        errorMessage = 'No response from server';
+      } else {
+        errorMessage = err.message;
+      }
+
+      console.error(`Error uploading ${file.name}:`, errorMessage);
+
+      // Update file with error status but don't stop other uploads
+      setFiles(prevFiles => {
+        return prevFiles.map(f =>
+          f.name === file.name
+            ? Object.assign(f, {
+                progress: 0,
+                error: true,
+                errorMessage,
+                uploadFailed: true,
+              })
+            : f,
+        );
+      });
+
+      // Return error object instead of throwing
+      return {error: true, message: errorMessage};
+    }
+  };
+
+  const openInMaps = (address) => {
+    const url = Platform.select({
+      ios: `http://maps.apple.com/?q=${encodeURIComponent(address)}`,
+      android: `geo:0,0?q=${encodeURIComponent(address)}`
+    });
+
+    Linking.openURL(url).catch(err => console.error('Failed to open map:', err));
+  };
+
 
   // useEffect(() => {
   //   console.log("ACTION STATUS ===> ", jobData.action_status);
@@ -1288,10 +1432,10 @@ const JobCard = ({navigation, route}) => {
             <Text style={styles.timePaymentStyle}>Payment</Text>
             <Text style={styles.cardHoursStyle}>{'$' + jobData.cost}</Text>
           </View>
-          {/* <View>
+          <View>
             <Text style={styles.timePaymentStyle}>Variations</Text>
-            <Text style={styles.cardHoursStyle}>$50.00st</Text>
-          </View> */}
+            <Text style={styles.cardHoursStyle}>{'$' + jobData.bonus}</Text>
+          </View>
         </View>
 
         <View style={styles.descriptionCardStyle}>
@@ -1358,19 +1502,25 @@ const JobCard = ({navigation, route}) => {
           }}>
           Job Location:
         </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center',marginHorizontal:16}}>
         <Text
           style={{
             color: appColors.black,
             marginTop: 4,
-            marginLeft: 16,
-            marginBottom: 16,
             width: '80%',
             fontSize: 14,
             fontFamily: 'sf_medium',
             fontWeight: 400,
+            flex:1
           }}>
           {jobData.address}
         </Text>
+        <TouchableOpacity onPress={() => openInMaps(jobData.address)} >
+        <MapIcon/>
+        </TouchableOpacity>
+        
+        </View>
+       
         {jobData != null && jobData.attachments.length > 0 && (
           <View style={{flexDirection: 'row'}}>
             <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>
@@ -1441,7 +1591,7 @@ const JobCard = ({navigation, route}) => {
           {jobData != null && jobData.project_photos == 3 && (
             <View>
               <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
-                Before & After
+                Before
               </Text>
               <TouchableOpacity
                 style={styles.imageViewStyle}
@@ -1454,12 +1604,27 @@ const JobCard = ({navigation, route}) => {
               <TouchableOpacity style={styles.imageViewStyle}>
                 <AddImageIcon />
               </TouchableOpacity>
+              <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+                After
+              </Text>
+              <TouchableOpacity style={styles.imageViewStyle}>
+                <AddImageIcon />
+              </TouchableOpacity>
             </View>
           )}
           {jobData != null && jobData.project_photos == 1 && (
             <View>
               <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
-                Before & After
+                Before
+              </Text>
+              <TouchableOpacity
+                style={styles.imageViewStyle}
+                onPress={() => setModalVisible(!modalVisible)}>
+                <AddImageIcon />
+              </TouchableOpacity>
+
+              <Text style={{fontSize: 14, fontWeight: '600', marginTop: 16}}>
+                After
               </Text>
               <TouchableOpacity
                 style={styles.imageViewStyle}
@@ -1798,13 +1963,12 @@ const styles = StyleSheet.create({
   },
   blackCardStyle: {
     backgroundColor: appColors.black,
-    paddingHorizontal: 20,
+    paddingHorizontal: 32,
     paddingVertical: 22,
     borderRadius: 28,
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 20,
-    gap: 40,
   },
   timePaymentStyle: {
     color: appColors.grey,
@@ -1850,7 +2014,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 32,
-    marginBottom:8,
+    marginBottom: 8,
     gap: 4,
   },
   doneButtonText: {

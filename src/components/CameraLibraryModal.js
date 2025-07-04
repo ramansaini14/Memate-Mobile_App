@@ -22,16 +22,16 @@ const CameraLibraryModal = ({ visible, onClose, onSelect }) => {
             style={styles.option}
             onPress={() => onSelect('camera')}
           >
-            <Text style={styles.text}>📷 Take Photo</Text>
+            <Text style={styles.text}>Take Photo</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.option}
             onPress={() => onSelect('library')}
           >
-            <Text style={styles.text}>🖼️ Choose from Library</Text>
+            <Text style={styles.text}>Choose from Library</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={styles.cancel}>
-            <Text style={[styles.text, { color: 'red' }]}>Cancel</Text>
+            <Text style={[styles.text, { color: 'red',fontWeight:"600" }]}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Pressable>

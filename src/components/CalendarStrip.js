@@ -74,8 +74,8 @@ const CalendarStrip = ({setApprovedJobs, orgId, setPdfFileName}) => {
   useEffect(() => {
     const currentWeek = today.isoWeek();
     console.log('Weeek =====> ', currentWeek);
-    setWhiteDot(currentWeek - 1);
-    setInitialIndex(currentWeek);
+    setWhiteDot(currentWeek - 2);
+    setInitialIndex(currentWeek-1);
   }, []);
 
   useEffect(() => {

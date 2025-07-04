@@ -29,6 +29,7 @@ import forgotReducer from './ForgotSlice';
 import jobPauseReducer from './PauseJobSlice';
 import jobsStartReducer from './StartJobSlice';
 import jobFinishReducer from './FinishJobSlice';
+import updateProfileInnerReducer from './UpdateProfileInnerSlice';
 
 const store = configureStore({
   reducer: {
@@ -62,6 +63,7 @@ const store = configureStore({
     jobPauseReducer:jobPauseReducer,
     jobsStartReducer:jobsStartReducer,
     jobFinishReducer:jobFinishReducer,
+    updateProfileInnerReducer:updateProfileInnerReducer,
   },
 });
 
