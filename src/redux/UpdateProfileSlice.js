@@ -43,6 +43,9 @@ export const hitUpdateProfile = createAsyncThunk(
       formData.append('date_of_birth', payload.profileData.data.detailData.dob);
       formData.append('abn', payload.profileData.data.detailData.abn);
       formData.append('city', payload.profileData.data.profileData.city);
+      formData.append('city_text', payload.profileData.data.profileData.city_text);
+      formData.append('state_text', payload.profileData.data.profileData.state_text);
+      formData.append('country_text', payload.profileData.data.profileData.country_text);
       formData.append(
         'street_address',
         payload.profileData.data.profileData.streetAddress,

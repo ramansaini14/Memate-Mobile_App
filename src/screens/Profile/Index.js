@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {use, useEffect, useState} from 'react';
 import {appColors} from '../../utils/appColors';
 import WhiteCalenderIcon from '../../assets/svg/WhiteCalenderIcon';
 import WhiteMenuIcon from '../../assets/svg/WhiteMenuIcon';
@@ -65,10 +65,15 @@ const Profile = ({navigation}) => {
     console.log('Response responseState ===>', responseState);
     if (responseState != null) {
       setStates(responseState);
-      dispatch(getProfile());
       // dispatch(clearGetState());
     }
   }, [responseState]);
+
+  useEffect(() => {
+    if(states.length>0){
+      dispatch(getProfile());
+    }
+  }, [states]);
 
   useEffect(() => {
     console.log('responseCities', responseCities);
@@ -93,8 +98,9 @@ const Profile = ({navigation}) => {
       setCountry(country);
       setState(state);
 
+      console.log("states ====> ",states[0]?.id);
       const payload = {
-        id: profileResponse.data.state,
+        id: profileResponse.data.state==null?states[0]?.id:profileResponse.data.state,
       };
       dispatch(hitGetCities(payload));
 
@@ -189,7 +195,7 @@ const Profile = ({navigation}) => {
               <Text style={{color: appColors.grey, fontSize: 13}}>Address</Text>
               {selectedCity != null &&
                 selectedState != null &&
-                selectedCountry != null && (
+                selectedCountry != null? (
                   <Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
                     {profile.street_address +
                       ', ' +
@@ -199,7 +205,15 @@ const Profile = ({navigation}) => {
                       ',' +
                       selectedCountry.name}
                   </Text>
-                )}
+                ):<Text style={{color: appColors.white, fontSize: 15,marginTop:4}}>
+                {profile.street_address +
+                  ', ' +
+                  profile.city_text +
+                  ', ' +
+                  profile.state_text +
+                  ',' +
+                  profile.country_text}
+              </Text>}
             </View>
           </View>
           <View style={{marginTop: 15}}>
@@ -239,6 +253,9 @@ const Profile = ({navigation}) => {
                   city: selectedCity,
                   profileEmail: profile.email,
                   profilePhone: profile.phone,
+                  city_text:profile.city_text,
+                  state_text:profile.state_text,
+                  country_text:profile.country_text,
                 })
               }>
               Edit Profile

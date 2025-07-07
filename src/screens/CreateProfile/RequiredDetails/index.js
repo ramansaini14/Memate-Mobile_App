@@ -128,7 +128,6 @@ const RequiredDetails = ({navigation}) => {
     if (
       lastName == '' ||
       firstName == '' ||
-      phoneNumber == '' ||
       selectedDate==''
     ) {
       Alert.alert('All fields are required!');

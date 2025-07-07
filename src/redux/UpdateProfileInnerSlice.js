@@ -42,6 +42,9 @@ export const hitUpdateProfileInner = createAsyncThunk(
       formData.append('date_of_birth', payload.profileData.dob);
       formData.append('abn', payload.profileData.abn);
       formData.append('city', payload.profileData.city);
+      formData.append('city_text', payload.profileData.city_text);
+      formData.append('state_text', payload.profileData.state_text);
+      formData.append('country_text', payload.profileData.country_text);
       formData.append(
         'street_address',
         payload.profileData.streetAddress,
@@ -88,6 +91,9 @@ export const hitUpdateProfileInner = createAsyncThunk(
       formData.append('date_of_birth', payload.profileData.dob);
       formData.append('abn', payload.profileData.abn);
       formData.append('city', payload.profileData.city);
+      formData.append('city_text', payload.profileData.city_text);
+      formData.append('state_text', payload.profileData.state_text);
+      formData.append('country_text', payload.profileData.country_text);
       formData.append(
         'street_address',
         payload.profileData.streetAddress,

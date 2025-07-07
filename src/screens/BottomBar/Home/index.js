@@ -56,12 +56,6 @@ const HomeScreen = ({navigation, route}) => {
   const globallyOrgData = useSelector(
     state => state.globalReducer.globallyOrgData,
   );
-  // console.log(
-  //   'globallyOrgData ===> ',
-  //   globallyOrgData,
-  //   ' isPaused: ',
-  //   isPaused,
-  // );
 
   const jobData = useSelector(state => state.globalReducer.jobData);
   const isPaused = useSelector(state => state.globalReducer.isPausedGlobal);
@@ -205,6 +199,7 @@ const HomeScreen = ({navigation, route}) => {
       );
 
       if (startedJobs.length > 0) {
+        console.log('Started Jobs ===>', startedJobs[0]);
         dispatch(setJobDataGlobally(startedJobs[0]));
       }
 

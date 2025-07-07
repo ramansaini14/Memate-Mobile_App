@@ -65,13 +65,13 @@ const PauseJobSlice = createSlice({
         // state.statusJobPause = action.payload.status
       })
       .addCase(hitPauseJob.fulfilled, (state, action) => {
-        console.log('Response  ===> ', state);
+        console.log('hitPauseJob  action.payload.status ===> ', action);
         state.isLoading = false;
         state.data = action.payload;
         state.statusJobPause = action.payload.status;
       })
       .addCase(hitPauseJob.rejected, (state, action) => {
-        console.log('Errorrrrrr  ===> ', state);
+        console.log('Errorrrrrr  ===> ', action.payload?.status);
         state.errorJobPause = action.payload?.message;
         state.statusJobPause = action.payload?.status;
       });

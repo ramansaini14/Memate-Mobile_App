@@ -36,7 +36,7 @@ const StateModal = ({
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
-        >
+        > 
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{title}</Text>
 

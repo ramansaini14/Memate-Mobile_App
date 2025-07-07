@@ -38,9 +38,9 @@ const GlobalSlice = createSlice({
     clearChatData(state) {
       state.chatData = null;
     },
-    clearGloballyOrgData(state) {
-      state.globallyOrgData = null;
-    },
+    // clearGloballyOrgData(state) {
+    //   state.globallyOrgData = null;
+    // },
   },
 });
 
@@ -53,6 +53,6 @@ export const {
   setGloballyOrgData,
   clearJobData,
   clearChatData,
-  clearGloballyOrgData,
+  // clearGloballyOrgData,
 } = GlobalSlice.actions;
 export default GlobalSlice.reducer;

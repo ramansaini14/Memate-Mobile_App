@@ -1,6 +1,7 @@
 import {
   Alert,
   Button,
+  FlatList,
   Image,
   Modal,
   PermissionsAndroid,
@@ -33,7 +34,13 @@ import ImagePicker from 'react-native-image-crop-picker';
 import WhiteCalender from '../../assets/svg/WhiteCalender';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import EditIcon from '../../assets/svg/EditIcon';
-import { clearUpdateProfileInner, hitUpdateProfileInner } from '../../redux/UpdateProfileInnerSlice';
+import {
+  clearUpdateProfileInner,
+  hitUpdateProfileInner,
+} from '../../redux/UpdateProfileInnerSlice';
+import RBSheet from 'react-native-raw-bottom-sheet';
+import CrossCloseIcon from '../../assets/svg/CrossCloseIcon';
+import WhiteCrossIcon from '../../assets/svg/WhiteCrossIcon';
 
 const EditProfile = ({navigation, route}) => {
   const {
@@ -45,14 +52,22 @@ const EditProfile = ({navigation, route}) => {
     state,
     city,
     profileEmail,
+    city_text,
+    state_text,
+    country_text,
   } = route.params;
   const [profile, setProfile] = useState(null);
 
-  const {statusCode, data} = useSelector(state => state.updateProfileInnerReducer);
+  const {statusCode, data} = useSelector(
+    state => state.updateProfileInnerReducer,
+  );
 
   const dispatch = useDispatch();
   const phoneRef = useRef(null);
   const emgPhoneRef = useRef(null);
+
+  const refRBSheet = useRef();
+  const refRBSheetCountry = useRef();
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('AU'); // Assuming default country is Aus
@@ -85,6 +100,9 @@ const EditProfile = ({navigation, route}) => {
   const [postcode, setPostcode] = useState('');
   const [emgNumber, setEmgNumber] = useState('');
   const [emgName, setEmgName] = useState('');
+  const [stateText, setStateText] = useState('');
+  const [cityText, setCityText] = useState('');
+  const [countryText, setCountryText] = useState('');
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState(new Date());
@@ -107,14 +125,16 @@ const EditProfile = ({navigation, route}) => {
     setCity(city);
     setEmail(profileEmail);
     setAbn(profileData.abn || '');
+    setCountryText(country_text);
+    setStateText(state_text);
+    setCityText(city_text);
 
     const formattedDate = profileData?.date_of_birth
-  ? new Date(parseInt(profileData.date_of_birth) * 1000)
-      .toISOString()
-      .split('T')[0]
-  : '';
+      ? new Date(parseInt(profileData.date_of_birth) * 1000)
+          .toISOString()
+          .split('T')[0]
+      : '';
 
-    
     setDob(formattedDate);
     setStreet(profileData.street_address || '');
     setPostcode(profileData.postcode || '');
@@ -154,24 +174,44 @@ const EditProfile = ({navigation, route}) => {
   }, [responseCities]);
 
   const onUpdate = () => {
-
-    const profileData = {
+    const profileData = selectedCountry?.id == 1 ? {
       firstName: profile.first_name,
       lastName: profile.last_name,
       email: email,
-      countryCode: countryCode == 'AU' ?  61 : countryCode,
+      countryCode: countryCode == 'AU' ? 61 : countryCode,
       phoneNumber: phoneNumber.substring(countryCode.length),
       dob: dob,
       abn: abn,
       city: selectedCity.id,
+      city_text: '',
+      state_text: '',
+      country_text: '',
       streetAddress: street,
       postcode: postcode,
       emgCountryCode: emgCountryCode == 'AU' ? 61 : emgCountryCode,
       emgPhoneNumber: emgPhoneNumber.substring(emgCountryCode.length),
       name: emgName,
-    };
-  
-    console.log("profile data ===> ", profileData);
+    }:{
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      email: email,
+      countryCode: countryCode == 'AU' ? 61 : countryCode,
+      phoneNumber: phoneNumber.substring(countryCode.length),
+      dob: dob,
+      abn: abn,
+      city:'',
+      city_text: cityText,
+      state_text: stateText,
+      country_text: selectedCountry!=null?selectedCountry.name:countryText,
+      streetAddress: street,
+      postcode: postcode,
+      emgCountryCode: emgCountryCode == 'AU' ? 61 : emgCountryCode,
+      emgPhoneNumber: emgPhoneNumber.substring(emgCountryCode.length),
+      name: emgName,
+    }
+    ;
+
+    console.log('profile data ===> ', profileData);
 
     const payload = {
       image: image,
@@ -184,9 +224,14 @@ const EditProfile = ({navigation, route}) => {
     if (statusCode == 200) {
       Alert.alert('Profile updated successfully');
       navigation.goBack();
-      dispatch(clearUpdateProfileInner())
+      dispatch(clearUpdateProfileInner());
     }
   }, [data]);
+
+    useEffect(() => {
+      // setState(null);
+      // setCity(null);
+    }, [selectedCountry]);
 
   const requestPermission = async () => {
     if (Platform.OS === 'android') {
@@ -261,14 +306,16 @@ const EditProfile = ({navigation, route}) => {
               {profile != null &&
                 (profile.has_photo ? (
                   <Image
-                    source={{uri: image==null?profile.photo:image.path}}
+                    source={{uri: image == null ? profile.photo : image.path}}
                     style={styles.avatar_}
                     resizeMode="contain"
                   />
                 ) : (
                   <ProfileDummy width={120} height={120} />
                 ))}
-              <TouchableOpacity style={{marginTop: -30,alignItems:'flex-end'}} onPress={() => pickImage()}>
+              <TouchableOpacity
+                style={{marginTop: -30, alignItems: 'flex-end'}}
+                onPress={() => pickImage()}>
                 <EditIcon />
               </TouchableOpacity>
             </View>
@@ -290,29 +337,19 @@ const EditProfile = ({navigation, route}) => {
             <Text style={styles.userDetailStyle}>User Details</Text>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>Email</Text>
-              <TextInput
-                style={{
-                  backgroundColor: '#212528',
-                  color: appColors.white,
-                  paddingHorizontal: 15,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                  marginTop: 5,
-                }}
-                placeholder="Email"
-                placeholderTextColor={appColors.placeholderColor}
-                value={email}
-                onChangeText={v => setEmail(v)}
-              />
+              <View style={styles.inputViewStyle}>
+                <TextInput
+                  style={styles.inputStyle}
+                  placeholder="Email"
+                  placeholderTextColor={appColors.placeholderColor}
+                  value={email}
+                  onChangeText={v => setEmail(v)}
+                />
+              </View>
             </View>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>Phone</Text>
-              <View
-                style={{
-                  backgroundColor: '#212528',
-                  borderRadius: 8,
-                  marginTop: 5,
-                }}>
+              <View style={styles.inputViewStyle}>
                 <PhoneInput
                   ref={phoneRef}
                   style={{
@@ -355,20 +392,15 @@ const EditProfile = ({navigation, route}) => {
             </View>
             <View style={{marginBottom: 10}}>
               <Text style={{color: appColors.grey, fontSize: 13}}>ABN</Text>
-              <TextInput
-                style={{
-                  backgroundColor: '#212528',
-                  color: appColors.white,
-                  paddingHorizontal: 15,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                  marginTop: 5,
-                }}
-                placeholder="Number"
-                placeholderTextColor={appColors.placeholderColor}
-                value={abn}
-                onChangeText={v => setAbn(v)}
-              />
+              <View style={styles.inputViewStyle}>
+                <TextInput
+                  style={styles.inputStyle}
+                  placeholder="Number"
+                  placeholderTextColor={appColors.placeholderColor}
+                  value={abn}
+                  onChangeText={v => setAbn(v)}
+                />
+              </View>
             </View>
           </View>
 
@@ -388,17 +420,20 @@ const EditProfile = ({navigation, route}) => {
                   <TextInput
                     style={styles.inputStyle}
                     editable={false}
-                    value={selectedCountry != null ? selectedCountry.name : ''}
+                    value={selectedCountry != null ? selectedCountry.name : countryText}
                     placeholderTextColor={appColors.placeholderColor}
                     keyboardType="email-address"
                   />
-                  <TouchableOpacity style={{marginRight: 16}}>
+                  <TouchableOpacity style={{marginRight: 16}}  onPress={() => {
+                      refRBSheetCountry.current.open();
+                    }}>
                     <WhiteDownArrow />
                   </TouchableOpacity>
                 </View>
               </View>
               <View style={{marginTop: 15}}>
                 <Text style={styles.textStyle}>State</Text>
+                {selectedCountry?.id == 1?
                 <View style={styles.inputViewStyle}>
                   <TextInput
                     style={styles.inputStyle}
@@ -410,17 +445,29 @@ const EditProfile = ({navigation, route}) => {
                   />
                   <TouchableOpacity
                     style={{marginRight: 16}}
-                    onPress={() => onDropDownClick(true)}>
+                    onPress={() => {
+                      setIsState(true);
+                      refRBSheet.current.open();
+                    }}>
                     <WhiteDownArrow />
                   </TouchableOpacity>
-                </View>
+                </View>:
+                     <View style={styles.inputViewStyle}>
+                     <TextInput
+                       style={styles.inputStyle}
+                       placeholder="Enter State"
+                       value={stateText}
+                       placeholderTextColor={appColors.placeholderColor}
+                       keyboardType="email-address"
+                       onChangeText={v => setStateText(v)}
+                     /></View>}
                 <Text style={{fontSize: 14}}>
                   {selectedState != null ? selectedState.name : ''}
                 </Text>
               </View>
               <View>
                 <Text style={styles.textStyle}>City</Text>
-                <View style={styles.inputViewStyle}>
+                {selectedCountry?.id == 1?<View style={styles.inputViewStyle}>
                   <TextInput
                     style={styles.inputStyle}
                     editable={false}
@@ -431,12 +478,24 @@ const EditProfile = ({navigation, route}) => {
                   />
                   <TouchableOpacity
                     style={{marginRight: 16}}
-                    onPress={() => onDropDownClick(false)}>
+                    onPress={() => {
+                      setIsState(false);
+                      refRBSheet.current.open();
+                    }
+                    }>
                     <WhiteDownArrow />
                   </TouchableOpacity>
-                </View>
+                </View>: <View style={styles.inputViewStyle}>
+                     <TextInput
+                       style={styles.inputStyle}
+                       placeholder="Enter City"
+                       value={cityText}
+                       placeholderTextColor={appColors.placeholderColor}
+                       keyboardType="email-address"
+                       onChangeText={v => setCityText(v)}
+                     /></View>
+                     }
                 <Text style={{fontSize: 14}}>
-                  {' '}
                   {selectedCity != null ? selectedCity.name : ''}
                 </Text>
               </View>
@@ -445,39 +504,29 @@ const EditProfile = ({navigation, route}) => {
                 <Text style={{color: appColors.grey, fontSize: 13}}>
                   Street Address
                 </Text>
-                <TextInput
-                  style={{
-                    backgroundColor: '#212528',
-                    color: appColors.white,
-                    paddingHorizontal: 15,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    marginTop: 5,
-                  }}
-                  placeholder="Number"
-                  placeholderTextColor={appColors.placeholderColor}
-                  value={street}
-                  onChangeText={v => setStreet(v)}
-                />
+                <View style={styles.inputViewStyle}>
+                  <TextInput
+                    style={styles.inputStyle}
+                    placeholder="Number"
+                    placeholderTextColor={appColors.placeholderColor}
+                    value={street}
+                    onChangeText={v => setStreet(v)}
+                  />
+                </View>
               </View>
               <View style={{marginBottom: 15}}>
                 <Text style={{color: appColors.grey, fontSize: 13}}>
                   Postcode
                 </Text>
-                <TextInput
-                  style={{
-                    backgroundColor: '#212528',
-                    color: appColors.white,
-                    paddingHorizontal: 15,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    marginTop: 5,
-                  }}
-                  placeholder="Number"
-                  placeholderTextColor={appColors.placeholderColor}
-                  value={postcode}
-                  onChangeText={v => setPostcode(v)}
-                />
+                <View style={styles.inputViewStyle}>
+                  <TextInput
+                    style={styles.inputStyle}
+                    placeholder="Number"
+                    placeholderTextColor={appColors.placeholderColor}
+                    value={postcode}
+                    onChangeText={v => setPostcode(v)}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -496,43 +545,40 @@ const EditProfile = ({navigation, route}) => {
                 <Text style={{color: appColors.grey, fontSize: 13}}>
                   Contact Name
                 </Text>
-                <TextInput
-                  style={{
-                    backgroundColor: '#212528',
-                    color: appColors.white,
-                    paddingHorizontal: 15,
-                    paddingVertical: 10,
-                    borderRadius: 8,
-                    marginTop: 5,
-                  }}
-                  placeholder="Number"
-                  placeholderTextColor={appColors.placeholderColor}
-                  value={emgName}
-                  onChangeText={v => setEmgName(v)}
-                />
+                <View style={styles.inputViewStyle}>
+                  <TextInput
+                    style={styles.inputStyle}
+                    placeholder="Number"
+                    placeholderTextColor={appColors.placeholderColor}
+                    value={emgName}
+                    onChangeText={v => setEmgName(v)}
+                  />
+                </View>
               </View>
               <View style={{marginBottom: 8}}>
                 <Text style={{color: appColors.grey, fontSize: 13}}>Phone</Text>
-                <PhoneInput
-                  ref={emgPhoneRef}
-                  style={{
-                    padding: 16,
-                    backgroundColor: appColors.inputBackground,
-                  }}
-                  value={emgPhoneNumber}
-                  initialValue={emgPhoneNumber}
-                  initialCountry={emgCountryCode}
-                  onChangePhoneNumber={setEmgPhoneNumber}
-                  textStyle={{color: 'white'}}
-                  onSelectCountry={iso2 => {
-                    console.log(
-                      'phoneRef.current.getCountryCode() ===> ',
-                      emgPhoneRef.current.getCountryCode(),
-                    );
-                    const code = emgPhoneRef.current.getCountryCode();
-                    setEmgCountryCode(code);
-                  }}
-                />
+                <View style={styles.inputViewStyle}>
+                  <PhoneInput
+                    ref={emgPhoneRef}
+                    style={{
+                      padding: 16,
+                      backgroundColor: appColors.inputBackground,
+                    }}
+                    value={emgPhoneNumber}
+                    initialValue={emgPhoneNumber}
+                    initialCountry={emgCountryCode}
+                    onChangePhoneNumber={setEmgPhoneNumber}
+                    textStyle={{color: 'white'}}
+                    onSelectCountry={iso2 => {
+                      console.log(
+                        'phoneRef.current.getCountryCode() ===> ',
+                        emgPhoneRef.current.getCountryCode(),
+                      );
+                      const code = emgPhoneRef.current.getCountryCode();
+                      setEmgCountryCode(code);
+                    }}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -545,11 +591,10 @@ const EditProfile = ({navigation, route}) => {
                 borderBottomWidth: 1,
               }}>
               <Text style={styles.addressStyle}>Security Options</Text>
-              <View style={{flexDirection: 'row',alignItems: 'center'}}>
-                <View style={{width: 30, height: 30}}>
-                  <KeyIcon />
-                </View>
-                <Text style={{color: appColors.white, fontSize: 16}}>
+              <View style={{flexDirection: 'row'}}>
+                <KeyIcon height={30} width={30} />
+                <Text
+                  style={{color: appColors.white, fontSize: 16, marginTop: 2}}>
                   Reset Pin
                 </Text>
               </View>
@@ -563,7 +608,8 @@ const EditProfile = ({navigation, route}) => {
               <DeleteIcon />
             </View>
             <View>
-              <Text style={{color: appColors.lightRed, fontSize: 15}}>
+              <Text
+                style={{color: appColors.lightRed, fontSize: 15, marginTop: 2}}>
                 Delete Account
               </Text>
             </View>
@@ -574,14 +620,106 @@ const EditProfile = ({navigation, route}) => {
             onPress={() => onUpdate()}>
             <Text style={styles.saveChangeButton}>Update Profile</Text>
           </TouchableOpacity>
-          <StateModal
+          {/* <StateModal
             title={isState ? 'Select State' : 'Select City'}
             modalVisible={modalVisible}
             setModalVisible={setModalVisible}
             selectedItem={isState ? selectedState : selectedCity}
             setSelectedItem={isState ? setState : setCity}
             items={isState ? states : cities}
-          />
+          /> */}
+
+          <RBSheet
+            ref={refRBSheet}
+            height={300}
+            openDuration={300}
+            customStyles={{
+              container: {
+                backgroundColor: '#111',
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                padding: 20,
+              },
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Text style={styles.sheetTitle}>
+                {isState ? 'Select State' : 'Select City'}
+              </Text>
+              <TouchableOpacity
+                style={{alignSelf: 'flex-end'}}
+                onPress={() => refRBSheet.current.close()}>
+                <WhiteCrossIcon height={28} width={28} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={isState?states:cities}
+              keyExtractor={item => item.id}
+              renderItem={({item,index}) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.countryRow}
+                  onPress={() => {
+                    refRBSheet.current.close();
+                    isState ? setState(item) : setCity(item);
+
+                  }}>
+                  <Text style={styles.countryText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </RBSheet>
+
+          <RBSheet
+            ref={refRBSheetCountry}
+            height={300}
+            openDuration={300}
+            customStyles={{
+              container: {
+                backgroundColor: '#111',
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                padding: 20,
+              },
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Text style={styles.sheetTitle}>
+               Select Country
+              </Text>
+              <TouchableOpacity
+                style={{alignSelf: 'flex-end'}}
+                onPress={() => refRBSheetCountry.current.close()}>
+                <WhiteCrossIcon height={28} width={28} />
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={countries}
+              keyExtractor={item => item.id}
+              renderItem={({item,index}) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.countryRow}
+                  onPress={() => {
+                    refRBSheetCountry.current.close();
+                    setCountry(item);
+
+                  }}>
+                  <Text style={styles.countryText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </RBSheet>
 
           {showDatePicker && (
             <Modal transparent={true} animationType="slide">
@@ -725,5 +863,22 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     backgroundColor: appColors.lightGrey,
+  },
+  sheetTitle: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    flex: 1,
+    marginLeft: 28,
+  },
+  countryRow: {
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#333',
+  },
+  countryText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

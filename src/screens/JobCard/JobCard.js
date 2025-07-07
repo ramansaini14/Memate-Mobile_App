@@ -221,45 +221,11 @@ const JobCard = ({navigation, route}) => {
       setIsPaused(false);
       setShowTracker(false); // Initially hide tracker
     }
-
-    // Check if this specific job is already running
-    // loadTimerStateFromStorage(dispatch).then(({jobs, activeJobId}) => {
-    //   console.log(`Checking stored timer state for job ${jobData.id}`, {
-    //     hasJobData: jobs && jobs[jobData.id] ? true : false,
-    //     activeJobId,
-    //   });
-
-    // if (jobs && jobs[jobData.id]) {
-    //   const jobState = jobs[jobData.id];
-    //   console.log(`Found stored state for job ${jobData.id}:`, jobState);
-
-    // Set local state based on the job's stored state
-    // setIsJobStarted(jobState.isRunning);
-    // setIsPaused(jobState.isPaused);
-
-    // If the job is running and not paused, start location tracking
-    // if (jobState.isRunning && !jobState.isPaused) {
-    //   console.log(
-    //     `Starting location tracking for job ${jobData.id} from loaded state`,
-    //   );
-    //   startLocationTracking();
-    // }
-    // }
-    // });
-
     if (jobData.action_status == 3) {
       setIsCompleted(true);
     }
-
-    // Make sure the background timer starts if needed
-    // startBackgroundTimer(dispatch);
-
-    // Clean up function
     return () => {
       console.log(`JobCard unmounting for job ID: ${jobData.id}`);
-      // Do not stop the background timer since it may be needed for other jobs!
-      // Just stop location tracking for this job
-      // stopLocationTracking();
     };
   }, [jobData.id]);
 
@@ -433,117 +399,6 @@ const JobCard = ({navigation, route}) => {
       });
   };
 
-  // // Fix the direct pause handler
-  // const handleDirectPause = () => {
-  //   // First check if we need to start the job
-  //   if (!isJobStarted) {
-  //     console.log('Job not started yet, starting it first');
-  //     handleStartStop();
-  //     return;
-  //   }
-
-  //   // Only if we're in a running state
-  //   if (isJobStarted && !isPaused) {
-  //     console.log(`Pausing job ${jobData.id}`);
-
-  //     // Update local state immediately to ensure UI responds
-  //     // setIsPaused(true);
-  //     setShowTracker(false);
-
-  //     // Explicitly stop location tracking
-  //     stopLocationTracking();
-  //     console.log('Location tracking stopped due to pause');
-
-  //     // Update Redux timer state to paused
-  //     dispatch(pauseTimer(jobData.id));
-
-  //     // Prepare and send API call with properly formatted data
-  //     console.log('Making pause API call');
-
-  //     // Get the locations for this specific job
-  //     const locationsKey = `locations_${jobData.id}`;
-  //     AsyncStorage.getItem(locationsKey)
-  //       .then(locationsStr => {
-  //         let locationsData = [];
-
-  //         try {
-  //           if (locationsStr) {
-  //             locationsData = JSON.parse(locationsStr);
-  //             console.log(
-  //               `Found ${locationsData.length} location points for pause API call`,
-  //             );
-  //           } else {
-  //             console.log('No stored locations, using current location');
-  //             // Fallback to current location if available
-  //             if (location && location.length > 0) {
-  //               locationsData = location;
-  //             } else {
-  //               // Create a minimal valid location entry
-  //               const currentDate = new Date().toISOString();
-  //               locationsData = [
-  //                 {
-  //                   latitude: '0',
-  //                   longitude: '0',
-  //                   date: currentDate,
-  //                 },
-  //               ];
-  //             }
-  //           }
-  //         } catch (error) {
-  //           console.error('Error parsing locations:', error);
-  //           // Fallback to a minimal valid location
-  //           const currentDate = new Date().toISOString();
-  //           locationsData = [
-  //             {
-  //               latitude: '0',
-  //               longitude: '0',
-  //               date: currentDate,
-  //             },
-  //           ];
-  //         }
-
-  //         // Ensure the payload is correctly formatted
-  //         const payload = {
-  //           orgId,
-  //           jobId: jobData.id,
-  //           data: locationsData,
-  //         };
-
-  //         console.log(`Sending pause payload for job ${jobData.id}:`, payload);
-  //         dispatch(hitJobPause(payload));
-  //         console.log('Pause API call completed');
-  //       })
-  //       .catch(err => {
-  //         console.error('Error loading locations:', err);
-  //         // Even on error, send minimal data to avoid API errors
-  //         const currentDate = new Date().toISOString();
-  //         const fallbackData = [
-  //           {
-  //             latitude: '0',
-  //             longitude: '0',
-  //             date: currentDate,
-  //           },
-  //         ];
-
-  //         dispatch(
-  //           hitJobPause({
-  //             orgId,
-  //             jobId: jobData.id,
-  //             data: fallbackData,
-  //           }),
-  //         );
-  //       });
-  //   } else {
-  //     console.log('Cannot pause: job not started or already paused', {
-  //       isJobStarted,
-  //       isPaused,
-  //     });
-  //   }
-  // };
-
-  /**
-   * Function to complete the job
-   */
   const onCompleteJob = async () => {
     console.log(`Completing job ${jobData.id}`);
 
@@ -636,7 +491,6 @@ const JobCard = ({navigation, route}) => {
     }
   };
 
-  // Fix the direct resume handler
   // const handleDirectResume = () => {
   //   console.log(`Direct resume called for job ${jobData.id}, current state:`, {
   //     isJobStarted,
@@ -705,8 +559,6 @@ const JobCard = ({navigation, route}) => {
       },
     );
   };
-
-  // const handleStartStop = () => {
   //   console.log(
   //     `handleStartStop called for job ${jobData.id}, current state:`,
   //     {

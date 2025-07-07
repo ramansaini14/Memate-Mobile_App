@@ -18,9 +18,11 @@ import TrueIcon from '../assets/svg/TrueIcon';
 import TimeTrackerCard from './TimeTrackerCard';
 import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {pauseTimer, stopTimer} from '../redux/TimerSlice';
+import {pauseTimer, stopBackgroundTimer, stopTimer} from '../redux/TimerSlice';
 import {setIsPayused, setJobDataGlobally} from '../redux/GlobalSlice';
-import {hitJobPause, hitJobStop} from '../redux/JobStatusSlice';
+import {clearJobStatus, hitJobPause, hitJobStop} from '../redux/JobStatusSlice';
+import { clearPauseStatus, hitPauseJob } from '../redux/PauseJobSlice';
+import { clearStartStatus } from '../redux/StartJobSlice';
 
 const CenterButtonModal = ({
   visible,
@@ -42,6 +44,10 @@ const CenterButtonModal = ({
   const jobData = useSelector(state => state.globalReducer.jobData);
 
   const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
+    const {errorJobPause, statusJobPause} = useSelector(
+      state => state.jobPauseReducer,
+    );
+    const responseJobPause = useSelector(state => state.jobPauseReducer.data);
 
   const dispatch = useDispatch();
 
@@ -156,57 +162,6 @@ const CenterButtonModal = ({
     // });
   };
 
-  const handleBack = () => {
-    onStateChange && onStateChange('initial');
-
-    Animated.parallel([
-      Animated.timing(textSlideAnim, {
-        toValue: 300,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(trackerSlideAnim, {
-        toValue: -200,
-        duration: 200,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentView('initial');
-      textSlideAnim.setValue(-300);
-      Animated.timing(textSlideAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    });
-  };
-
-  const handleCompleteJob = () => {
-    console.log('completed');
-    setIsCompleted(true);
-  };
-
-  const handleStartStop = () => {
-    if (!isJobStarted) {
-      setIsJobStarted(true);
-    } else {
-      setIsPaused(!isPaused);
-    }
-  };
-
-  const handlePause = () => {
-    setIsPaused(true);
-  };
-
-  const handleResume = () => {
-    setIsPaused(false);
-  };
-
-  const setTimer = () => {};
-
-  const handlePauseClick = () => {};
-
   const onCompleteJob = async () => {
     console.log(`Completing job ${jobData.id}`);
 
@@ -294,10 +249,10 @@ const CenterButtonModal = ({
   // Fix the direct pause handler
   const handleDirectPause = () => {
     // Update Redux timer state to paused
-    dispatch(pauseTimer(jobData.id));
+    // dispatch(pauseTimer(jobData.id));
 
-    dispatch(setIsPayused(true));
-    dispatch(setJobDataGlobally(null));
+    // dispatch(setIsPayused(true));
+    // dispatch(setJobDataGlobally(null));
 
     // Prepare and send API call with properly formatted data
     console.log('Making pause API call');
@@ -352,7 +307,7 @@ const CenterButtonModal = ({
         };
 
         console.log(`Sending pause payload for job ${jobData.id}:`, payload);
-        dispatch(hitJobPause(payload));
+        dispatch(hitPauseJob(payload));
         onClose();
         console.log('Pause API call completed');
       })
@@ -369,7 +324,7 @@ const CenterButtonModal = ({
         ];
 
         dispatch(
-          hitJobPause({
+          hitPauseJob({
             orgId,
             jobId: jobData.id,
             data: fallbackData,
@@ -377,6 +332,26 @@ const CenterButtonModal = ({
         );
       });
   };
+
+    useEffect(() => {
+
+      console.log('statusJobPause ===> ', statusJobPause); 
+      if (responseJobPause != null) {
+        console.log('responseJobPause ===> ', responseJobPause);
+        // dispatch(pauseTimer(jobData?.id));
+        // stopBackgroundTimer(dispatch);
+        // dispatch(setIsPayused(true));
+        // dispatch(clearJobStatus());
+        // dispatch(clearStartStatus());
+        // dispatch(clearPauseStatus());
+        dispatch(setJobDataGlobally(null));
+      } else if (statusJobPause == 400) {
+        Alert.alert(
+          'MeMate',
+          errorJobPause || 'Failed to start job. Please try again.',
+        );
+      }
+    }, [errorJobPause, statusJobPause, responseJobPause]);
 
   const renderInitialView = () => (
     <Animated.View
