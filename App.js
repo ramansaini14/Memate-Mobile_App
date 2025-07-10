@@ -11,6 +11,14 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {LogBox} from 'react-native';
 
 import firebase from '@react-native-firebase/app';
+
+import { Platform } from 'react-native';
+// import PushNotification from 'react-native-push-notification';
+// import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import { registerPushNotifications } from './src/services/notificationService'
+
+
+
 // import crashlytics from '@react-native-firebase/crashlytics';
 
 // Ignore specific warnings
@@ -52,6 +60,9 @@ const AppWithTimer = () => {
 
 const App = () => {
   useEffect(() => {
+    registerPushNotifications();
+  }, []);
+  useEffect(() => {
     const firebaseConfig = {
       apiKey: "AIzaSyDcDAFxoXTqd3GNdzWJgSCcA_0KtuVNo-s",
       projectId: "memate-9f816",
@@ -64,9 +75,6 @@ const App = () => {
 
       firebase.initializeApp(firebaseConfig);
       console.log('Firebase initialized');
-
-          
-
   }, []);
   
 

@@ -1,4 +1,4 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Button, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {appColors} from '../../utils/appColors';
 import OrganizationComponent from '../../components/OrganizationComponent';
@@ -15,12 +15,22 @@ import CalenderIcon from '../../assets/svg/CalenderIcon';
 import SimpleCalenderIcon from '../../assets/svg/SimpleCalenderIcon';
 import { emitSocket } from '../../socketService';
 import { useIsFocused } from '@react-navigation/native';
+import PushNotification from 'react-native-push-notification';
+import { selectJobTimer } from '../../redux/TimerSlice';
+import TimerNotification, { startNotificationTimer, stopNotificationTimer } from '../../services/TimerNotification';
+// import PushNotificationIOS from '@react-native-community/push-notification-ios'
 
 const ChooseOrganization = ({navigation}) => {
+
+   const jobData = useSelector(state => state.globalReducer.jobData);
+   const jobTimer = useSelector(state => selectJobTimer(state, jobData?.id));
+    const timer = jobTimer ? jobTimer.value : 0;
   const dispatch = useDispatch();
 
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const [orgData, setOrgData] = useState(null);
+  
+  const [message,setMessage] = useState(timer)
 
   const isFocused= useIsFocused();
 
@@ -55,6 +65,40 @@ const ChooseOrganization = ({navigation}) => {
       // dispatch(getOrganizationClear())
     }
   }, [responseOrg]);
+
+  const test = () => {
+    // PushNotification.localNotification({
+    //   channelId: 'default-channel-id',
+    //   title: 'Test Push',
+    //   message: 'This is a test local notification 🎉',
+    // });
+    PushNotification.localNotification({
+      channelId: 'default-channel-id',
+      id:1,
+      title: 'Test Push',
+      message: `Running Time ${message}`,
+      ongoing: true,
+      importance: 'max',
+      priority: 'max',
+      onlyAlertOnce: true,
+    });
+  }
+
+
+    // useEffect(() => {
+    //   PushNotification.localNotification({
+    //     channelId: 'default-channel-id',
+    //     id: 1, // constant ID to "update" notification
+    //     title: 'Timer Running',
+    //     message: `Time Left: ${timer} seconds`,
+    //     ongoing: true,
+    //     importance: 'max',
+    //     priority: 'max',
+    //     onlyAlertOnce: true, // avoid multiple alerts
+    //   });
+
+    //   // setMessage(timer)
+    // }, [timer]);
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -100,6 +144,9 @@ const ChooseOrganization = ({navigation}) => {
           Terms and Conditions
         </Text>
       </View>
+      <TimerNotification/>
+      {/* <TouchableOpacity onPress={() => test()} style={{height: 50, width: 100, backgroundColor: appColors.black}}></TouchableOpacity> */}
+     
     </SafeAreaView>
   );
 };

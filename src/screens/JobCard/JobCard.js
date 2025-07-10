@@ -243,7 +243,7 @@ const JobCard = ({navigation, route}) => {
         action_status: '1',
         action_status_text: 'started',
       };
-
+      console.log("setJobDataGlobally called in responseJobStart");
       dispatch(setJobDataGlobally(tempJob)); // Update global job data
       setJobData(tempJob); // Update local job data
       dispatch(clearJobStatus());
@@ -265,6 +265,7 @@ const JobCard = ({navigation, route}) => {
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());
       dispatch(clearPauseStatus());
+      console.log("setJobDataGlobally called in responseJobPause");
       dispatch(setJobDataGlobally(null));
     } else if (statusJobPause == 400) {
       Alert.alert(
@@ -281,13 +282,14 @@ const JobCard = ({navigation, route}) => {
     // Get initial location
     getCurrentLocation();
     dispatch(setIsPayused(false)); // Reset completed state when starting tracking
+    console.log("setJobDataGlobally called in startLocationTracking");
     dispatch(setJobDataGlobally(jobData)); // Update global job data
 
     // Set up regular location tracking
     if (!intervalRef.current) {
       intervalRef.current = setInterval(() => {
         getCurrentLocation();
-      }, 60000); // Every 30 seconds
+      }, 60000); // Every 30 
     }
   };
 
@@ -309,6 +311,7 @@ const JobCard = ({navigation, route}) => {
       intervalRef.current = null;
       console.log('Location tracking interval cleared');
       dispatch(setIsPayused(true)); // Reset completed state when stopping tracking
+      console.log("setJobDataGlobally null called in stopLocationTracking");
       dispatch(setJobDataGlobally(null));
     }
   };

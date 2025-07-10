@@ -339,11 +339,11 @@ const CenterButtonModal = ({
       if (responseJobPause != null) {
         console.log('responseJobPause ===> ', responseJobPause);
         // dispatch(pauseTimer(jobData?.id));
-        // stopBackgroundTimer(dispatch);
-        // dispatch(setIsPayused(true));
-        // dispatch(clearJobStatus());
-        // dispatch(clearStartStatus());
-        // dispatch(clearPauseStatus());
+        stopBackgroundTimer(dispatch);
+        dispatch(setIsPayused(true));
+        dispatch(clearJobStatus());
+        dispatch(clearStartStatus());
+        dispatch(clearPauseStatus());
         dispatch(setJobDataGlobally(null));
       } else if (statusJobPause == 400) {
         Alert.alert(

@@ -35,7 +35,7 @@ import {reportRead} from '../../../redux/ReportReadSlice';
 import PdfIcon from '../../../assets/svg/PdfIcon';
 import DownloadPdfIcon from '../../../assets/svg/DownloadPdfIcon';
 import CalendarStrip from '../../../components/CalendarStrip';
-import {getJobs} from '../../../redux/GetJobsSlice';
+import {clearJobsData, getJobs} from '../../../redux/GetJobsSlice';
 import BackIcon from '../../../assets/svg/BackIcon';
 import LinearGradient from 'react-native-linear-gradient';
 import WhiteDot from '../../../assets/svg/WhiteDot';
@@ -162,7 +162,19 @@ const HomeScreen = ({navigation, route}) => {
       dispatch(getOrganization());
       getReportData();
     }
-  }, [isFocused, jobData, globallyOrgData]);
+  }, [isFocused, globallyOrgData]);
+
+  useEffect(()=>{
+
+    const payload = {
+      id: globallyOrgData.id,
+      offset: 0,
+      status: 'a',
+      action_status: '',
+    };
+
+    dispatch(getJobs(payload));
+  },[jobData])
 
   useEffect(() => {
     // clearToken()
@@ -193,16 +205,6 @@ const HomeScreen = ({navigation, route}) => {
       const sortUpJobs = upJobs.sort(
         (a, b) => parseInt(b.start_date) - parseInt(a.start_date), // descending
       );
-
-      const startedJobs = responseJobs.results.filter(
-        item => (item.action_status === '1')
-      );
-
-      if (startedJobs.length > 0) {
-        console.log('Started Jobs ===>', startedJobs[0]);
-        dispatch(setJobDataGlobally(startedJobs[0]));
-      }
-
 
       console.log('Upcoming jobs ===>', sortUpJobs);
       setUpcomingJobs(sortUpJobs);
@@ -268,7 +270,19 @@ const HomeScreen = ({navigation, route}) => {
       }
 
       setFilterData(updatedData);
+
+      const startedJobs = responseJobs.results.filter(
+        item => (item.action_status === '1')
+      );
+
+      if (startedJobs.length > 0 && jobData == null) {
+        console.log('Started Jobs ===>', startedJobs[0]);
+        console.log("setJobDataGlobally called with jobData: ", startedJobs[0]);
+        dispatch(setJobDataGlobally(startedJobs[0]));
+      }
+
     }
+    dispatch(clearJobsData());
   }, [responseJobs]);
 
   useEffect(() => {

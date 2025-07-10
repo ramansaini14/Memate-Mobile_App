@@ -66,13 +66,17 @@ const SplashScreen = ({navigation}) => {
         navigation.navigate('StartScreen');
       } else if (isNew === 'true') {
         if (isNew && !isPinCreate) {
-          navigation.navigate('CreatePin');
+          navigation.navigate('StartScreen');
         } else if (isNew && !isAppTerm) {
           navigation.navigate('TermsAndConditions', {from: 'pin', id: 0});
         } else if (isNew && isRequired) {
           console.log('isRequired Inner===> ', isRequired);
           navigation.navigate('RequireDetails');
-        } else {
+        }
+        else if(isRequired){
+          navigation.navigate('StartScreen');
+        }
+         else {
           connectSocket();
           navigation.reset({
             index: 0,
