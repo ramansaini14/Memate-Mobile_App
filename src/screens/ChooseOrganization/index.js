@@ -34,6 +34,24 @@ const ChooseOrganization = ({navigation}) => {
 
   const isFocused= useIsFocused();
 
+  const checkToken = async() =>{
+    const token = await AsyncStorage.getItem("Token")
+
+    setInterval(()=>{
+      if(token==null){
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'StartScreen'}],
+        });
+      }
+    },1200)
+
+  }
+
+  useEffect(()=>{
+    
+  },[])
+
   const onNextClick = async itemData => {
     console.log('ORG ID ===> ', JSON.stringify(itemData.id));
     
@@ -144,7 +162,7 @@ const ChooseOrganization = ({navigation}) => {
           Terms and Conditions
         </Text>
       </View>
-      <TimerNotification/>
+      {/* <TimerNotification/> */}
       {/* <TouchableOpacity onPress={() => test()} style={{height: 50, width: 100, backgroundColor: appColors.black}}></TouchableOpacity> */}
      
     </SafeAreaView>
