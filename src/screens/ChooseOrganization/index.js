@@ -1,4 +1,4 @@
-import {Button, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Button, StyleSheet, Text, TouchableOpacity, View,NativeModules} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {appColors} from '../../utils/appColors';
 import OrganizationComponent from '../../components/OrganizationComponent';
@@ -19,6 +19,8 @@ import PushNotification from 'react-native-push-notification';
 import { selectJobTimer } from '../../redux/TimerSlice';
 import TimerNotification, { startNotificationTimer, stopNotificationTimer } from '../../services/TimerNotification';
 // import PushNotificationIOS from '@react-native-community/push-notification-ios'
+
+const {MeMateTimer} = NativeModules
 
 const ChooseOrganization = ({navigation}) => {
 
@@ -50,6 +52,8 @@ const ChooseOrganization = ({navigation}) => {
 
   useEffect(()=>{
     
+    // MeMateTimer.endTimer()
+
   },[])
 
   const onNextClick = async itemData => {
@@ -84,24 +88,17 @@ const ChooseOrganization = ({navigation}) => {
     }
   }, [responseOrg]);
 
-  const test = () => {
-    // PushNotification.localNotification({
-    //   channelId: 'default-channel-id',
-    //   title: 'Test Push',
-    //   message: 'This is a test local notification 🎉',
-    // });
-    PushNotification.localNotification({
-      channelId: 'default-channel-id',
-      id:1,
-      title: 'Test Push',
-      message: `Running Time ${message}`,
-      ongoing: true,
-      importance: 'max',
-      priority: 'max',
-      onlyAlertOnce: true,
-    });
-  }
+  let time = 0;
 
+  const test = async (value) => {
+
+      await MeMateTimer.startTimer("🔥", value);
+
+
+  };
+  const endT = () =>{
+    MeMateTimer.endTimer()
+  }
 
     // useEffect(() => {
     //   PushNotification.localNotification({
@@ -163,7 +160,8 @@ const ChooseOrganization = ({navigation}) => {
         </Text>
       </View>
       {/* <TimerNotification/> */}
-      {/* <TouchableOpacity onPress={() => test()} style={{height: 50, width: 100, backgroundColor: appColors.black}}></TouchableOpacity> */}
+      <TouchableOpacity onPress={() => test()} style={{height: 50, width: 100, backgroundColor: appColors.black}}></TouchableOpacity>
+      <TouchableOpacity onPress={() => endT()} style={{height: 50, width: 100, backgroundColor: 'red'}}></TouchableOpacity>
      
     </SafeAreaView>
   );

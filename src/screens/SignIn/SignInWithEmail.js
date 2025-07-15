@@ -6,25 +6,28 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import { appColors } from '../../utils/appColors';
+import React, {useEffect, useRef, useState} from 'react';
+import {appColors} from '../../utils/appColors';
 import LogoIcon from '../../assets/svg/LogoIcon';
 import CheckBox from '@react-native-community/checkbox';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '../../redux/loginSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {loginUser} from '../../redux/loginSlice';
 import axios from 'axios';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ApiBaseUrl, BASE_URL, verifyEmail } from '../../utils/Constants';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ApiBaseUrl, BASE_URL, verifyEmail} from '../../utils/Constants';
 import _fetch from '../../utils/_fetch';
 import MainLogo from '../../assets/svg/MainLogo';
-import { clearVerifyEmailSlice, hitVerifyEmail } from '../../redux/VerifyEmailSlice';
+import {
+  clearVerifyEmailSlice,
+  hitVerifyEmail,
+} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BackIcon from '../../assets/svg/BackIcon';
 
-const SignInWithEmail = ({ navigation,route }) => {
+const SignInWithEmail = ({navigation, route}) => {
   const dispatch = useDispatch();
 
-  const {from} = route.params
+  const {from} = route.params;
 
   // console.log("From ===> ",from)
 
@@ -35,71 +38,87 @@ const SignInWithEmail = ({ navigation,route }) => {
   const [email, setEmail] = useState('');
   const [isValid, setIsValid] = useState(false);
 
-
   const loginSuccess = useSelector(state => state.loginReducer.data);
-  const responseVerifyEmail = useSelector(state => state.verifyEmailReducer.data);
-   const {statusCode, error, isLoading,data } = useSelector(state => state.verifyEmailReducer);
+  const responseVerifyEmail = useSelector(
+    state => state.verifyEmailReducer.data,
+  );
+  const {statusCode, error, isLoading, data} = useSelector(
+    state => state.verifyEmailReducer,
+  );
 
   const onLoginClick = async () => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const isValidEmail = emailRegex.test(email);
     setIsValid(isValidEmail);
 
-    if(isValidEmail){
+    if (isValidEmail) {
       // if(from==0){
       //   navigation.navigate("LoginPin",{email:email,from:from})
       // }else{
-        const payload = {
-          email:email
-        }
-        dispatch(hitVerifyEmail(payload))
-      // }   
-    }
-    else{
-      Alert.alert("MeMate","Please enter valid email")
+      const payload = {
+        email: email,
+      };
+      dispatch(hitVerifyEmail(payload));
+      // }
+    } else {
+      Alert.alert('MeMate', 'Please enter valid email');
     }
   };
-
-
 
   const handleEmailChange = e => {
     setEmail(e);
   };
 
-  const saveEmail = async() =>{
-    await AsyncStorage.setItem("email",email)
-  }
+  const saveEmail = async () => {
+    await AsyncStorage.setItem('email', email);
+  };
 
   useEffect(() => {
     console.log('responseVerifyEmail ===>', responseVerifyEmail);
     if (responseVerifyEmail != null) {
       // navigation('/ChooseOrganization');
-        // Alert.alert("MeMate",responseVerifyEmail.message)
-        if(responseVerifyEmail.is_agree){
-          console.log("From   ====> ",from)
-          if(from==0){
-            navigation.navigate("LoginPin",{email:email,from:from})
-          }else{
-          Alert.alert('MeMate', 'Email already existed.');
+      // Alert.alert("MeMate",responseVerifyEmail.message)
+      const resFun = async () => {
+        if (responseVerifyEmail.is_agree) {
+          console.log('From   ====> ', from);
+          if (from == 0) {
+            const storedEmail = await AsyncStorage.getItem('email');
+            if (storedEmail != null && storedEmail == email) {
+              navigation.navigate('LoginPin', {
+                email: email,
+                from: from,
+                isFaceLock: true,
+              });
+            } else {
+              navigation.navigate('LoginPin', {
+                email: email,
+                from: from,
+                isFaceLock: false,
+              });
+            }
+          } else {
+            Alert.alert('MeMate', 'Email already existed.');
           }
-        }else{
-       saveEmail()
-        navigation.navigate("EmailConfirmation",{email:email,from:2})
+        } else {
+          saveEmail();
+          navigation.navigate('EmailConfirmation', {email: email, from: 2});
         }
-        dispatch(clearVerifyEmailSlice())
+      };
+      resFun()
+      dispatch(clearVerifyEmailSlice());
     } else if (responseVerifyEmail != null) {
       // alert('Invalid credentials!');
     }
   }, [responseVerifyEmail]);
 
-  useEffect(() => { 
+  useEffect(() => {
     console.log('error Error ===>', error);
-    if(error!=null){
+    if (error != null) {
       if (error?.error) {
         Alert.alert('MeMate', error.error);
       } else if (error?.detail) {
         Alert.alert('MeMate', error.detail);
-      } 
+      }
       dispatch(clearVerifyEmailSlice());
     }
   }, [error]);
@@ -114,11 +133,13 @@ const SignInWithEmail = ({ navigation,route }) => {
 
   return (
     <SafeAreaView style={styles.containerStyle}>
-       <View style={styles.textView}>
+      <View style={styles.textView}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <BackIcon />
         </TouchableOpacity>
-        <Text style={styles.headerTextStyle}>{from==0?"Sign in - Email":"Sign up - Email"}</Text>
+        <Text style={styles.headerTextStyle}>
+          {from == 0 ? 'Sign in - Email' : 'Sign up - Email'}
+        </Text>
       </View>
       <View style={styles.logoStyle}>
         <MainLogo width={200} />
@@ -128,23 +149,36 @@ const SignInWithEmail = ({ navigation,route }) => {
           style={styles.inputStyle}
           placeholder="email@email.com"
           placeholderTextColor={appColors.placeholderColor}
-          onChangeText={e => { handleEmailChange(e); }}
-          keyboardType='email-address'
+          onChangeText={e => {
+            handleEmailChange(e);
+          }}
+          keyboardType="email-address"
           autoCapitalize="none"
         />
-        <TouchableOpacity style={styles.buttonStyle} onPress={() => { onLoginClick(); }}>
-          <Text style={{ color: appColors.black, fontWeight: '700',fontSize:16 }}> {from==0?"Next":"Sign Up"}</Text>
+        <TouchableOpacity
+          style={styles.buttonStyle}
+          onPress={() => {
+            onLoginClick();
+          }}>
+          <Text
+            style={{color: appColors.black, fontWeight: '700', fontSize: 16}}>
+            {' '}
+            {from == 0 ? 'Next' : 'Sign Up'}
+          </Text>
         </TouchableOpacity>
       </View>
-       {from!=2&&<TouchableOpacity
-              style={styles.signInStyle}
-              onPress={() => {
-                navigation.navigate('SignIn');
-              }}>
-              <Text style={{color: appColors.white, fontWeight: '700', fontSize: 16}}>
-                Sign in with Phone
-              </Text>
-            </TouchableOpacity>}
+      {from != 2 && (
+        <TouchableOpacity
+          style={styles.signInStyle}
+          onPress={() => {
+            navigation.navigate('SignIn');
+          }}>
+          <Text
+            style={{color: appColors.white, fontWeight: '700', fontSize: 16}}>
+            Sign in with Phone
+          </Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -167,13 +201,13 @@ const styles = StyleSheet.create({
   inputStyle: {
     marginHorizontal: 16,
     borderRadius: 8,
-    borderWidth:1,
-    borderColor:appColors.borderLightGrey,
+    borderWidth: 1,
+    borderColor: appColors.borderLightGrey,
     backgroundColor: appColors.inputBackground,
     paddingHorizontal: 10,
-    padding:20,
-    fontSize:16,
-    color:appColors.white
+    padding: 20,
+    fontSize: 16,
+    color: appColors.white,
   },
   row_between: {
     flexDirection: 'row',
@@ -185,7 +219,7 @@ const styles = StyleSheet.create({
   row__: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10
+    gap: 10,
   },
   buttonStyle: {
     color: appColors.black,
@@ -195,7 +229,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    padding:20
+    padding: 20,
   },
   textStyle: {
     color: appColors.white,
@@ -208,8 +242,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding:20,
-    marginBottom:24
+    padding: 20,
+    marginBottom: 24,
   },
   headerTextStyle: {
     color: appColors.white,
