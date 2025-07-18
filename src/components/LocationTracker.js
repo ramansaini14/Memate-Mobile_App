@@ -471,7 +471,7 @@ const LocationTracker = ({
               key="resume-button"
               style={styles.pauseIcon}
               onPress={handleResume}>
-              <StartJobPlayIcon />
+              <StartJobPlayIcon height={28} width={28} />
             </TouchableOpacity>
           ) : (
             // Job is running - show pause button
@@ -479,7 +479,7 @@ const LocationTracker = ({
               key="pause-button"
               style={styles.pauseIcon}
               onPress={handlePause}>
-              <PauseJobIcon />
+              <PauseJobIcon height={28} width={28} />
             </TouchableOpacity>
           )}
         </View>
@@ -506,8 +506,8 @@ const styles = StyleSheet.create({
   },
   pauseIcon: {
     // borderWidth: 8,
-    height: 50,
-    width: 50,
+    height: 58,
+    width: 58,
     backgroundColor: appColors.black,
 
     justifyContent: 'center',
