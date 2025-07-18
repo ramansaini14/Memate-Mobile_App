@@ -166,14 +166,17 @@ const HomeScreen = ({navigation, route}) => {
 
   useEffect(()=>{
 
-    const payload = {
-      id: globallyOrgData.id,
-      offset: 0,
-      status: 'a',
-      action_status: '',
-    };
-
-    dispatch(getJobs(payload));
+    setTimeout(()=>{
+      const payload = {
+        id: globallyOrgData.id,
+        offset: 0,
+        status: 'a',
+        action_status: '',
+      };
+  
+      dispatch(getJobs(payload));
+    },1500)
+ 
   },[jobData])
 
   useEffect(() => {

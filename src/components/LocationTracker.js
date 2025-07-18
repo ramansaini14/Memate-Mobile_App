@@ -361,11 +361,12 @@ const LocationTracker = ({
     // If job isn't started yet, use startStop handler first
     if (!isJobStarted) {
       console.log(`Job ${data.id} not started, starting it first`);
-      if (handleStartStop) {
+      // if (handleStartStop) {
         handleStartStop();
-      } else {
-        onStartPress();
-      }
+      // } 
+      // else {
+      //   onStartPress();
+      // }
       return;
     }
 
@@ -477,7 +478,7 @@ const LocationTracker = ({
             <TouchableOpacity
               key="pause-button"
               style={styles.pauseIcon}
-              onPress={handlePauseButtonPress}>
+              onPress={handlePause}>
               <PauseJobIcon />
             </TouchableOpacity>
           )}

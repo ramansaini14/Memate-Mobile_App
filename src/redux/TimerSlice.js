@@ -50,7 +50,8 @@ const TimerSlice = createSlice({
             value: 0,
             isRunning: true,
             isPaused: false,
-            lastUpdateTime: Date.now()
+            lastUpdateTime: Date.now(),
+            startTime: Date.now()
           };
         }
         
@@ -115,12 +116,14 @@ const TimerSlice = createSlice({
           value: 0,
           isRunning: false,
           isPaused: false,
-          lastUpdateTime: Date.now()
+          lastUpdateTime: Date.now(),
+          startTime: Date.now() // Initialize startTime for new jobs
         };
       }
       
       state.jobs[jobId].value = value;
       state.jobs[jobId].lastUpdateTime = Date.now();
+      // Preserve existing startTime - don't overwrite it during updates
       
       // Persist values
       // safeAsyncStorage.setItem(`timer_${jobId}`, value.toString());
@@ -137,23 +140,29 @@ const TimerSlice = createSlice({
       state.isRunning = true;
       state.isPaused = false;
       
+      const currentTime = Date.now();
+      
       // Initialize or update job-specific timer
       if (!state.jobs[jobId]) {
         state.jobs[jobId] = {
           value: 0,
           isRunning: true,
           isPaused: false,
-          lastUpdateTime: Date.now()
+          lastUpdateTime: currentTime,
+          startTime: currentTime // Store actual start time
         };
       } else {
+        // If resuming an existing job, calculate new start time based on current elapsed value
+        const existingValue = state.jobs[jobId].value;
+        state.jobs[jobId].startTime = currentTime - (existingValue * 1000);
         state.jobs[jobId].isRunning = true;
         state.jobs[jobId].isPaused = false;
-        state.jobs[jobId].lastUpdateTime = Date.now();
+        state.jobs[jobId].lastUpdateTime = currentTime;
       }
       
       // Update the global timer value to match this job
       state.value = state.jobs[jobId].value;
-      state.lastUpdateTime = Date.now();
+      state.lastUpdateTime = currentTime;
       
       // Store state in AsyncStorage
       safeAsyncStorage.setItem('timerRunning', 'true');
@@ -162,7 +171,7 @@ const TimerSlice = createSlice({
       safeAsyncStorage.setItem('timerLastUpdate', state.lastUpdateTime.toString());
       safeAsyncStorage.setItem('timerJobs', JSON.stringify(state.jobs));
       
-      console.log(`Job ${jobId} started with timer:`, state.jobs[jobId].value);
+      console.log(`Job ${jobId} started with timer:`, state.jobs[jobId].value, 'startTime:', new Date(state.jobs[jobId].startTime));
     },
     pauseTimer: (state, action) => {
       const jobId = action.payload || state.activeJobId;
@@ -192,7 +201,8 @@ const TimerSlice = createSlice({
           value: 0,
           isRunning: true,
           isPaused: true,
-          lastUpdateTime: Date.now()
+          lastUpdateTime: Date.now(),
+          startTime: Date.now()
         };
       } else {
         state.jobs[jobId].isRunning = true;
@@ -215,7 +225,6 @@ const TimerSlice = createSlice({
       
       console.log('resumeTimer action called for job:', jobId);
       
-      // If this is the active job, resume the global timer
       if (jobId === state.activeJobId) {
         state.isRunning = true;
         state.isPaused = false;
@@ -233,7 +242,8 @@ const TimerSlice = createSlice({
           value: 0,
           isRunning: true,
           isPaused: false,
-          lastUpdateTime: Date.now()
+          lastUpdateTime: Date.now(),
+          startTime: Date.now()
         };
       } else {
         state.jobs[jobId].isRunning = true;
@@ -312,6 +322,15 @@ const TimerSlice = createSlice({
       const jobId = action.payload;
       // This is just a selector, doesn't modify state
       // It will be used by our selector function
+    },
+    setElapsedFromNative: (state, action) => {
+      const { jobId, seconds } = action.payload;
+      if (!state.jobs[jobId]) {
+        state.jobs[jobId] = { value: 0, isRunning: true, isPaused: false, startTime: Date.now(), lastUpdateTime: Date.now() };
+      }
+      state.jobs[jobId].value = seconds;
+      // keep global value in-sync with the active job
+      if (jobId === state.activeJobId) state.value = seconds;
     }
   }
 });
@@ -325,7 +344,8 @@ export const {
   resumeTimer, 
   stopTimer,
   syncTimerFromStorage,
-  getJobTimer
+  getJobTimer,
+  setElapsedFromNative
 } = TimerSlice.actions;
 
 // Selector to get a specific job's timer
@@ -404,23 +424,67 @@ export const loadTimerStateFromStorage = async (dispatch) => {
     const isPaused = pausedStr === 'true';
     const activeJobId = jobId || null;
     const lastUpdateTime = lastUpdateStr ? parseInt(lastUpdateStr, 10) : Date.now();
-    const jobs = jobsStr ? JSON.parse(jobsStr) : {};
+    let jobs = jobsStr ? JSON.parse(jobsStr) : {};
     
-    dispatch(syncTimerFromStorage({
-      value,
-      isRunning,
-      isPaused, 
-      activeJobId,
-      lastUpdateTime,
-      jobs
-    }));
+    // If there's an active running timer, calculate the actual elapsed time
+    if (isRunning && !isPaused && activeJobId && jobs[activeJobId] && jobs[activeJobId].startTime) {
+      const currentTime = Date.now();
+      const startTime = jobs[activeJobId].startTime;
+      const actualElapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+      
+      console.log('App restarted with active timer:');
+      console.log('- Start time:', new Date(startTime));
+      console.log('- Current time:', new Date(currentTime));
+      console.log('- Stored value:', jobs[activeJobId].value);
+      console.log('- Actual elapsed:', actualElapsedSeconds);
+      
+      // Update the job value to the correct elapsed time
+      jobs[activeJobId].value = actualElapsedSeconds;
+      jobs[activeJobId].lastUpdateTime = currentTime;
+      
+      // Update global value for active job
+      const correctedValue = actualElapsedSeconds;
+      
+      console.log('Timer corrected to:', actualElapsedSeconds, 'seconds');
+      
+      dispatch(syncTimerFromStorage({
+        value: correctedValue,
+        isRunning,
+        isPaused, 
+        activeJobId,
+        lastUpdateTime: currentTime,
+        jobs
+      }));
+      
+      // Persist the corrected values back to storage
+      safeAsyncStorage.setItem('timerValue', correctedValue.toString());
+      safeAsyncStorage.setItem('timerJobs', JSON.stringify(jobs));
+      safeAsyncStorage.setItem('timerLastUpdate', currentTime.toString());
+      
+    } else {
+      // No active timer or timer is paused, restore as-is
+      dispatch(syncTimerFromStorage({
+        value,
+        isRunning,
+        isPaused, 
+        activeJobId,
+        lastUpdateTime,
+        jobs
+      }));
+    }
     
     // Start background timer if needed
     if (isRunning && !isPaused) {
       startBackgroundTimer(dispatch);
     }
     
-    return { value, isRunning, isPaused, activeJobId, jobs };
+    return { 
+      value: jobs[activeJobId]?.value || value, 
+      isRunning, 
+      isPaused, 
+      activeJobId, 
+      jobs 
+    };
   } catch (error) {
     console.error('Error loading timer state from storage:', error);
     return { value: 0, isRunning: false, isPaused: false, activeJobId: null, jobs: {} };

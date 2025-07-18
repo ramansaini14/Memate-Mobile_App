@@ -12,6 +12,8 @@ import {
   FlatList,
   ActivityIndicator,
   Linking,
+  NativeModules,
+  AppState,
 } from 'react-native';
 import React, {useEffect, useState, useRef, use} from 'react';
 import {appColors} from '../../utils/appColors';
@@ -66,6 +68,8 @@ import {
   clearAttachmentFileUrl,
   hitAttachmentFileUrl,
 } from '../../redux/AttachmentFileUrlSlice';
+import TimerManager from '../../services/TimeManager';
+import { useLiveActivityTimer } from '../../hooks/useLiveActivityTimer';
 // import {uploadImageToS3} from '../../redux/uploadSlice';
 
 import RNFS from 'react-native-fs';
@@ -76,7 +80,12 @@ import {clearPauseStatus, hitPauseJob} from '../../redux/PauseJobSlice';
 import ImagePicker from 'react-native-image-crop-picker';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
+const {MeMateTimer} = NativeModules
+
 const JobCard = ({navigation, route}) => {
+  // Manage Live Activity based on TimerManager state
+  useLiveActivityTimer();
+  
   const [showTracker, setShowTracker] = useState(true);
   const {data} = route.params;
   const [jobData, setJobData] = useState(data);
@@ -93,6 +102,10 @@ const JobCard = ({navigation, route}) => {
   const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
   const [isExpand, setExpand] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [time, setTime] = useState('00:00:00');
+
+
   // Get global timer state (primarily for the active job)
   const globalTimer = useSelector(state => state.timer.value);
   const {isPausedGlobal} = useSelector(
@@ -229,6 +242,55 @@ const JobCard = ({navigation, route}) => {
     };
   }, [jobData.id]);
 
+
+  // const startTimerWidget = async()=>{
+  //   MeMateTimer.endTimer()
+  //   MeMateTimer.startTimer("🔥", timer)
+  //   // console.log("memateStartTimer ===> ",memateStartTimer)
+  // }
+/**
+ * Timer UseEffect
+ * @returns <unsubscribe()>
+ */
+    useEffect(() => {
+        // Initialize timer
+        TimerManager.initialize();
+
+        // Subscribe to timer updates
+        const unsubscribe = TimerManager.addListener((seconds) => {
+            setTime(TimerManager.getFormattedTime(seconds));
+        });
+
+        // Add AppState listener (sync no longer needed as Redux handles state)
+        const handleAppStateChange = (nextAppState) => {
+            console.log('JobCard: App state changed to:', nextAppState);
+            // Redux store handles timer state persistence automatically
+        };
+
+        const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+
+        return () => {
+            unsubscribe();
+            appStateSubscription?.remove();
+        };
+    }, []);
+
+  // startTimerWidget function removed - Live Activities are now handled automatically by useLiveActivityTimer hook
+
+  useEffect(()=>{
+    // startTimerWidget()
+  },[timer])
+
+    const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins
+      .toString()
+      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+
   useEffect(() => {
     console.log('statusStartJob ===> ', statusStartJob);
     if (responseJobStart != null) {
@@ -245,6 +307,10 @@ const JobCard = ({navigation, route}) => {
       };
       console.log("setJobDataGlobally called in responseJobStart");
       dispatch(setJobDataGlobally(tempJob)); // Update global job data
+      
+      // Live Activities are now handled automatically by useLiveActivityTimer hook
+      // No manual timer widget start needed
+      
       setJobData(tempJob); // Update local job data
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());
@@ -267,6 +333,7 @@ const JobCard = ({navigation, route}) => {
       dispatch(clearPauseStatus());
       console.log("setJobDataGlobally called in responseJobPause");
       dispatch(setJobDataGlobally(null));
+      TimerManager.stop()
     } else if (statusJobPause == 400) {
       Alert.alert(
         'MeMate',
@@ -284,6 +351,7 @@ const JobCard = ({navigation, route}) => {
     dispatch(setIsPayused(false)); // Reset completed state when starting tracking
     console.log("setJobDataGlobally called in startLocationTracking");
     dispatch(setJobDataGlobally(jobData)); // Update global job data
+    // MeMateTimer.startTimer("🔥", 0)
 
     // Set up regular location tracking
     if (!intervalRef.current) {
@@ -313,8 +381,11 @@ const JobCard = ({navigation, route}) => {
       dispatch(setIsPayused(true)); // Reset completed state when stopping tracking
       console.log("setJobDataGlobally null called in stopLocationTracking");
       dispatch(setJobDataGlobally(null));
+      // MeMateTimer.endTimer()
+      // TimerManager.stopTimer()
     }
   };
+  
 
   /**
    * Handles the pause action for the job.

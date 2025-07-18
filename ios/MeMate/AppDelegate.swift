@@ -3,6 +3,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import UserNotifications
+import BackgroundTasks
 // import PushNotificationIOS // Only needed for advanced push handling
 
 @main
@@ -34,7 +35,45 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     // ✅ Set UNUserNotificationCenter delegate
     UNUserNotificationCenter.current().delegate = self
 
+    // Register background task
+    BGTaskScheduler.shared.register(
+      forTaskWithIdentifier: "com.sarswatech.MeMate.MeMateTimer",
+      using: nil
+    ) { task in
+      self.handleTimerTask(task: task as! BGProcessingTask)
+    }
+
     return true
+  }
+
+  func handleTimerTask(task: BGProcessingTask) {
+    task.expirationHandler = {
+      task.setTaskCompleted(success: false)
+    }
+
+    // Schedule next background task
+    scheduleBackgroundTask()
+
+    // Your background task logic here
+    task.setTaskCompleted(success: true)
+  }
+
+  func scheduleBackgroundTask() {
+    let request = BGProcessingTaskRequest(identifier: "com.sarswatech.MeMate.MeMateTimer")
+    request.requiresNetworkConnectivity = false
+    request.requiresExternalPower = false
+
+    do {
+      try BGTaskScheduler.shared.submit(request)
+    } catch {
+      print("Could not schedule background task: \(error)")
+    }
+  }
+
+  // Prevent Live Activities from being ended when app terminates
+  func applicationWillTerminate(_ application: UIApplication) {
+    // Do NOT end Live Activities here - they should persist after app termination
+    print("App terminating - Live Activities will continue running")
   }
 
   // ✅ Handle notification while app is in foreground

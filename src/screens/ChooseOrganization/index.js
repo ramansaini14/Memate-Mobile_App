@@ -13,16 +13,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {setGloballyOrgData} from '../../redux/GlobalSlice';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
 import SimpleCalenderIcon from '../../assets/svg/SimpleCalenderIcon';
-import { emitSocket } from '../../socketService';
+import { emitSocket, emitSocketWithAck, getSocket } from '../../socketService';
 import { useIsFocused } from '@react-navigation/native';
 import PushNotification from 'react-native-push-notification';
 import { selectJobTimer } from '../../redux/TimerSlice';
 import TimerNotification, { startNotificationTimer, stopNotificationTimer } from '../../services/TimerNotification';
 // import PushNotificationIOS from '@react-native-community/push-notification-ios'
 
-const {MeMateTimer} = NativeModules
+// const {MeMateTimer} = NativeModules
 
 const ChooseOrganization = ({navigation}) => {
+
+  // const socket = getSocket()
 
    const jobData = useSelector(state => state.globalReducer.jobData);
    const jobTimer = useSelector(state => selectJobTimer(state, jobData?.id));
@@ -32,9 +34,23 @@ const ChooseOrganization = ({navigation}) => {
   const responseOrg = useSelector(state => state.getOrganizationReducer.data);
   const [orgData, setOrgData] = useState(null);
   
-  const [message,setMessage] = useState(timer)
+  const [message,setMessage] = useState(null)
+
+  useEffect(()=>{
+    console.log("chat Response ===> ",message)
+  },[message])
 
   const isFocused= useIsFocused();
+
+  // const emitSocket = (event, data) => {
+  //   console.log('event ===> ', event, '  socket ====> ', socket);
+  //   if (socket) {
+  //     socket.emit(event, data, response => {
+  //       setMessage(response)
+  //       console.log('Response Chat', response); // ok
+  //     });
+  //   }
+  // };
 
   const checkToken = async() =>{
     const token = await AsyncStorage.getItem("Token")
@@ -50,21 +66,32 @@ const ChooseOrganization = ({navigation}) => {
 
   }
 
-  useEffect(()=>{
+  // useEffect(()=>{
     
     // MeMateTimer.endTimer()
 
-  },[])
+  // },[])
+
+  const chatResponse = (res) =>{
+    console.log("Chat Response ===> ",res)
+  }
 
   const onNextClick = async itemData => {
     console.log('ORG ID ===> ', JSON.stringify(itemData.id));
     
-    const payload = {
-      user_id: itemData.appuser_id,
+  
+    try {
+      const payload = {
+        user_id: itemData.appuser_id,
+      }
+      emitSocket("register_user",payload,setMessage)
+      // const registerUser = await emitSocketWithAck('register_user', payload);
+      // console.log('Response in variable registerUser:', registerUser);
+    } catch (err) {
+      console.error('Error from socket:', err.message);
     }
-    const register_user = emitSocket('register_user', payload);
 
-    // await AsyncStorage.setItem('orgId', JSON.stringify(itemData.id));
+    await AsyncStorage.setItem('orgId', JSON.stringify(itemData.id));
 
     dispatch(setGloballyOrgData(itemData));
 
@@ -88,17 +115,17 @@ const ChooseOrganization = ({navigation}) => {
     }
   }, [responseOrg]);
 
-  let time = 0;
+  // let time = 0;
 
-  const test = async (value) => {
+  // const test = async (value) => {
 
-      await MeMateTimer.startTimer("🔥", value);
+  //     await MeMateTimer.startTimer("🔥", value);
 
 
-  };
-  const endT = () =>{
-    MeMateTimer.endTimer()
-  }
+  // };
+  // const endT = () =>{
+  //   MeMateTimer.endTimer()
+  // }
 
     // useEffect(() => {
     //   PushNotification.localNotification({
@@ -160,8 +187,8 @@ const ChooseOrganization = ({navigation}) => {
         </Text>
       </View>
       {/* <TimerNotification/> */}
-      <TouchableOpacity onPress={() => test()} style={{height: 50, width: 100, backgroundColor: appColors.black}}></TouchableOpacity>
-      <TouchableOpacity onPress={() => endT()} style={{height: 50, width: 100, backgroundColor: 'red'}}></TouchableOpacity>
+      {/* <TouchableOpacity onPress={() => test()} style={{height: 50, width: 100, backgroundColor: appColors.black}}></TouchableOpacity>
+      <TouchableOpacity onPress={() => endT()} style={{height: 50, width: 100, backgroundColor: 'red'}}></TouchableOpacity> */}
      
     </SafeAreaView>
   );

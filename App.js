@@ -9,6 +9,7 @@ import {
 } from './src/redux/TimerSlice';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {LogBox} from 'react-native';
+import TimerManager from './src/services/TimeManager';
 
 import firebase from '@react-native-firebase/app';
 
@@ -25,6 +26,10 @@ import { registerPushNotifications } from './src/services/notificationService'
 LogBox.ignoreLogs([
   'Non-serializable values were found in the navigation state',
 ]);
+
+// Initialize TimerManager immediately
+console.log('App.js: Calling TimerManager.initialize()');
+TimerManager.initialize();
 
 // Initialize timer on app startup without using hooks
 console.log('App.js: Initializing app...');

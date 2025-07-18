@@ -11,8 +11,9 @@ import SwiftUI
 @main
 struct MeMateTimerBundle: WidgetBundle {
     var body: some Widget {
-        MeMateTimer()
-        MeMateTimerControl()
-        MeMateTimerLiveActivity()
+        // Only include Live Activity - no regular widgets needed
+        if #available(iOS 16.2, *) {
+            MeMateTimerLiveActivity()
+        }
     }
 }

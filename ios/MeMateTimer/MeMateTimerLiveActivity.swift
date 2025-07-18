@@ -1,130 +1,126 @@
-//
-//  MeMateTimerLiveActivity.swift
-//  MeMateTimer
-//
-//  Created by Anuj Nagpal on 14/07/25.
-//
-
 import ActivityKit
 import WidgetKit
 import SwiftUI
 
 struct MeMateTimerAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        // Dynamic stateful properties about your activity go here!
-        var emoji: String
-      var startTime: Date
+        var startTime: Date
+        
+        // Helper function to calculate time interval since now
+        func getTimeIntervalSinceNow() -> Double {
+            return startTime.timeIntervalSince1970 - Date().timeIntervalSince1970
+        }
     }
-
-    // Fixed non-changing properties about your activity go here!
+    
+    // Fixed non-changing properties - keeping it minimal
     var name: String
 }
 
-@available(iOS 16.1,*)
+@available(iOS 16.2, *)
 struct MeMateTimerLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MeMateTimerAttributes.self) { context in
-            // Lock screen/banner UI goes here
-            VStack {
-                Text("MeMate Timer")
-                    .font(.headline)
-              TimelineView(.periodic(from: context.state.startTime, by: 1)) { timelineContext in
-                    Text(timerInterval: context.state.startTime...timelineContext.date, countsDown: false)
+            // Lock screen/banner UI - Clean and beautiful design
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "timer")
+                        .foregroundColor(.white)
                         .font(.title2)
-                        .monospacedDigit()
+                    
+                    Text("Timer")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Text(
+                        Date(timeIntervalSinceNow: context.state.getTimeIntervalSinceNow()),
+                        style: .timer
+                    )
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.cyan)
+                    .monospacedDigit()
                 }
+                
+                Text("Memate Job Running 🫠")
+                    .font(.caption)
+                    .bold(true)
+                    .foregroundColor(.white.opacity(0.9))
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
-            .background(Color.black)
-            .foregroundColor(.white)
-
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .activityBackgroundTint(Color.black.opacity(0.8))
+            .activitySystemActionForegroundColor(Color.white)
+            
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded UI goes here.  Compose the expanded UI through
-                // various regions, like leading/trailing/center/bottom
-                DynamicIslandExpandedRegion(.leading) {
-                    Text("MeMate")
-                }
-                DynamicIslandExpandedRegion(.trailing) {
-                    TimelineView(.periodic(from: context.state.startTime, by: 1)) { timelineContext in
-                        Text(timerInterval: context.state.startTime...timelineContext.date, countsDown: false)
-                            .font(.subheadline)
-                            .monospacedDigit()
+                // Expanded UI - Centered timer with beautiful design
+                DynamicIslandExpandedRegion(.center) {
+                    VStack(spacing: 12) {
+                        Text("MeMate Job Timer")
+                            .font(.headline)
+                            .fontWeight(.semibold)
                             .foregroundColor(.white)
-                            .frame(width: 70, alignment: .center)
-                            .padding(4)
-                            .background(Color.black)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                        
+                        HStack {
+                            Image(systemName: "timer")
+                                .foregroundColor(.cyan)
+                                .font(.title2)
+                            
+                            Text(
+                                Date(timeIntervalSinceNow: context.state.getTimeIntervalSinceNow()),
+                                style: .timer
+                            )
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.cyan)
+                            .monospacedDigit()
+                        }
                     }
+                    .padding(.vertical, 8)
                 }
+                
+                // Bottom region for future controls (pause/stop buttons)
                 DynamicIslandExpandedRegion(.bottom) {
-                  TimelineView(.periodic(from: context.state.startTime, by: 1)) { timelineContext in
-                        Text(timerInterval: context.state.startTime...timelineContext.date, countsDown: false)
-                            .font(.subheadline)
-                            .monospacedDigit()
-                            .foregroundColor(.white)
-                            .frame(width: 70, alignment: .center)
-                            .padding(4)
-                            .background(Color.black)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                    }
-                    // more content
+                    Text("Tap to open app")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 4)
                 }
+                
             } compactLeading: {
-                // Text("")
-                    Image(systemName: "timer")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 20, height: 20)
+                // Compact leading - Timer icon
+                Image(systemName: "timer")
+                    .imageScale(.medium)
+                    .foregroundColor(.cyan)
+                    .padding(.leading, 4)
+                    
             } compactTrailing: {
-              TimelineView(.periodic(from: context.state.startTime, by: 1)) { timelineContext in
-                    Text(timerInterval: context.state.startTime...timelineContext.date, countsDown: false)
-                        .font(.subheadline)
-                        .monospacedDigit()
-                        .foregroundColor(.white)
-                        .frame(width: 70, alignment: .center)
-                        .padding(4)
-                        .background(Color.black)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
+                // Compact trailing - Timer count
+                Text(
+                    Date(timeIntervalSinceNow: context.state.getTimeIntervalSinceNow()),
+                    style: .timer
+                )
+                .foregroundColor(.cyan)
+                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .fontWeight(.semibold)
+                .monospacedDigit()
+                .frame(minWidth: 45, maxWidth: 60)
+                .minimumScaleFactor(0.8)
+                .lineLimit(1)
+                .padding(.trailing, 4)
+                
             } minimal: {
-                TimelineView(.periodic(from: context.state.startTime, by: 1)) { timelineContext in
-                    Text(timerInterval: context.state.startTime...timelineContext.date, countsDown: false)
-                        .font(.caption2)
-                        .monospacedDigit()
-                        .foregroundColor(.white)
-                        .padding(6)
-                        .background(Color.black)
-                        .clipShape(Capsule())
-                }
+                // Minimal - Just the timer icon
+                Image(systemName: "timer")
+                    .imageScale(.small)
+                    .foregroundColor(.cyan)
             }
-            .widgetURL(URL(string: "http://www.apple.com"))
-            .keylineTint(Color.red)
+            .widgetURL(URL(string: "memate://timer"))
+            .keylineTint(Color.cyan)
         }
     }
 }
-
-extension MeMateTimerAttributes {
-    fileprivate static var preview: MeMateTimerAttributes {
-        MeMateTimerAttributes(name: "World")
-    }
-}
-
-extension MeMateTimerAttributes.ContentState {
-    fileprivate static var smiley: MeMateTimerAttributes.ContentState {
-//        MeMateTimerAttributes.ContentState(emoji: "😀")
-      MeMateTimerAttributes.ContentState(emoji: "😀", startTime: Date())
-     }
-     
-     fileprivate static var starEyes: MeMateTimerAttributes.ContentState {
-       MeMateTimerAttributes.ContentState(emoji: "🤩", startTime: Date())
-     }
-}
-//
-//#Preview("Notification", as: .content, using: MeMateTimerAttributes.preview) {
-//   MeMateTimerLiveActivity()
-//} contentStates: {
-//    MeMateTimerAttributes.ContentState.smiley
-//    MeMateTimerAttributes.ContentState.starEyes
-//}

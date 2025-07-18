@@ -8,6 +8,7 @@ import {
   Animated,
   Easing,
   ActivityIndicator,
+  NativeModules,
 } from 'react-native';
 import {appColors} from '../utils/appColors';
 import RightArrowWhite from '../assets/svg/RightArrowWhite';
@@ -23,6 +24,9 @@ import {setIsPayused, setJobDataGlobally} from '../redux/GlobalSlice';
 import {clearJobStatus, hitJobPause, hitJobStop} from '../redux/JobStatusSlice';
 import { clearPauseStatus, hitPauseJob } from '../redux/PauseJobSlice';
 import { clearStartStatus } from '../redux/StartJobSlice';
+import TimerManager from '../services/TimeManager';
+
+const {MeMateTimer} = NativeModules
 
 const CenterButtonModal = ({
   visible,
@@ -210,6 +214,9 @@ const CenterButtonModal = ({
         setIsSwipeCompleted(false);
         onClose();
         dispatch(setJobDataGlobally(null));
+
+        // MeMateTimer.endTimer()
+
       }, 1500);
 
       // Prepare and send API call
@@ -345,6 +352,8 @@ const CenterButtonModal = ({
         dispatch(clearStartStatus());
         dispatch(clearPauseStatus());
         dispatch(setJobDataGlobally(null));
+        // MeMateTimer.endTimer()
+        TimerManager.stop()
       } else if (statusJobPause == 400) {
         Alert.alert(
           'MeMate',
@@ -398,7 +407,6 @@ const CenterButtonModal = ({
           <Text style={styles.jobId}>{jobData?.number}</Text>
           <Text style={styles.companyText}>{jobData?.short_description}</Text>
         </View>
-        <View style={styles.placeholder} />
       </View>
 
       {/* <View style={styles.actionButtonsContainer}>
@@ -576,7 +584,6 @@ const styles = StyleSheet.create({
   progressHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     width: '100%',
     marginBottom: 24,
   },
@@ -600,12 +607,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: appColors.white,
-    marginBottom: 8,
+
   },
   jobId: {
     fontSize: 14,
     color: '#888',
     marginBottom: 4,
+    marginTop: 8,
   },
   companyText: {
     fontSize: 14,

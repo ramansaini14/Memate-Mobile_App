@@ -9,7 +9,13 @@
 
 @interface RCT_EXTERN_MODULE(MeMateTimer, NSObject)
 
-RCT_EXTERN_METHOD(startTimer:(NSString *)emoji withSeconds:(double)seconds withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
-RCT_EXTERN_METHOD(endTimer)
++ (BOOL)requiresMainQueueSetup {
+    return NO;
+}
+
+RCT_EXTERN_METHOD(startTimer:(double)seconds withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(updateTimer:(double)seconds withResolver:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(stopTimer:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
+RCT_EXTERN_METHOD(isActivityRunning:(RCTPromiseResolveBlock)resolve withRejecter:(RCTPromiseRejectBlock)reject)
 
 @end

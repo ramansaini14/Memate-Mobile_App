@@ -1,53 +1,78 @@
 import {
-  Modal,
+  FlatList,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {appColors} from '../../utils/appColors';
 import WhiteBackIcon from '../../assets/svg/WhiteBackIcon';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
 import MenuIcon from '../../assets/svg/MenuIcon';
 import FrameBoy from '../../assets/svg/FrameBoy';
 import DoubleTick from '../../assets/svg/DoubleTick';
-import SingleTick from '../../assets/svg/SingleTick';
-import BagIcon from '../../assets/svg/BagIcon';
-import GirlFrame from '../../assets/svg/GirlFrame';
-import YellowBagIcon from '../../assets/svg/YellowBagIcon';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {io} from 'socket.io-client';
-import {useSocket} from '../../components/useSocket';
 import ModalCreateChat from '../../components/ModalCreateChat';
-import { useSelector } from 'react-redux';
-import { emitSocket } from '../../socketService';
+import {useSelector} from 'react-redux';
+import {emitSocket, emitSocketWithoutCallback, onSocket} from '../../socketService';
+import {Image} from 'react-native-svg';
+import DummyUserIcon from '../../assets/svg/DummyUserIcon';
+import ProfilePictureIcon from '../../assets/svg/ProfilePictureIcon';
 
 const Chat = ({navigation}) => {
-
   const globallyOrgData = useSelector(
     state => state.globalReducer.globallyOrgData,
   );
 
   const [managers, setManagers] = useState([]);
 
+  const [orgData, setOrgData] = useState(null);
+  const [name,setName] = useState('')
+  const [chatGroups,setChatGroups] = useState('')
+
   useEffect(()=>{
+    console.log("Chat Groups ===> ",chatGroups)
+  },[chatGroups])
+
+  useEffect(() => {
     console.log('globallyOrgData managers===> ', globallyOrgData.managers);
     setManagers(globallyOrgData.managers || []);
-  },[])
+    const orgPayload = {
+      user_id: globallyOrgData.appuser_id,
+      organization_id: globallyOrgData.id,
+    };
+
+    emitSocket('get_organization_users', orgPayload, setOrgData);
+    emitSocket('get_user_chat_groups', {user_id:globallyOrgData.appuser_id}, setChatGroups);
+    
+    onSocket("create_chat_group_response",(response)=>{
+      console.log("create_chat_group_response ===> ",response)
+    })
+
+  }, []);
   const [visibleModal, setVisibleModal] = useState(false);
   const onCloseClick = () => {
     setVisibleModal(false);
-  }
+  };
   const onCreateChatClick = () => {
     setVisibleModal(true);
-  }
+  };
 
-  const onCreateClick = (payload) => {
-    emitSocket(create_chat_group, payload);
+  const onCreateClick = value => {
+    const payload = {
+      user_id: globallyOrgData.appuser_id,
+      name: name,
+      participants: ["abc","xyz"],
+      organization_id: globallyOrgData.id,
+      project_id: '',
+      task_id: ''
+    }
+    console.log("Payload ===> ",payload)
+    emitSocketWithoutCallback('create_chat_group', payload);
     setVisibleModal(false);
-  }
+  };
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -69,7 +94,7 @@ const Chat = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </View>
-      <ScrollView style={{flex: 1}} showsVerticalScrollIndicator={false}>
+      <View style={{flex: 1, padding: 16}}>
         <View>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <Text
@@ -98,63 +123,79 @@ const Chat = ({navigation}) => {
             paddingBottom: 20,
             borderColor: appColors.lightGrey,
             borderBottomWidth: 1,
+            flex: 1,
           }}>
-          <TouchableOpacity onPress={() => navigation.navigate('MainChatRoom')}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 20,
-              }}>
-              <FrameBoy width={55} height={55} />
-              <View style={{flexDirection: 'column', flex: 1}}>
-                <Text style={{color: appColors.black}}>Imran Molla</Text>
-                <Text>Organisation Name</Text>
-                <Text
-                  style={{color: appColors.black, width: 150}}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Of course, let me know if you're on your way
-                </Text>
-              </View>
-              <View style={{flexDirection: 'column'}}>
-                <Text>09 APR</Text>
-                <View style={{alignItems: 'center', marginTop: 10}}>
-                  <DoubleTick width={16} height={16} />
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => navigation.navigate('MainChatRoom')}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 20,
-              }}>
-              <FrameBoy width={55} height={55} />
-              <View style={{flexDirection: 'column', flex: 1}}>
-                <Text style={{color: appColors.black}}>Imran Molla</Text>
-                <Text>Organisation Name</Text>
-                <Text
-                  style={{color: appColors.black, width: 150}}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  Of course, let me know if you're on your way
-                </Text>
-              </View>
-              <View style={{flexDirection: 'column'}}>
-                <Text>09 APR</Text>
-                <View style={{alignItems: 'center', marginTop: 10}}>
-                  <SingleTick width={16} height={16} />
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
+          {orgData != null && (
+            <FlatList
+              showsVerticalScrollIndicator={false}
+              data={orgData.users}
+              keyExtractor={(item, index) =>
+                item.id?.toString() ?? index.toString()
+              }
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.chatCard}
+                  onPress={() => navigation.navigate('JobCard', {data: item})}>
+                  {/* <Image
+                    source={{uri: item.avatar}}
+                    style={styles.avatar_}
+                    resizeMode="contain"
+                  /> */}
+                  <ProfilePictureIcon height={60} width={60}/>
+                  <View style={{flex: 1,paddingHorizontal:8}}>
+                    <Text style={{fontSize:14,fontWeight:'600',color:appColors.homeBlack}}>{item.first_name} {item.last_name}</Text>
+                    <Text style={{fontSize:12,color:appColors.placeholderColor}}>Position</Text>
+                    <Text style={{fontSize:13,color:appColors.homeBlack}}>Please Send me the Contract details.</Text>
+                  </View>
+                  <View style={{flexDirection: 'column'}}>
+                    <Text style={{fontSize: 10}}>09 APR</Text>
+                    <View
+                      style={{
+                        height: 24,
+                        width: 24,
+                        borderRadius: 12,
+                        backgroundColor: appColors.yellow,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        alignSelf:'flex-end',
+                        marginTop:8
+                      }}>
+                      <Text style={{fontSize:10}}>2</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              //  onEndReached={() => {
+              //    if (!loadingMore) {
+              //      if (!nextUrl) {
+              //        return; // No more data to load
+              //      }
+              //      setLoadingMore(true);
+              //      // fetchJobs(page + 1);
+              //      const payload = {
+              //        url:nextUrl
+              //      }
+              //      console.log('payload ===> ', payload);
+              //      dispatch(getJobs(payload));
+              //    }
+              //  }}
+              //  onEndReachedThreshold={0.5}
+              //  ListFooterComponent={() =>
+              //    loadingMore ? <ActivityIndicator size="small" color={appColors.primary} style={{marginVertical: 16}} /> : null
+              //  }
+            />
+          )}
         </View>
-      </ScrollView>
-      <ModalCreateChat modalVisible={visibleModal} onCloseClick={onCloseClick} onCreateClick={onCreateClick} managers={managers}/>
+      </View>
+      <ModalCreateChat
+        modalVisible={visibleModal}
+        onCloseClick={onCloseClick}
+        onCreateClick={onCreateClick}
+        managers={managers}
+        name={name}
+        setName={setName}
+      />
     </SafeAreaView>
   );
 };
@@ -165,14 +206,13 @@ const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
     backgroundColor: appColors.white,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 16,
   },
   headerStyle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    padding: 16,
   },
   usernameStyle: {
     color: appColors.black,
@@ -204,5 +244,15 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontWeight: '600',
     fontSize: 12,
+  },
+  chatCard: {
+    flexDirection: 'row',
+    marginTop: 8,
+    alignItems:'center'
+  },
+  avatar_: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
 });

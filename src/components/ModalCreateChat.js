@@ -1,4 +1,4 @@
-import React, { use, useState } from 'react';
+import React, {use, useState} from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TextInput,
 } from 'react-native';
 import {appColors} from '../utils/appColors';
-import { Manager } from 'socket.io-client';
+import {Manager} from 'socket.io-client';
 import ManagersDropDown from './ManagersDropDown';
 
 const ModalCreateChat = ({
@@ -19,22 +20,24 @@ const ModalCreateChat = ({
   onCloseClick,
   onCreateClick,
   managers,
+  name,
+  setName
 }) => {
   const [loading, setLoading] = useState(true);
 
-  console.log("Modal Managers ===> ", managers);
+  console.log('Modal Managers ===> ', managers);
 
   const onCreate = () => {
     const payload = {
       user_id: 1, // Replace with actual user ID
       name: 'New Chat', // Replace with actual chat name
-      participants:[],
+      participants: [],
       organization_id: 1, // Replace with actual organization ID
       project_id: 1, // Replace with actual project ID
       task_id: 1, // Replace with actual task ID
-    }
+    };
     onCreateClick(payload);
-  }
+  };
 
   return (
     <Modal
@@ -48,17 +51,37 @@ const ModalCreateChat = ({
           style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Create Chat</Text>
-            <View style={{flex:1}}>
+            <View style={{flex: 1}}>
+              <TextInput
+                style={{
+                  paddingVertical: 15,
+                  paddingHorizontal:8,
+                  borderWidth: 0.5,
+                  borderRadius: 8,
+                  marginHorizontal: 16,
+                  borderColor: appColors.homeBlack,
+                  marginTop:16
+                }}
+                placeholder='Enter Name'
+                value={name}
+                onChangeText={(value) => setName(value)}
+              />
 
-            <ManagersDropDown managers={managers}/>
+              <ManagersDropDown managers={managers} />
             </View>
 
             {/* Close Button */}
             <TouchableOpacity
-              onPress={() => onCloseClick()}
+              onPress={() => onCreateClick()}
               style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Create</Text>
+            </TouchableOpacity>
+              <TouchableOpacity
+              onPress={() => onCloseClick()}
+              style={[styles.closeButton,{marginBottom:32}]}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
+          
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -79,12 +102,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
-    height:"50%",
+    height: '40%',
   },
   modalContent: {
-    flex:1,
+    flex: 1,
     width: '100%',
     alignItems: 'center',
+    backgroundColor:appColors.white
   },
   modalTitle: {
     fontSize: 18,
@@ -92,10 +116,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   scrollContainer: {
- 
     width: '100%',
     backgroundColor: appColors.yellow,
-
   },
   listItem: {
     padding: 15,
@@ -112,9 +134,9 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.black,
     padding: 10,
     borderRadius: 5,
-    width: '100%',
     alignItems: 'center',
-    marginBottom: 16,
+    marginHorizontal:16,
+    width:'100%'
   },
   closeButtonText: {
     color: 'white',
