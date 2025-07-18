@@ -9,6 +9,9 @@ export const useLiveActivityTimer = () => {
   const dispatch = useDispatch();
   const { value: timerValue, isRunning, isPaused, activeJobId, jobs } = useSelector(state => state.timer);
   
+  // Get job data from global state
+  const jobDataGlobally = useSelector(state => state.globalReducer.jobData);
+  
   const lastStartedJobRef = useRef(null);
   const isLiveActivityActiveRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
@@ -19,6 +22,35 @@ export const useLiveActivityTimer = () => {
       return jobs[activeJobId].value;
     }
     return timerValue;
+  };
+
+  // Helper function to get current job information
+  const getCurrentJobInfo = () => {
+    let jobId = activeJobId ? activeJobId.toString() : '0';
+    let jobName = 'Unknown Job';
+
+    // First try to get job info from the global job data
+    if (jobDataGlobally && jobDataGlobally.id && jobDataGlobally.id == activeJobId) {
+      jobId = jobDataGlobally.id.toString();
+      jobName = jobDataGlobally.short_description || jobDataGlobally.number || `Job ${jobDataGlobally.id}`;
+    }
+    // If no global job data matches, try to find it in the timer jobs state
+    else if (activeJobId && jobs[activeJobId]) {
+      const job = jobs[activeJobId];
+      jobId = activeJobId.toString();
+      // Timer state might have job name if we stored it there
+      jobName = job.jobName || job.short_description || job.number || `Job ${activeJobId}`;
+    }
+    // Fallback
+    else if (activeJobId) {
+      jobId = activeJobId.toString();
+      jobName = `Job ${activeJobId}`;
+    }
+
+    return {
+      jobId,
+      jobName,
+    };
   };
 
   // Function to calculate actual elapsed time and sync Redux timer
@@ -49,8 +81,9 @@ export const useLiveActivityTimer = () => {
     }
 
     try {
-      console.log('Starting Live Activity with seconds:', seconds);
-      await MeMateTimer.startTimer(seconds);
+      const jobInfo = getCurrentJobInfo();
+      console.log('Starting Live Activity with seconds:', seconds, 'jobId:', jobInfo.jobId, 'jobName:', jobInfo.jobName);
+      await MeMateTimer.startTimer(seconds, jobInfo.jobId, jobInfo.jobName);
       isLiveActivityActiveRef.current = true;
       console.log('Live Activity started successfully');
     } catch (error) {
@@ -65,7 +98,8 @@ export const useLiveActivityTimer = () => {
     }
 
     try {
-      await MeMateTimer.updateTimer(seconds);
+      const jobInfo = getCurrentJobInfo();
+      await MeMateTimer.updateTimer(seconds, jobInfo.jobId, jobInfo.jobName);
     } catch (error) {
       console.error('Failed to update Live Activity:', error);
       // If update fails, try to restart the activity
@@ -155,7 +189,7 @@ export const useLiveActivityTimer = () => {
       startLiveActivity(currentTimerValue);
     }
     
-  }, [isRunning, isPaused, activeJobId, timerValue, jobs]);
+  }, [isRunning, isPaused, activeJobId, timerValue, jobs, jobDataGlobally]);
 
   /**
    * Additional effect to handle app startup synchronization

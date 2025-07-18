@@ -19,8 +19,8 @@ public class MeMateTimer: NSObject {
         return ActivityAuthorizationInfo().areActivitiesEnabled
     }
     
-    @objc(startTimer:withResolver:withRejecter:)
-    func startTimer(seconds: Double, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(startTimer:jobId:jobName:withResolver:withRejecter:)
+    func startTimer(seconds: Double, jobId: String, jobName: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         // Check if Live Activities are enabled
         guard areActivitiesEnabled() else {
             reject("LIVE_ACTIVITIES_DISABLED", "Live Activities are disabled for this app", nil)
@@ -32,7 +32,11 @@ public class MeMateTimer: NSObject {
         
         // Prepare the activity attributes and content state
         let attributes = MeMateTimerAttributes(name: "MeMate")
-        let contentState = MeMateTimerAttributes.ContentState(startTime: startTime)
+        let contentState = MeMateTimerAttributes.ContentState(
+            startTime: startTime,
+            jobId: jobId,
+            jobName: jobName
+        )
         
         Task {
             do {
@@ -58,8 +62,8 @@ public class MeMateTimer: NSObject {
         }
     }
     
-    @objc(updateTimer:withResolver:withRejecter:)
-    func updateTimer(seconds: Double, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    @objc(updateTimer:jobId:jobName:withResolver:withRejecter:)
+    func updateTimer(seconds: Double, jobId: String, jobName: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         guard let activity = currentActivity else {
             reject("NO_ACTIVITY", "No active Live Activity to update", nil)
             return
@@ -67,7 +71,11 @@ public class MeMateTimer: NSObject {
         
         // Calculate updated start time
         let startTime = Date().addingTimeInterval(-seconds)
-        let updatedContentState = MeMateTimerAttributes.ContentState(startTime: startTime)
+        let updatedContentState = MeMateTimerAttributes.ContentState(
+            startTime: startTime,
+            jobId: jobId,
+            jobName: jobName
+        )
         
         Task {
             do {

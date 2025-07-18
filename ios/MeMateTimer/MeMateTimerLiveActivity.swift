@@ -5,6 +5,8 @@ import SwiftUI
 struct MeMateTimerAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var startTime: Date
+        var jobId: String
+        var jobName: String
         
         // Helper function to calculate time interval since now
         func getTimeIntervalSinceNow() -> Double {
@@ -12,7 +14,7 @@ struct MeMateTimerAttributes: ActivityAttributes {
         }
     }
     
-    // Fixed non-changing properties - keeping it minimal
+    // Fixed non-changing properties
     var name: String
 }
 
@@ -23,11 +25,13 @@ struct MeMateTimerLiveActivity: Widget {
             // Lock screen/banner UI - Clean and beautiful design
             VStack(spacing: 8) {
                 HStack {
-                    Image(systemName: "timer")
+                    Image("memateIconLockScreen")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24, height: 24)
                         .foregroundColor(.white)
-                        .font(.title2)
                     
-                    Text("Timer")
+                    Text("Job Timer")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
@@ -44,10 +48,20 @@ struct MeMateTimerLiveActivity: Widget {
                     .monospacedDigit()
                 }
                 
-                Text("Memate Job Running 🫠")
-                    .font(.caption)
-                    .bold(true)
-                    .foregroundColor(.white.opacity(0.9))
+                HStack {
+                    Text("Job: \(context.state.jobName)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white.opacity(0.9))
+                        .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    Text("ID: \(context.state.jobId)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white.opacity(0.7))
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -66,9 +80,11 @@ struct MeMateTimerLiveActivity: Widget {
                             .foregroundColor(.white)
                         
                         HStack {
-                            Image(systemName: "timer")
+                          Image(systemName: "pencil")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 28, height: 28)
                                 .foregroundColor(.cyan)
-                                .font(.title2)
                             
                             Text(
                                 Date(timeIntervalSinceNow: context.state.getTimeIntervalSinceNow()),
@@ -78,6 +94,19 @@ struct MeMateTimerLiveActivity: Widget {
                             .fontWeight(.bold)
                             .foregroundColor(.cyan)
                             .monospacedDigit()
+                        }
+                        
+                        VStack(spacing: 4) {
+                            Text("Job: \(context.state.jobName)")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(1)
+                            
+                            Text("ID: \(context.state.jobId)")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white.opacity(0.7))
                         }
                     }
                     .padding(.vertical, 8)
@@ -93,8 +122,10 @@ struct MeMateTimerLiveActivity: Widget {
                 
             } compactLeading: {
                 // Compact leading - Timer icon
-                Image(systemName: "timer")
-                    .imageScale(.medium)
+                Image("memateIconLockScreen")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 16, height: 16)
                     .foregroundColor(.cyan)
                     .padding(.leading, 4)
                     
@@ -115,8 +146,10 @@ struct MeMateTimerLiveActivity: Widget {
                 
             } minimal: {
                 // Minimal - Just the timer icon
-                Image(systemName: "timer")
-                    .imageScale(.small)
+                Image("memateIconLockScreen")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 12, height: 12)
                     .foregroundColor(.cyan)
             }
             .widgetURL(URL(string: "memate://timer"))
