@@ -4,7 +4,6 @@ import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import UserNotifications
 import BackgroundTasks
-// import PushNotificationIOS // Only needed for advanced push handling
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -32,10 +31,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
       launchOptions: launchOptions
     )
 
-    // ✅ Set UNUserNotificationCenter delegate
     UNUserNotificationCenter.current().delegate = self
 
-    // Register background task
     BGTaskScheduler.shared.register(
       forTaskWithIdentifier: "com.sarswatech.MeMate.MeMateTimer",
       using: nil
@@ -51,10 +48,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
       task.setTaskCompleted(success: false)
     }
 
-    // Schedule next background task
     scheduleBackgroundTask()
 
-    // Your background task logic here
     task.setTaskCompleted(success: true)
   }
 
@@ -70,20 +65,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
   }
 
-  // Prevent Live Activities from being ended when app terminates
+  // 📌 Add this method to support document opening in-place
+  func application(_ app: UIApplication,
+                   open url: URL,
+                   options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    print("Opened document at URL: \(url)")
+    // If you need to handle this URL further, do it here
+    return true
+  }
+
   func applicationWillTerminate(_ application: UIApplication) {
-    // Do NOT end Live Activities here - they should persist after app termination
     print("App terminating - Live Activities will continue running")
   }
 
-  // ✅ Handle notification while app is in foreground
   func userNotificationCenter(_ center: UNUserNotificationCenter,
                               willPresent notification: UNNotification,
                               withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
     completionHandler([.alert, .sound, .badge])
   }
 
-  // ✅ Handle tap on notification
   func userNotificationCenter(_ center: UNUserNotificationCenter,
                               didReceive response: UNNotificationResponse,
                               withCompletionHandler completionHandler: @escaping () -> Void) {

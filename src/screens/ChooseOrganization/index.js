@@ -18,6 +18,8 @@ import { useIsFocused } from '@react-navigation/native';
 import PushNotification from 'react-native-push-notification';
 import { selectJobTimer } from '../../redux/TimerSlice';
 import TimerNotification, { startNotificationTimer, stopNotificationTimer } from '../../services/TimerNotification';
+import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
+import LinearGradient from 'react-native-linear-gradient';
 // import PushNotificationIOS from '@react-native-community/push-notification-ios'
 
 // const {MeMateTimer} = NativeModules
@@ -35,6 +37,7 @@ const ChooseOrganization = ({navigation}) => {
   const [orgData, setOrgData] = useState(null);
   
   const [message,setMessage] = useState(null)
+  const [loading, setLoading] = useState(true);
 
   useEffect(()=>{
     console.log("chat Response ===> ",message)
@@ -102,6 +105,7 @@ const ChooseOrganization = ({navigation}) => {
 
   useEffect(() => {
     if (isFocused) {
+      setLoading(true);
       dispatch(getOrganization());
     }
     
@@ -110,6 +114,7 @@ const ChooseOrganization = ({navigation}) => {
   useEffect(() => {
     console.log('responseOrg ===> ', responseOrg);
     if (responseOrg != null) {
+      setLoading(false);
       setOrgData(responseOrg);
       // dispatch(getOrganizationClear())
     }
@@ -147,7 +152,34 @@ const ChooseOrganization = ({navigation}) => {
       <Text style={[styles.textStyle, {marginBottom: 20}]}>
         Choose Organization
       </Text>
-      {orgData != null &&
+       {loading
+            ? Array.from({length: 3}).map((_, index) => (
+                <ShimmerPlaceholder
+                  key={index}
+                  LinearGradient={LinearGradient}
+                  style={{
+                    height: 120,
+                    width: '90%',
+                    borderRadius: 24,
+                    marginVertical: 10,
+                    marginHorizontal:16,
+                    backgroundColor: appColors.offWhite,
+                  }}
+                  shimmerStyle={{borderRadius: 24}}
+                  shimmerColors={['#f0f0f0', '#e0e0e0', '#f0f0f0']}
+                  location={[0.3, 0.5, 0.7]}
+                  isInteraction={false}
+                  duration={1000}
+                  autoRun
+                  // Diagonal direction
+                  shimmerDirection="diagonal"
+                  LinearGradientProps={{
+                    start: {x: 0, y: 1},
+                    end: {x: 1, y: 0},
+                  }}
+                />
+              ))
+            :orgData != null &&
         orgData.map(item => (
           <OrganizationComponent
             onNextClick={onNextClick}

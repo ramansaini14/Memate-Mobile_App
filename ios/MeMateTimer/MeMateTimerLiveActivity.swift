@@ -42,7 +42,7 @@ struct MeMateTimerLiveActivity: Widget {
                         Date(timeIntervalSinceNow: context.state.getTimeIntervalSinceNow()),
                         style: .timer
                     )
-                    .font(.title)
+                    .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.cyan)
                     .monospacedDigit()
@@ -80,7 +80,7 @@ struct MeMateTimerLiveActivity: Widget {
                             .foregroundColor(.white)
                         
                         HStack {
-                          Image(systemName: "pencil")
+                            Image("memateIconLockScreen")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 28, height: 28)

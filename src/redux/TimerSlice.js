@@ -6,6 +6,9 @@ import { useDispatch } from 'react-redux';
 // Initialize a background timer variable
 let backgroundTimerInterval = null;
 
+/**
+ * @returns <SafeAsyncStorage>
+ */
 // Helper function to safely handle AsyncStorage operations
 const safeAsyncStorage = {
   setItem: async (key, value) => {

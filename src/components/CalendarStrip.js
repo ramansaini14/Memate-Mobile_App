@@ -71,11 +71,24 @@ const CalendarStrip = ({setApprovedJobs, orgId, setPdfFileName}) => {
     setWhiteDot(isWhitDot + 1);
   };
 
+  // useEffect(() => {
+  //   const currentWeek = today.isoWeek();
+  //   console.log('Weeek =====> ', currentWeek);
+  //   setWhiteDot(currentWeek - 2);
+  //   setInitialIndex(currentWeek - 1);
+  // }, []);
+
   useEffect(() => {
     const currentWeek = today.isoWeek();
-    console.log('Weeek =====> ', currentWeek);
-    setWhiteDot(currentWeek - 2);
-    setInitialIndex(currentWeek-1);
+    const initial = currentWeek - 2;
+    setWhiteDot(initial);
+    setInitialIndex(currentWeek - 1);
+  
+    // Scroll on mount
+    // setTimeout(() => {
+    //   const offset = initial * ITEM_WIDTH - Dimensions.get('window').width / 2 + ITEM_WIDTH / 2;
+    //   flatListRef.current?.scrollToOffset({ offset: Math.max(offset, 0), animated: false });
+    // }, 100);
   }, []);
 
   useEffect(() => {
@@ -151,6 +164,18 @@ const CalendarStrip = ({setApprovedJobs, orgId, setPdfFileName}) => {
     );
   };
 
+  useEffect(() => {
+    if (flatListRef.current) {
+      const screenWidth = Dimensions.get('window').width;
+      const offset = isWhitDot * ITEM_WIDTH + screenWidth - ITEM_WIDTH ;
+      console.log("offset ===> ",offset," isWhiteDot ===> ",isWhitDot+ " Item Width ===> ",ITEM_WIDTH, " Screen Witdh ===>")
+      flatListRef.current.scrollToOffset({
+        offset: Math.max(offset, 0),
+        animated: true,
+      });
+    }
+  }, [isWhitDot]);
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -158,20 +183,20 @@ const CalendarStrip = ({setApprovedJobs, orgId, setPdfFileName}) => {
         horizontal
         data={weeks}
         renderItem={renderItem}
-        keyExtractor={item => item}
+        keyExtractor={(_, index) => index.toString()}
         getItemLayout={(_, index) => ({
           length: ITEM_WIDTH,
           offset: ITEM_WIDTH * index,
           index,
         })}
-        initialScrollIndex={initialIndex}
-        // onScroll={handleScroll}
-        // onMomentumScrollEnd={handleScrollEnd}
-        scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
         snapToInterval={ITEM_WIDTH}
-        snapToAlignment="start"
-        decelerationRate="normal"
+        decelerationRate="fast"
+        contentContainerStyle={{
+          paddingHorizontal:
+            Dimensions.get('window').width / 2 - ITEM_WIDTH / 2,
+        }}
       />
       <View style={styles.header}>
         <TouchableOpacity onPress={handlePrevWeek} style={styles.navButton}>

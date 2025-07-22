@@ -667,7 +667,7 @@ const JobsScreen = ({navigation, route}) => {
                       setLoadingMore(true);
                       // fetchJobs(page + 1);
                       const payload = {
-                        url:nextUrl
+                        url:nextUrl.replace('http:', 'https:'),
                       }
                       console.log('payload ===> ', payload);
                       dispatch(getJobs(payload));

@@ -1,6 +1,9 @@
 import {
+  Alert,
+  AppState,
   FlatList,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -43,12 +46,23 @@ import PinkDot from '../../../assets/svg/PinkDot';
 import {hitAllTasks} from '../../../redux/AllTaskSlice';
 import {selectJobTimer} from '../../../redux/TimerSlice';
 import TimerHomePage from '../../../components/TimerHomePage';
-import {setGloballyOrgData, setJobDataGlobally} from '../../../redux/GlobalSlice';
+import {
+  setGloballyOrgData,
+  setJobDataGlobally,
+} from '../../../redux/GlobalSlice';
 import moment from 'moment';
+import TimerManager from '../../../services/TimeManager';
+import RNFS from 'react-native-fs';
+import {ApiBaseUrl} from '../../../utils/Constants';
+import notifee, {AndroidImportance} from '@notifee/react-native';
+import {PermissionsAndroid} from 'react-native';
+import { useLiveActivityTimer } from '../../../hooks/useLiveActivityTimer';
 
 // const { height, width } = Dimensions.get("window");
 
 const HomeScreen = ({navigation, route}) => {
+
+  useLiveActivityTimer();
   const [active, setInActive] = useState(0);
   const [orgId, setOrgId] = useState('');
   const [isResultReport, setIsResultReport] = useState(true);
@@ -79,6 +93,32 @@ const HomeScreen = ({navigation, route}) => {
   const isFocused = useIsFocused();
 
   const [orgVisible, setOrgVisible] = useState(false);
+
+  useEffect(() => {
+    // Initialize timer
+    TimerManager.initialize();
+
+    // Subscribe to timer updates
+    const unsubscribe = TimerManager.addListener(seconds => {
+      setTime(TimerManager.getFormattedTime(seconds));
+    });
+
+    // Add AppState listener (sync no longer needed as Redux handles state)
+    const handleAppStateChange = nextAppState => {
+      console.log('JobCard: App state changed to:', nextAppState);
+      // Redux store handles timer state persistence automatically
+    };
+
+    const appStateSubscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+
+    return () => {
+      unsubscribe();
+      appStateSubscription?.remove();
+    };
+  }, []);
 
   const onClose = () => {
     setOrgVisible(false);
@@ -164,20 +204,18 @@ const HomeScreen = ({navigation, route}) => {
     }
   }, [isFocused, globallyOrgData]);
 
-  useEffect(()=>{
-
-    setTimeout(()=>{
+  useEffect(() => {
+    setTimeout(() => {
       const payload = {
         id: globallyOrgData.id,
         offset: 0,
         status: 'a',
         action_status: '',
       };
-  
+
       dispatch(getJobs(payload));
-    },1500)
- 
-  },[jobData])
+    }, 1500);
+  }, [jobData]);
 
   useEffect(() => {
     // clearToken()
@@ -221,7 +259,8 @@ const HomeScreen = ({navigation, route}) => {
           console.log('Filter Item ===> ', filterItem);
           if (filterItem) {
             if (filterItem.status == 'a') {
-              const cmfLength = responseJobs.summary[4].total-responseJobs.summary[5].total;
+              const cmfLength =
+                responseJobs.summary[4].total - responseJobs.summary[5].total;
               filterItem.count = cmfLength;
             } else {
               filterItem.count = item.total;
@@ -275,15 +314,14 @@ const HomeScreen = ({navigation, route}) => {
       setFilterData(updatedData);
 
       const startedJobs = responseJobs.results.filter(
-        item => (item.action_status === '1')
+        item => item.action_status === '1',
       );
 
       if (startedJobs.length > 0 && jobData == null) {
         console.log('Started Jobs ===>', startedJobs[0]);
-        console.log("setJobDataGlobally called with jobData: ", startedJobs[0]);
+        console.log('setJobDataGlobally called with jobData: ', startedJobs[0]);
         dispatch(setJobDataGlobally(startedJobs[0]));
       }
-
     }
     dispatch(clearJobsData());
   }, [responseJobs]);
@@ -294,6 +332,142 @@ const HomeScreen = ({navigation, route}) => {
       setTasks(responseAllTasks.results);
     }
   }, [responseAllTasks]);
+
+  useEffect(() => {
+    notifee.createChannel({
+      id: 'download',
+      name: 'File Downloads',
+      importance: AndroidImportance.HIGH,
+    });
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (Platform.OS === 'android') {
+      await notifee.requestPermission();
+    }
+  };
+
+  const downloadFileWithNotification = async (pdfUrl, fileName) => {
+    await requestNotificationPermission();
+  
+    const downloadPath =
+      Platform.OS === 'android'
+        ? `${RNFS.DownloadDirectoryPath}/${fileName}`
+        : `${RNFS.DocumentDirectoryPath}/${fileName}`;
+  
+        console.log("download Path ====> ",downloadPath)
+    // Display initial notification
+    const notificationId = await notifee.displayNotification({
+      title: 'Downloading PDF',
+      body: 'Download in progress...',
+      android: {
+        channelId: 'download',
+        progress: {
+          max: 100,
+          current: 0,
+          indeterminate: true,
+        },
+        smallIcon: 'ic_launcher', // Make sure this icon exists in res/drawable
+        importance: AndroidImportance.HIGH,
+      },
+    });
+  
+    // Start Download
+    RNFS.downloadFile({
+      fromUrl: pdfUrl,
+      toFile: downloadPath,
+      progressDivider: 1,
+      progress: async (res) => {
+        const progressPercent = Math.floor(
+          (res.bytesWritten / res.contentLength) * 100,
+        );
+        await notifee.displayNotification({
+          id: notificationId,
+          title: 'Downloading PDF',
+          body: `${progressPercent}% completed`,
+          android: {
+            channelId: 'download',
+            progress: {
+              max: 100,
+              current: progressPercent,
+              indeterminate: false,
+            },
+            smallIcon: 'ic_launcher',
+          },
+        });
+      },
+    })
+      .promise.then(async (res) => {
+        if (res.statusCode === 200) {
+          await notifee.displayNotification({
+            id: notificationId,
+            title: 'Download Complete',
+            body: `File Saved Successfully`,
+            android: {
+              channelId: 'download',
+              smallIcon: 'ic_launcher',
+            },
+          });
+        }
+      })
+      .catch(async (err) => {
+        console.error('Download error:', err.message);
+        await notifee.displayNotification({
+          id: notificationId,
+          title: 'Download Failed',
+          body: err.message,
+          android: {
+            channelId: 'download',
+            smallIcon: 'ic_launcher',
+          },
+        });
+      });
+  };
+
+  // const checkPermission = async () => {
+  //   if (Platform.OS === 'android') {
+  //     const granted = await PermissionsAndroid.request(
+  //       PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+  //       {
+  //         title: 'Storage Permission Required',
+  //         message: 'App needs access to your storage to download files',
+  //       },
+  //     );
+  //     return granted === PermissionsAndroid.RESULTS.GRANTED;
+  //   }
+  //   return true;
+  // };
+
+  // const downloadFile = async (pdfFile, fileNamew) => {
+  //   const pdfUrl = ApiBaseUrl + pdfFile;
+
+  //   console.log("PDF URL ===> ",pdfUrl)
+  //   const fileName = "df6a2073-aea3-4fd5-90ce-8996d50a1158.pdf"
+
+  //   const hasPermission = await checkPermission();
+  //   if (!hasPermission) return;
+
+  //   // const fileName = 'downloaded-file.pdf';
+  //   const path =
+  //     Platform.OS === 'android'
+  //       ? `${RNFS.DownloadDirectoryPath}/${fileName}`
+  //       : `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+  //   RNFS.downloadFile({
+  //     fromUrl: pdfUrl,
+  //     toFile: path,
+  //   })
+  //     .promise.then(res => {
+  //       if (res.statusCode === 200) {
+  //         Alert.alert('Success', `File downloaded to:\n${path}`);
+  //       } else {
+  //         Alert.alert('Error', 'Failed to download file');
+  //       }
+  //     })
+  //     .catch(err => {
+  //       Alert.alert('Download error', err.message);
+  //     });
+  // };
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -848,7 +1022,15 @@ const HomeScreen = ({navigation, route}) => {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.whiteBar}>
+              <TouchableOpacity
+                style={styles.whiteBar}
+                onPress={() =>
+                  downloadFileWithNotification(ApiBaseUrl + reportReadData.invoice.url,`${reportReadData.invoice.number}.pdf` )
+                  // downloadFile(
+                  //   reportReadData.invoice.url,
+                  //   reportReadData.invoice.number,
+                  // )
+                }>
                 <PdfIcon />
                 <View style={{marginHorizontal: 8}}>
                   <Text style={styles.invoiceText}>

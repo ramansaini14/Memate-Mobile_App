@@ -252,28 +252,28 @@ const JobCard = ({navigation, route}) => {
  * Timer UseEffect
  * @returns <unsubscribe()>
  */
-    useEffect(() => {
-        // Initialize timer
-        TimerManager.initialize();
+    // useEffect(() => {
+    //     // Initialize timer
+    //     TimerManager.initialize();
 
-        // Subscribe to timer updates
-        const unsubscribe = TimerManager.addListener((seconds) => {
-            setTime(TimerManager.getFormattedTime(seconds));
-        });
+    //     // Subscribe to timer updates
+    //     const unsubscribe = TimerManager.addListener((seconds) => {
+    //         setTime(TimerManager.getFormattedTime(seconds));
+    //     });
 
-        // Add AppState listener (sync no longer needed as Redux handles state)
-        const handleAppStateChange = (nextAppState) => {
-            console.log('JobCard: App state changed to:', nextAppState);
-            // Redux store handles timer state persistence automatically
-        };
+    //     // Add AppState listener (sync no longer needed as Redux handles state)
+    //     const handleAppStateChange = (nextAppState) => {
+    //         console.log('JobCard: App state changed to:', nextAppState);
+    //         // Redux store handles timer state persistence automatically
+    //     };
 
-        const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    //     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
-        return () => {
-            unsubscribe();
-            appStateSubscription?.remove();
-        };
-    }, []);
+    //     return () => {
+    //         unsubscribe();
+    //         appStateSubscription?.remove();
+    //     };
+    // }, []);
 
   // startTimerWidget function removed - Live Activities are now handled automatically by useLiveActivityTimer hook
 

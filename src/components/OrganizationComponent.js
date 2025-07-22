@@ -15,7 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 const OrganizationComponent = ({onNextClick, itemData, from}) => {
   const [isActive, setIsActive] = useState(true);
 
-  console.log('From ===> ', from);
+  console.log('From ===> ', itemData);
   return (
     // <LinearGradient
     //   colors={['#1AB2FF', '#FFB258']}
@@ -30,7 +30,7 @@ const OrganizationComponent = ({onNextClick, itemData, from}) => {
         <View style={styles.viewStyle}>
           {/* <OrgIcon /> */}
           <Image
-            source={{uri: (itemData.logo).replace('http://', 'https://')}}
+            source={{uri: itemData.logo!=null?(itemData.logo).replace('http://', 'https://'):""}}
             style={{width: 80, height: 36}}
             resizeMode="center"
           />
