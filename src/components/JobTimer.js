@@ -1,15 +1,20 @@
 import React from 'react';
-import { View } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import { useLiveActivityTimer } from '../hooks/useLiveActivityTimer';
-import { startTimer, pauseTimer, resumeTimer, stopTimer } from '../redux/TimerSlice';
+import {View} from 'react-native';
+import {useSelector, useDispatch} from 'react-redux';
+import {useLiveActivityTimer} from '../hooks/useLiveActivityTimer';
+import {
+  startTimer,
+  pauseTimer,
+  resumeTimer,
+  stopTimer,
+} from '../redux/TimerSlice';
 
-const JobTimer = ({ jobId }) => {
+const JobTimer = ({jobId}) => {
   const dispatch = useDispatch();
   const jobTimer = useSelector(state => state.timer.jobs[jobId]);
-  
+
   // This will automatically manage the Live Activity
-  useLiveActivityTimer();
+  Platform.OS == 'ios' && useLiveActivityTimer();
 
   const handleStart = () => {
     dispatch(startTimer(jobId));
@@ -26,7 +31,6 @@ const JobTimer = ({ jobId }) => {
   const handleStop = () => {
     dispatch(stopTimer(jobId));
   };
-
 };
 
-export default JobTimer; 
+export default JobTimer;

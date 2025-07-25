@@ -22,18 +22,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {pauseTimer, stopBackgroundTimer, stopTimer} from '../redux/TimerSlice';
 import {setIsPayused, setJobDataGlobally} from '../redux/GlobalSlice';
 import {clearJobStatus, hitJobPause, hitJobStop} from '../redux/JobStatusSlice';
-import { clearPauseStatus, hitPauseJob } from '../redux/PauseJobSlice';
-import { clearStartStatus } from '../redux/StartJobSlice';
+import {clearPauseStatus, hitPauseJob} from '../redux/PauseJobSlice';
+import {clearStartStatus} from '../redux/StartJobSlice';
 import TimerManager from '../services/TimeManager';
 
-const {MeMateTimer} = NativeModules
+const {MeMateTimer} = NativeModules;
 
 const CenterButtonModal = ({
   visible,
   onClose,
   onStateChange,
   onAvailableClick,
-  orgId
+  orgId,
 }) => {
   const [currentView, setCurrentView] = useState('initial');
   const [animating, setAnimating] = useState(false);
@@ -48,10 +48,10 @@ const CenterButtonModal = ({
   const jobData = useSelector(state => state.globalReducer.jobData);
 
   const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
-    const {errorJobPause, statusJobPause} = useSelector(
-      state => state.jobPauseReducer,
-    );
-    const responseJobPause = useSelector(state => state.jobPauseReducer.data);
+  const {errorJobPause, statusJobPause} = useSelector(
+    state => state.jobPauseReducer,
+  );
+  const responseJobPause = useSelector(state => state.jobPauseReducer.data);
 
   const dispatch = useDispatch();
 
@@ -176,7 +176,7 @@ const CenterButtonModal = ({
     setIsJobStarted(false);
     setIsPaused(false);
     dispatch(setIsPayused(false));
-    
+
     setIsSwipeCompleted(true);
     setShowTracker(false);
 
@@ -216,7 +216,6 @@ const CenterButtonModal = ({
         dispatch(setJobDataGlobally(null));
 
         // MeMateTimer.endTimer()
-
       }, 1500);
 
       // Prepare and send API call
@@ -340,27 +339,26 @@ const CenterButtonModal = ({
       });
   };
 
-    useEffect(() => {
-
-      console.log('statusJobPause ===> ', statusJobPause); 
-      if (responseJobPause != null) {
-        console.log('responseJobPause ===> ', responseJobPause);
-        // dispatch(pauseTimer(jobData?.id));
-        stopBackgroundTimer(dispatch);
-        dispatch(setIsPayused(true));
-        dispatch(clearJobStatus());
-        dispatch(clearStartStatus());
-        dispatch(clearPauseStatus());
-        dispatch(setJobDataGlobally(null));
-        // MeMateTimer.endTimer()
-        TimerManager.stop()
-      } else if (statusJobPause == 400) {
-        Alert.alert(
-          'MeMate',
-          errorJobPause || 'Failed to start job. Please try again.',
-        );
-      }
-    }, [errorJobPause, statusJobPause, responseJobPause]);
+  useEffect(() => {
+    console.log('statusJobPause ===> ', statusJobPause);
+    if (responseJobPause != null) {
+      console.log('responseJobPause ===> ', responseJobPause);
+      // dispatch(pauseTimer(jobData?.id));
+      stopBackgroundTimer(dispatch);
+      dispatch(setIsPayused(true));
+      dispatch(clearJobStatus());
+      dispatch(clearStartStatus());
+      dispatch(clearPauseStatus());
+      dispatch(setJobDataGlobally(null));
+      // MeMateTimer.endTimer()
+      Platform.OS == 'ios' && TimerManager.stop();
+    } else if (statusJobPause == 400) {
+      Alert.alert(
+        'MeMate',
+        errorJobPause || 'Failed to start job. Please try again.',
+      );
+    }
+  }, [errorJobPause, statusJobPause, responseJobPause]);
 
   const renderInitialView = () => (
     <Animated.View
@@ -464,7 +462,7 @@ const CenterButtonModal = ({
           <View>
             <ActivityIndicator color={appColors.white} />
           </View>
-         )} 
+        )}
       </View>
     </Animated.View>
   );
@@ -607,7 +605,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: appColors.white,
-
   },
   jobId: {
     fontSize: 14,

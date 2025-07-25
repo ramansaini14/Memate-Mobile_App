@@ -10,19 +10,19 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { appColors } from '../../utils/appColors';
+import React, {useEffect, useState} from 'react';
+import {appColors} from '../../utils/appColors';
 // import LogoIcon from '../../assets/svg/LogoIcon';
 // import OTPTextView from 'react-native-otp-textinput';
 // import MainLogo from '../../assets/svg/MainLogo';
-import { useDispatch, useSelector } from 'react-redux';
-import { clearCreatePin, hitCreatePin } from '../../redux/CreatePinSlice';
-import { getToken } from '../../utils/Constants';
+import {useDispatch, useSelector} from 'react-redux';
+import {clearCreatePin, hitCreatePin} from '../../redux/CreatePinSlice';
+import {getToken} from '../../utils/Constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OtpInput } from 'react-native-otp-entry';
+import {OtpInput} from 'react-native-otp-entry';
 import * as Keychain from 'react-native-keychain';
 
-const CreatePin = ({ navigation }) => {
+const CreatePin = ({navigation}) => {
   const dispatch = useDispatch();
   const token = getToken();
 
@@ -47,7 +47,6 @@ const CreatePin = ({ navigation }) => {
       setIsLoading(true);
       dispatch(hitCreatePin(payload));
       console.log('Creating pin with payload:', payload);
-
     }
   };
 
@@ -57,7 +56,7 @@ const CreatePin = ({ navigation }) => {
 
   const savePinCreated = async () => {
     await AsyncStorage.setItem('isPinCreate', 'true');
-    navigation.navigate('TermsAndConditions', { from: 'pin', id: 0 });
+    navigation.navigate('TermsAndConditions', {from: 'pin', id: 0});
     dispatch(clearCreatePin());
   };
 
@@ -70,7 +69,10 @@ const CreatePin = ({ navigation }) => {
       showFaceIDAlert();
     } else if (responseStatus === false) {
       setIsLoading(false);
-      Alert.alert('Error', 'Something went wrong, pin not created. Please try again.');
+      Alert.alert(
+        'Error',
+        'Something went wrong, pin not created. Please try again.',
+      );
     }
   }, [responseStatus]);
 
@@ -94,7 +96,7 @@ const CreatePin = ({ navigation }) => {
         accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
         authenticationPrompt: 'Authenticate to register Face ID',
       });
-  
+
       const credentials = await Keychain.getGenericPassword();
       if (credentials) {
         console.log('Face ID registered successfully');
@@ -107,13 +109,12 @@ const CreatePin = ({ navigation }) => {
       throw error;
     }
   };
-  
 
   // const showFaceIDAlert = async () => {
   //   try {
   //     const biometryType = await Keychain.getSupportedBiometryType();
   //     console.log('Biometry Type ===> ', biometryType);
-      
+
   //     if (biometryType) {
   //       Alert.alert(
   //         'Face ID Registration',
@@ -184,11 +185,11 @@ const CreatePin = ({ navigation }) => {
   //     Alert.alert('Error', 'Unable to check Face ID availability.');
   //   }
   // };
-/**
- * 
- * @returns {keychain credentials} <keychain credentials>
- * @handles {Face ID registration for ios and android using faceId or fingerPrint for biometrics authentication}
- */
+  /**
+   *
+   * @returns {keychain credentials} <keychain credentials>
+   * @handles {Face ID registration for ios and android using faceId or fingerPrint for biometrics authentication}
+   */
   const showFaceIDAlert = async () => {
     try {
       const biometryType = await Keychain.getSupportedBiometryType();
@@ -196,12 +197,12 @@ const CreatePin = ({ navigation }) => {
         Alert.alert(
           'Not Available',
           'Face ID/Touch ID is not available on this device.',
-          [{ text: 'OK', onPress: () => savePinCreated() }],
-          { cancelable: false }
+          [{text: 'OK', onPress: () => savePinCreated()}],
+          {cancelable: false},
         );
         return;
       }
-  
+
       const attemptFaceIDRegistration = async () => {
         try {
           const success = await registerFaceID();
@@ -209,20 +210,20 @@ const CreatePin = ({ navigation }) => {
             await AsyncStorage.setItem('faceIdEnabled', 'true');
             Alert.alert(
               'Success',
-              'Face ID has been registered successfully!',
-              [{ text: 'OK', onPress: () => savePinCreated() }],
-              { cancelable: false }
+              'Authentication has been registered successfully!',
+              [{text: 'OK', onPress: () => savePinCreated()}],
+              {cancelable: false},
             );
           }
         } catch (error) {
           Alert.alert(
-            'Face ID Failed',
-            'Face ID could not be recognized. Would you like to try again?',
+            'Authentication Failed',
+            'Authenticator could not be recognized. Would you like to try again?',
             [
               {
                 text: 'Try Again',
                 onPress: () => {
-                  attemptFaceIDRegistration(); 
+                  attemptFaceIDRegistration();
                 },
               },
               {
@@ -231,14 +232,14 @@ const CreatePin = ({ navigation }) => {
                 onPress: () => savePinCreated(),
               },
             ],
-            { cancelable: false }
+            {cancelable: false},
           );
         }
       };
-  
+
       Alert.alert(
-        'Face ID Registration',
-        'Do you want to register Face ID for quick and secure access?',
+        'Authentication Registration',
+        'Do you want to register Face ID/Biometric for quick and secure access?',
         [
           {
             text: 'Disallow',
@@ -250,14 +251,13 @@ const CreatePin = ({ navigation }) => {
             onPress: attemptFaceIDRegistration,
           },
         ],
-        { cancelable: false }
+        {cancelable: false},
       );
     } catch (error) {
       console.log('Error checking biometric availability:', error);
-      Alert.alert('Error', 'Unable to check Face ID availability.');
+      Alert.alert('Error', 'Unable to check Authentication availability.');
     }
   };
-  
 
   /**
    * @access {checkLogin} <Functionality for checking login>
@@ -268,13 +268,15 @@ const CreatePin = ({ navigation }) => {
   // };
 
   /**
-   * Refined views for keyboard functionality 
+   * Refined views for keyboard functionality
    * @satisfies {KeyboardAvoidingView} <Functionality while entering OTP>
    */
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <KeyboardAvoidingView style={{ flex: 1 }} keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}>
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}>
         <SafeAreaView style={styles.containerStyle}>
           <View style={styles.textView}>
             <Text style={styles.headerTextStyle}>Create Pin</Text>
@@ -297,7 +299,7 @@ const CreatePin = ({ navigation }) => {
                 pinCodeContainerStyle: styles.roundedTextInput,
                 focusedPinCodeContainerStyle: styles.roundedTextInput,
                 pinCodeTextStyle: styles.otpTextInput,
-                focusStickStyle: { backgroundColor: appColors.borderLightGrey },
+                focusStickStyle: {backgroundColor: appColors.borderLightGrey},
               }}
             />
 
@@ -310,7 +312,7 @@ const CreatePin = ({ navigation }) => {
                 alignSelf: 'center',
               }}
             />
-            <Text style={[styles.textStyle, { marginTop: 32 }]}>Confirm Pin</Text>
+            <Text style={[styles.textStyle, {marginTop: 32}]}>Confirm Pin</Text>
             <OtpInput
               numberOfDigits={6}
               onTextChange={text => {
@@ -318,8 +320,7 @@ const CreatePin = ({ navigation }) => {
                 if (text.length === 6) {
                   Keyboard.dismiss();
                 }
-              }
-              }
+              }}
               autoFocus={false}
               blurOnFilled={true}
               type="numeric"
@@ -327,7 +328,7 @@ const CreatePin = ({ navigation }) => {
                 pinCodeContainerStyle: styles.roundedTextInput,
                 focusedPinCodeContainerStyle: styles.roundedTextInput,
                 pinCodeTextStyle: styles.otpTextInput,
-                focusStickStyle: { backgroundColor: appColors.borderLightGrey }
+                focusStickStyle: {backgroundColor: appColors.borderLightGrey},
               }}
             />
             <TouchableOpacity
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
     color: appColors.white,
     backgroundColor: appColors.inputBackground,
     borderColor: appColors.borderLightGrey,
-    marginTop: 16
+    marginTop: 16,
   },
   container: {
     justifyContent: 'center',
@@ -444,6 +445,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   otpTextInput: {
-    color: appColors.white
+    color: appColors.white,
   },
 });

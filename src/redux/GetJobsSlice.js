@@ -14,15 +14,18 @@ export const getJobs = createAsyncThunk('getJobs', async payload => {
       },
     };
 
-   
-    const url =payload.url ?payload.url :
-      ApiBaseUrl +
-      jobs +
-      payload.id +
-      (payload.status == '0' ? '' : `/?statuses=${payload.status}`) +(payload.action_status==""?"":`&action_statuses=${payload.action_status}`)+
-      (payload.status == '0'
-        ? `/?limit=10&offset=${payload.offset}`
-        : `&limit=10&offset=${payload.offset}`);
+    const url = payload.url
+      ? payload.url
+      : ApiBaseUrl +
+        jobs +
+        payload.id +
+        (payload.status == '0' ? '' : `/?statuses=${payload.status}`) +
+        (payload.action_status == ''
+          ? ''
+          : `&action_statuses=${payload.action_status}`) +
+        (payload.status == '0'
+          ? `/?limit=10&offset=${payload.offset}`
+          : `&limit=10&offset=${payload.offset}`);
 
     console.log('URL JOBs ====> ', url);
 

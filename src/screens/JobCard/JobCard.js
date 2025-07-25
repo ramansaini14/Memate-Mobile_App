@@ -69,7 +69,7 @@ import {
   hitAttachmentFileUrl,
 } from '../../redux/AttachmentFileUrlSlice';
 import TimerManager from '../../services/TimeManager';
-import { useLiveActivityTimer } from '../../hooks/useLiveActivityTimer';
+import {useLiveActivityTimer} from '../../hooks/useLiveActivityTimer';
 // import {uploadImageToS3} from '../../redux/uploadSlice';
 
 import RNFS from 'react-native-fs';
@@ -78,14 +78,15 @@ import {setIsPayused, setJobDataGlobally} from '../../redux/GlobalSlice';
 import {clearStartStatus, hitStartJob} from '../../redux/StartJobSlice';
 import {clearPauseStatus, hitPauseJob} from '../../redux/PauseJobSlice';
 import ImagePicker from 'react-native-image-crop-picker';
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import {createAsyncThunk} from '@reduxjs/toolkit';
+import {startCallTimer, stopCallTimer} from '../../services/backgroundService';
 
-const {MeMateTimer} = NativeModules
+const {MeMateTimer} = NativeModules;
 
 const JobCard = ({navigation, route}) => {
   // Manage Live Activity based on TimerManager state
-  useLiveActivityTimer();
-  
+  Platform.OS == 'ios' && useLiveActivityTimer();
+
   const [showTracker, setShowTracker] = useState(true);
   const {data} = route.params;
   const [jobData, setJobData] = useState(data);
@@ -104,7 +105,6 @@ const JobCard = ({navigation, route}) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [time, setTime] = useState('00:00:00');
-
 
   // Get global timer state (primarily for the active job)
   const globalTimer = useSelector(state => state.timer.value);
@@ -242,46 +242,45 @@ const JobCard = ({navigation, route}) => {
     };
   }, [jobData.id]);
 
-
   // const startTimerWidget = async()=>{
   //   MeMateTimer.endTimer()
   //   MeMateTimer.startTimer("🔥", timer)
   //   // console.log("memateStartTimer ===> ",memateStartTimer)
   // }
-/**
- * Timer UseEffect
- * @returns <unsubscribe()>
- */
-    // useEffect(() => {
-    //     // Initialize timer
-    //     TimerManager.initialize();
+  /**
+   * Timer UseEffect
+   * @returns <unsubscribe()>
+   */
+  // useEffect(() => {
+  //     // Initialize timer
+  //     TimerManager.initialize();
 
-    //     // Subscribe to timer updates
-    //     const unsubscribe = TimerManager.addListener((seconds) => {
-    //         setTime(TimerManager.getFormattedTime(seconds));
-    //     });
+  //     // Subscribe to timer updates
+  //     const unsubscribe = TimerManager.addListener((seconds) => {
+  //         setTime(TimerManager.getFormattedTime(seconds));
+  //     });
 
-    //     // Add AppState listener (sync no longer needed as Redux handles state)
-    //     const handleAppStateChange = (nextAppState) => {
-    //         console.log('JobCard: App state changed to:', nextAppState);
-    //         // Redux store handles timer state persistence automatically
-    //     };
+  //     // Add AppState listener (sync no longer needed as Redux handles state)
+  //     const handleAppStateChange = (nextAppState) => {
+  //         console.log('JobCard: App state changed to:', nextAppState);
+  //         // Redux store handles timer state persistence automatically
+  //     };
 
-    //     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+  //     const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
 
-    //     return () => {
-    //         unsubscribe();
-    //         appStateSubscription?.remove();
-    //     };
-    // }, []);
+  //     return () => {
+  //         unsubscribe();
+  //         appStateSubscription?.remove();
+  //     };
+  // }, []);
 
   // startTimerWidget function removed - Live Activities are now handled automatically by useLiveActivityTimer hook
 
-  useEffect(()=>{
+  useEffect(() => {
     // startTimerWidget()
-  },[timer])
+  }, [timer]);
 
-    const formatTime = (seconds) => {
+  const formatTime = seconds => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -289,7 +288,6 @@ const JobCard = ({navigation, route}) => {
       .toString()
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
 
   useEffect(() => {
     console.log('statusStartJob ===> ', statusStartJob);
@@ -305,12 +303,12 @@ const JobCard = ({navigation, route}) => {
         action_status: '1',
         action_status_text: 'started',
       };
-      console.log("setJobDataGlobally called in responseJobStart");
+      console.log('setJobDataGlobally called in responseJobStart');
       dispatch(setJobDataGlobally(tempJob)); // Update global job data
-      
+      startCallTimer();
+
       // Live Activities are now handled automatically by useLiveActivityTimer hook
       // No manual timer widget start needed
-      
       setJobData(tempJob); // Update local job data
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());
@@ -323,6 +321,7 @@ const JobCard = ({navigation, route}) => {
   useEffect(() => {
     if (responseJobPause != null) {
       console.log('responseJobPause ===> ', responseJobPause);
+      Platform.OS == 'ios' ? TimerManager.stop() : stopCallTimer();
       dispatch(pauseTimer(jobData.id));
       stopBackgroundTimer(dispatch);
       stopLocationTracking();
@@ -331,9 +330,8 @@ const JobCard = ({navigation, route}) => {
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());
       dispatch(clearPauseStatus());
-      console.log("setJobDataGlobally called in responseJobPause");
+      console.log('setJobDataGlobally called in responseJobPause');
       dispatch(setJobDataGlobally(null));
-      TimerManager.stop()
     } else if (statusJobPause == 400) {
       Alert.alert(
         'MeMate',
@@ -349,7 +347,7 @@ const JobCard = ({navigation, route}) => {
     // Get initial location
     getCurrentLocation();
     dispatch(setIsPayused(false)); // Reset completed state when starting tracking
-    console.log("setJobDataGlobally called in startLocationTracking");
+    console.log('setJobDataGlobally called in startLocationTracking');
     dispatch(setJobDataGlobally(jobData)); // Update global job data
     // MeMateTimer.startTimer("🔥", 0)
 
@@ -357,7 +355,7 @@ const JobCard = ({navigation, route}) => {
     if (!intervalRef.current) {
       intervalRef.current = setInterval(() => {
         getCurrentLocation();
-      }, 60000); // Every 30 
+      }, 60000); // Every 30
     }
   };
 
@@ -379,13 +377,12 @@ const JobCard = ({navigation, route}) => {
       intervalRef.current = null;
       console.log('Location tracking interval cleared');
       dispatch(setIsPayused(true)); // Reset completed state when stopping tracking
-      console.log("setJobDataGlobally null called in stopLocationTracking");
+      console.log('setJobDataGlobally null called in stopLocationTracking');
       dispatch(setJobDataGlobally(null));
       // MeMateTimer.endTimer()
       // TimerManager.stopTimer()
     }
   };
-  
 
   /**
    * Handles the pause action for the job.
@@ -394,6 +391,7 @@ const JobCard = ({navigation, route}) => {
     stopLocationTracking();
     // Update Redux timer state to paused
     dispatch(pauseTimer(jobData.id));
+    setIsPaused(true);
 
     // Prepare and send API call with properly formatted data
     console.log('Making pause API call');
@@ -727,15 +725,14 @@ const JobCard = ({navigation, route}) => {
     'upload/uploadImageToS3',
     async ({localFilePath, presignedUrl}, {rejectWithValue}) => {
       try {
-  
         // Read file as base64 and convert to binary buffer
         const base64 = await RNFS.readFile(localFilePath, 'base64');
         const buffer = Buffer.from(base64, 'base64');
-  
+
         console.log('🟡 Uploading to:', presignedUrl);
         console.log('📄 File path:', localFilePath);
         console.log('➡️ Request Body Length (bytes):', buffer.length);
-  
+
         // Send PUT request using fetch (no Content-Type)
         const response = await fetch(presignedUrl, {
           method: 'PUT',
@@ -744,22 +741,24 @@ const JobCard = ({navigation, route}) => {
             // Do not set 'Content-Type' – presigned URL already defines it
           },
         });
-  
+
         console.log('🟢 Upload status:', response.status);
-  
+
         if (response.ok) {
           console.log('✅ Upload successful!');
           return '✅ Upload successful!';
         } else {
           const errorText = await response.text();
           console.error('❌ Upload failed:', response.status, errorText);
-          return rejectWithValue(`Upload failed with status ${response.status}`);
+          return rejectWithValue(
+            `Upload failed with status ${response.status}`,
+          );
         }
       } catch (error) {
         console.error('❌ Upload error:', error);
         return rejectWithValue(error?.message || 'Unknown error');
       }
-    }
+    },
   );
 
   const handleCopy = () => {
@@ -971,7 +970,7 @@ const JobCard = ({navigation, route}) => {
           orgId: orgId,
           jobId: jobData.id,
           filename: result.assets[0].fileName,
-          type:"before"
+          type: 'before',
         };
         console.log('Payload for attachment file URL:', payload);
         dispatch(hitAttachmentFileUrl(payload));
@@ -1082,15 +1081,16 @@ const JobCard = ({navigation, route}) => {
     }
   };
 
-  const openInMaps = (address) => {
+  const openInMaps = address => {
     const url = Platform.select({
       ios: `http://maps.apple.com/?q=${encodeURIComponent(address)}`,
-      android: `geo:0,0?q=${encodeURIComponent(address)}`
+      android: `geo:0,0?q=${encodeURIComponent(address)}`,
     });
 
-    Linking.openURL(url).catch(err => console.error('Failed to open map:', err));
+    Linking.openURL(url).catch(err =>
+      console.error('Failed to open map:', err),
+    );
   };
-
 
   // useEffect(() => {
   //   console.log("ACTION STATUS ===> ", jobData.action_status);
@@ -1428,25 +1428,29 @@ const JobCard = ({navigation, route}) => {
           }}>
           Job Location:
         </Text>
-        <View style={{flexDirection: 'row', alignItems: 'center',marginHorizontal:16}}>
-        <Text
+        <View
           style={{
-            color: appColors.black,
-            marginTop: 4,
-            width: '80%',
-            fontSize: 14,
-            fontFamily: 'sf_medium',
-            fontWeight: 400,
-            flex:1
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginHorizontal: 16,
           }}>
-          {jobData.address}
-        </Text>
-        <TouchableOpacity onPress={() => openInMaps(jobData.address)} >
-        <MapIcon/>
-        </TouchableOpacity>
-        
+          <Text
+            style={{
+              color: appColors.black,
+              marginTop: 4,
+              width: '80%',
+              fontSize: 14,
+              fontFamily: 'sf_medium',
+              fontWeight: 400,
+              flex: 1,
+            }}>
+            {jobData.address}
+          </Text>
+          <TouchableOpacity onPress={() => openInMaps(jobData.address)}>
+            <MapIcon />
+          </TouchableOpacity>
         </View>
-       
+
         {jobData != null && jobData.attachments.length > 0 && (
           <View style={{flexDirection: 'row'}}>
             <Text style={{color: appColors.placeholderColor, marginLeft: 16}}>

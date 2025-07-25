@@ -65,7 +65,10 @@ const PauseJobSlice = createSlice({
         // state.statusJobPause = action.payload.status
       })
       .addCase(hitPauseJob.fulfilled, (state, action) => {
-        console.log('hitPauseJob  action.payload.status ===> ', action);
+        console.log(
+          'hitPauseJob  action.payload.status ===> ',
+          action.payload.status,
+        );
         state.isLoading = false;
         state.data = action.payload;
         state.statusJobPause = action.payload.status;

@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -29,7 +30,7 @@ import {useIsFocused} from '@react-navigation/native';
 import JobFilterModal from '../../../components/JobFilterModal';
 import moment from 'moment';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import {get} from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 const JobsScreen = ({navigation, route}) => {
   const {isWhiteDot, from} = route.params;
@@ -129,6 +130,7 @@ const JobsScreen = ({navigation, route}) => {
   }, [isWhitDot]);
 
   useEffect(() => {
+    console.log('responseJobs outer===>', responseJobs);
     if (responseJobs != null && responseJobs.status == 'OK') {
       console.log('responseJobs ===>', responseJobs);
       setNextUrl(responseJobs.next);
@@ -145,8 +147,8 @@ const JobsScreen = ({navigation, route}) => {
         );
         if (loadingMore) {
           setJobsData(prevData => [...prevData, ...inProgressData]);
-        }else {
-        setJobsData(inProgressData);
+        } else {
+          setJobsData(inProgressData);
         }
         setLoadingMore(false);
       } else if (filterData[isWhitDot].status == 'a') {
@@ -155,15 +157,15 @@ const JobsScreen = ({navigation, route}) => {
         );
         if (loadingMore) {
           setJobsData(prevData => [...prevData, ...comfiredJobData]);
-        }else {
-        setJobsData(comfiredJobData);
+        } else {
+          setJobsData(comfiredJobData);
         }
         setLoadingMore(false);
       } else {
         if (loadingMore) {
           setJobsData(prevData => [...prevData, ...responseJobs.results]);
-        }else {
-        setJobsData(responseJobs.results);
+        } else {
+          setJobsData(responseJobs.results);
         }
         setLoadingMore(false);
       }
@@ -172,14 +174,15 @@ const JobsScreen = ({navigation, route}) => {
       responseJobs.summary.forEach(item => {
         const statusName = statusMap[item.status];
         const filterItem = updatedData.find(fd => fd.name === statusName);
-          if (filterItem) {
-            if (filterItem.status == 'a') {
-              const cmfLength = responseJobs.summary[4].total-responseJobs.summary[5].total;
-              filterItem.count = cmfLength;
-            } else {
-              filterItem.count = item.total;
-            }
+        if (filterItem) {
+          if (filterItem.status == 'a') {
+            const cmfLength =
+              responseJobs.summary[4].total - responseJobs.summary[5].total;
+            filterItem.count = cmfLength;
+          } else {
+            filterItem.count = item.total;
           }
+        }
       });
 
       const totalJobs = responseJobs.summary
@@ -276,91 +279,91 @@ const JobsScreen = ({navigation, route}) => {
       </View>
       <Text style={styles.headStyle}>Jobs</Text>
       <View>
-      <FlatList
-        ref={flatListRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={filterData}
-        keyExtractor={item => item.id}
-        renderItem={({item, index}) => (
-          <TouchableOpacity
-            onPress={() => setWhiteDot(index)}
-            style={{
-              width: 136,
-              height: 106,
-              justifyContent: 'center',
-              marginLeft: 4,
-            }}>
-            <LinearGradient
-              colors={
-                isWhitDot == index
-                  ? ['#1AB2FF', '#FFB258']
-                  : [appColors.white, appColors.white]
-              } // Define gradient colors
-              start={{x: 0, y: 0}} // Top-left corner
-              end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
+        <FlatList
+          ref={flatListRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={filterData}
+          keyExtractor={item => item.id}
+          renderItem={({item, index}) => (
+            <TouchableOpacity
+              onPress={() => setWhiteDot(index)}
               style={{
-                flex: 1,
-                borderRadius: 25,
-                // paddingHorizontal: 16,
-                // paddingVertical: 16,
-                borderWidth: 1,
-                borderColor: appColors.lightGrey,
-                // justifyContent: 'center',
+                width: 136,
+                height: 106,
+                justifyContent: 'center',
+                marginLeft: 4,
               }}>
-              <View style={{flexDirection: 'row'}}>
+              <LinearGradient
+                colors={
+                  isWhitDot == index
+                    ? ['#1AB2FF', '#FFB258']
+                    : [appColors.white, appColors.white]
+                } // Define gradient colors
+                start={{x: 0, y: 0}} // Top-left corner
+                end={{x: 1, y: 1}} // Bottom-right corner (Diagonal direction)
+                style={{
+                  flex: 1,
+                  borderRadius: 25,
+                  // paddingHorizontal: 16,
+                  // paddingVertical: 16,
+                  borderWidth: 1,
+                  borderColor: appColors.lightGrey,
+                  // justifyContent: 'center',
+                }}>
+                <View style={{flexDirection: 'row'}}>
+                  <Text
+                    style={{
+                      color:
+                        isWhitDot == index ? appColors.white : appColors.black,
+                      paddingRight: 10,
+                      fontSize: 24,
+                      fontWeight: '500',
+                      paddingLeft: 10,
+                      paddingTop: 16,
+                    }}>
+                    {item.count}
+                  </Text>
+                  {isWhitDot == index ? (
+                    <View
+                      style={{
+                        flex: 1,
+                        alignItems: 'flex-end',
+                        padding: 16,
+                      }}>
+                      <WhiteDot height={6} width={6} />
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        flex: 1,
+                        alignItems: 'flex-end',
+                        padding: 16,
+                      }}>
+                      <PinkDot height={6} width={6} />
+                    </View>
+                  )}
+                </View>
+
                 <Text
                   style={{
+                    fontSize: 14,
+                    marginTop: 7,
+                    fontFamily: 'sf-pro-text-semibold',
+                    fontWeight: 600,
+
                     color:
                       isWhitDot == index ? appColors.white : appColors.black,
-                    paddingRight: 10,
-                    fontSize: 24,
-                    fontWeight: '500',
-                    paddingLeft: 10,
-                    paddingTop: 16,
+                    // width: "70%"
+                    paddingHorizontal: 8,
                   }}>
-                  {item.count}
+                  {item.name}
                 </Text>
-                {isWhitDot == index ? (
-                  <View
-                    style={{
-                      flex: 1,
-                      alignItems: 'flex-end',
-                      padding: 16,
-                    }}>
-                    <WhiteDot height={6} width={6} />
-                  </View>
-                ) : (
-                  <View
-                    style={{
-                      flex: 1,
-                      alignItems: 'flex-end',
-                      padding: 16,
-                    }}>
-                    <PinkDot height={6} width={6} />
-                  </View>
-                )}
-              </View>
-
-              <Text
-                style={{
-                  fontSize: 14,
-                  marginTop: 7,
-                  fontFamily: 'sf-pro-text-semibold',
-                  fontWeight: 600,
-
-                  color: isWhitDot == index ? appColors.white : appColors.black,
-                  // width: "70%"
-                  paddingHorizontal: 8,
-                }}>
-                {item.name}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      />
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+        />
       </View>
-     
 
       <View style={{flex: 1}}>
         <View
@@ -376,7 +379,7 @@ const JobsScreen = ({navigation, route}) => {
               fontWeight: '600',
               color: appColors.black,
               marginLeft: 16,
-              paddingBottom:8,
+              paddingBottom: 8,
               fontFamily: 'sf-pro-text-semibold',
             }}>
             {filterData[isWhitDot == -1 ? 0 : isWhitDot].name}
@@ -414,7 +417,7 @@ const JobsScreen = ({navigation, route}) => {
               ))
             : jobsData != null && (
                 <FlatList
-                showsVerticalScrollIndicator={false}
+                  showsVerticalScrollIndicator={false}
                   data={jobsData}
                   keyExtractor={(item, index) =>
                     item.id?.toString() ?? index.toString()
@@ -667,15 +670,21 @@ const JobsScreen = ({navigation, route}) => {
                       setLoadingMore(true);
                       // fetchJobs(page + 1);
                       const payload = {
-                        url:nextUrl.replace('http:', 'https:'),
-                      }
+                        url: nextUrl.replace('http:', 'https:'),
+                      };
                       console.log('payload ===> ', payload);
                       dispatch(getJobs(payload));
                     }
                   }}
                   onEndReachedThreshold={0.5}
                   ListFooterComponent={() =>
-                    loadingMore ? <ActivityIndicator size="small" color={appColors.primary} style={{marginVertical: 16}} /> : null
+                    loadingMore ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={appColors.primary}
+                        style={{marginVertical: 16}}
+                      />
+                    ) : null
                   }
                 />
               )}
@@ -700,6 +709,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: appColors.white,
     padding: 16,
+    paddingBottom: Platform.OS == 'android' ? 40 : 8,
   },
   headerStyle: {
     flexDirection: 'row',

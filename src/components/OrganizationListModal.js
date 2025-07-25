@@ -30,7 +30,7 @@ const OrganizationListModal = ({
   selectedOrg,
   setOrgVisible,
 }) => {
-  const [isActive, setIsActive] = useState(true)
+  const [isActive, setIsActive] = useState(true);
   return (
     <Modal
       visible={visible}
@@ -54,7 +54,9 @@ const OrganizationListModal = ({
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setOrgVisible(false)}>
                   <Image
-                    source={{uri: (selectedOrg.logo).replace('http://', 'https://')}}
+                    source={{
+                      uri: selectedOrg.logo.replace('http://', 'https://'),
+                    }}
                     style={{width: 80, height: 40}}
                   />
                 </TouchableOpacity>
@@ -95,14 +97,15 @@ const OrganizationListModal = ({
             <FlatList
               data={organizations}
               keyExtractor={item => item.id.toString()}
-              renderItem={({item}) => (
-                item.id!=selectedOrg?.id &&
-                <OrganizationComponent
-                  itemData={item}
-                  onNextClick={onItemSelect}
-                  from={0}
-                />
-              )}
+              renderItem={({item}) =>
+                item.id != selectedOrg?.id && (
+                  <OrganizationComponent
+                    itemData={item}
+                    onNextClick={onItemSelect}
+                    from={0}
+                  />
+                )
+              }
             />
           </View>
           {/* <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -117,7 +120,7 @@ const OrganizationListModal = ({
             borderRadius: 20,
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop:16
+            marginTop: 16,
           }}
           onPress={onClose}>
           {/* <Text style={{color: appColors.black, fontSize: 20}}></Text> */}

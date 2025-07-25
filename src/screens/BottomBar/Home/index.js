@@ -56,13 +56,12 @@ import RNFS from 'react-native-fs';
 import {ApiBaseUrl} from '../../../utils/Constants';
 import notifee, {AndroidImportance} from '@notifee/react-native';
 import {PermissionsAndroid} from 'react-native';
-import { useLiveActivityTimer } from '../../../hooks/useLiveActivityTimer';
+import {useLiveActivityTimer} from '../../../hooks/useLiveActivityTimer';
 
 // const { height, width } = Dimensions.get("window");
 
 const HomeScreen = ({navigation, route}) => {
-
-  useLiveActivityTimer();
+  Platform.OS == 'ios' && useLiveActivityTimer();
   const [active, setInActive] = useState(0);
   const [orgId, setOrgId] = useState('');
   const [isResultReport, setIsResultReport] = useState(true);
@@ -198,7 +197,6 @@ const HomeScreen = ({navigation, route}) => {
 
   useEffect(() => {
     if (isFocused && globallyOrgData != null) {
-      setOrgId(globallyOrgData.id);
       dispatch(getOrganization());
       getReportData();
     }
@@ -323,7 +321,7 @@ const HomeScreen = ({navigation, route}) => {
         dispatch(setJobDataGlobally(startedJobs[0]));
       }
     }
-    dispatch(clearJobsData());
+    // dispatch(clearJobsData());
   }, [responseJobs]);
 
   useEffect(() => {
@@ -349,13 +347,13 @@ const HomeScreen = ({navigation, route}) => {
 
   const downloadFileWithNotification = async (pdfUrl, fileName) => {
     await requestNotificationPermission();
-  
+
     const downloadPath =
       Platform.OS === 'android'
         ? `${RNFS.DownloadDirectoryPath}/${fileName}`
         : `${RNFS.DocumentDirectoryPath}/${fileName}`;
-  
-        console.log("download Path ====> ",downloadPath)
+
+    console.log('download Path ====> ', downloadPath);
     // Display initial notification
     const notificationId = await notifee.displayNotification({
       title: 'Downloading PDF',
@@ -371,13 +369,13 @@ const HomeScreen = ({navigation, route}) => {
         importance: AndroidImportance.HIGH,
       },
     });
-  
+
     // Start Download
     RNFS.downloadFile({
       fromUrl: pdfUrl,
       toFile: downloadPath,
       progressDivider: 1,
-      progress: async (res) => {
+      progress: async res => {
         const progressPercent = Math.floor(
           (res.bytesWritten / res.contentLength) * 100,
         );
@@ -397,7 +395,7 @@ const HomeScreen = ({navigation, route}) => {
         });
       },
     })
-      .promise.then(async (res) => {
+      .promise.then(async res => {
         if (res.statusCode === 200) {
           await notifee.displayNotification({
             id: notificationId,
@@ -410,7 +408,7 @@ const HomeScreen = ({navigation, route}) => {
           });
         }
       })
-      .catch(async (err) => {
+      .catch(async err => {
         console.error('Download error:', err.message);
         await notifee.displayNotification({
           id: notificationId,
@@ -1024,8 +1022,12 @@ const HomeScreen = ({navigation, route}) => {
 
               <TouchableOpacity
                 style={styles.whiteBar}
-                onPress={() =>
-                  downloadFileWithNotification(ApiBaseUrl + reportReadData.invoice.url,`${reportReadData.invoice.number}.pdf` )
+                onPress={
+                  () =>
+                    downloadFileWithNotification(
+                      ApiBaseUrl + reportReadData.invoice.url,
+                      `${reportReadData.invoice.number}.pdf`,
+                    )
                   // downloadFile(
                   //   reportReadData.invoice.url,
                   //   reportReadData.invoice.number,
