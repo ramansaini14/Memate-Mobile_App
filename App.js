@@ -13,12 +13,11 @@ import TimerManager from './src/services/TimeManager';
 
 import firebase from '@react-native-firebase/app';
 
-import { Platform } from 'react-native';
+import {Platform} from 'react-native';
 // import PushNotification from 'react-native-push-notification';
 // import PushNotificationIOS from '@react-native-community/push-notification-ios';
-import { registerPushNotifications } from './src/services/notificationService'
-
-
+import {registerPushNotifications} from './src/services/notificationService';
+import {requestNotificationPermission} from './src/utils/Constants';
 
 // import crashlytics from '@react-native-firebase/crashlytics';
 
@@ -66,22 +65,23 @@ const AppWithTimer = () => {
 const App = () => {
   useEffect(() => {
     registerPushNotifications();
+    requestNotificationPermission();
   }, []);
   useEffect(() => {
     const firebaseConfig = {
-      apiKey: "AIzaSyDcDAFxoXTqd3GNdzWJgSCcA_0KtuVNo-s",
-      projectId: "memate-9f816",
-      appId: Platform.OS === 'ios'
-        ? "1:791398132012:ios:506472af656feaae6e6489"
-        : "1:791398132012:android:c594b2acb96923636e6489",
+      apiKey: 'AIzaSyDcDAFxoXTqd3GNdzWJgSCcA_0KtuVNo-s',
+      projectId: 'memate-9f816',
+      appId:
+        Platform.OS === 'ios'
+          ? '1:791398132012:ios:506472af656feaae6e6489'
+          : '1:791398132012:android:c594b2acb96923636e6489',
     };
-    
+
     console.log('Initializing Firebase...');
 
-      firebase.initializeApp(firebaseConfig);
-      console.log('Firebase initialized');
+    firebase.initializeApp(firebaseConfig);
+    console.log('Firebase initialized');
   }, []);
-  
 
   return (
     <Provider store={store}>

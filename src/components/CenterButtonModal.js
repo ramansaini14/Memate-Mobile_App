@@ -25,6 +25,7 @@ import {clearJobStatus, hitJobPause, hitJobStop} from '../redux/JobStatusSlice';
 import {clearPauseStatus, hitPauseJob} from '../redux/PauseJobSlice';
 import {clearStartStatus} from '../redux/StartJobSlice';
 import TimerManager from '../services/TimeManager';
+import {stopCallTimer} from '../services/backgroundService';
 
 const {MeMateTimer} = NativeModules;
 
@@ -345,6 +346,7 @@ const CenterButtonModal = ({
       console.log('responseJobPause ===> ', responseJobPause);
       // dispatch(pauseTimer(jobData?.id));
       stopBackgroundTimer(dispatch);
+      stopCallTimer();
       dispatch(setIsPayused(true));
       dispatch(clearJobStatus());
       dispatch(clearStartStatus());

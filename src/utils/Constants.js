@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {PermissionsAndroid, Platform} from 'react-native';
 
 //BASE URL
 export const ApiBaseUrl = 'https://dev.memate.com.au/';
@@ -68,4 +69,14 @@ export const formatDate = dateString => {
     month: 'short',
     year: 'numeric',
   });
+};
+
+export const requestNotificationPermission = async () => {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  }
+  return true;
 };

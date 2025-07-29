@@ -3,7 +3,7 @@ import PushNotification from 'react-native-push-notification';
 
 const sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
-// Create channel once
+// Create notification channel once
 PushNotification.createChannel(
   {
     channelId: 'call-timer',
@@ -13,13 +13,23 @@ PushNotification.createChannel(
   created => console.log(`Channel created: ${created}`),
 );
 
-// Update single call-like timer notification
+// Utility: Format seconds to hh:mm:ss
+const formatTime = seconds => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(
+    s,
+  ).padStart(2, '0')}`;
+};
+
+// Update single notification like WhatsApp call timer
 const updateCallTimerNotification = formattedTime => {
   PushNotification.localNotification({
-    id: 101, // keep it fixed!
+    id: '101', // constant ID for single-notification updates
     channelId: 'call-timer',
     title: 'Ongoing Call',
-    message: formattedTime, // shows like WhatsApp's "00:01:03"
+    message: formattedTime,
     smallIcon: 'ic_launcher',
     playSound: false,
     importance: 'high',
@@ -31,58 +41,90 @@ const updateCallTimerNotification = formattedTime => {
   });
 };
 
-// Background task with formatted timer
-const callTimerTask = async ({delay}) => {
-  let count = 0;
+// Background task
+// const callTimerTask = async taskData => {
+//   const {delay, startTimer = 0} = taskData;
+//   let count = startTimer;
+
+//   while (BackgroundService.isRunning()) {
+//     const formatted = formatTime(count);
+//     // updateCallTimerNotification(formatted);
+//     console.log('Timer:', formatted);
+//     await BackgroundService.updateNotification({
+//       taskDesc: formatted,
+//     });
+
+//     count++;
+//     await sleep(delay);
+//   }
+// };
+
+const callTimerTask = async taskData => {
+  const {delay = 1000, startTimer = 0} = taskData;
+  let startTime = Date.now() - startTimer * 1000;
 
   while (BackgroundService.isRunning()) {
-    const h = Math.floor(count / 3600);
-    const m = Math.floor((count % 3600) / 60);
-    const s = count % 60;
+    const now = Date.now();
+    const elapsedSeconds = Math.floor((now - startTime) / 1000);
+    const formatted = formatTime(elapsedSeconds);
 
-    const formatted = `${String(h).padStart(2, '0')}:${String(m).padStart(
-      2,
-      '0',
-    )}:${String(s).padStart(2, '0')}`;
-    updateCallTimerNotification(formatted);
-    console.log('Timer:', formatted);
+    try {
+      await BackgroundService.updateNotification({
+        taskDesc: formatted,
+      });
 
-    count++;
+      // (Optional) Show a persistent Android notification
+      // updateCallTimerNotification(formatted);
+    } catch (err) {
+      console.warn('Failed to update notification:', err);
+    }
+
     await sleep(delay);
   }
 };
 
-// Service options
-const options = {
+// Background service options (static part)
+const baseOptions = {
   taskName: 'MeMate Timer',
-  taskTitle: 'Timer in progress', // only set once
-  taskDesc: 'Job Timer running', // not updatable
+  taskTitle: 'Job in progress', // set only once
+  taskDesc: 'Running Job timer...', // not dynamic
   taskIcon: {
-    name: 'ic_launcher',
-    type: 'mipmap',
+    name: 'ic_stat_playstore_removebg_preview', // no file extension
+    type: 'drawable', // must be drawable, NOT mipmap
   },
-  linkingURI: 'yourapp://call', // optional
-  parameters: {
-    delay: 1000,
-  },
+  color: '#000000',
+  linkingURI: 'memate://home', // optional
 };
 
-// Export control functions
-export const startCallTimer = async () => {
-  const running = await BackgroundService.isRunning();
-  if (!running) {
+// Start timer from custom start time
+export const startCallTimer = async (startTimer = 0) => {
+  const isRunning = await BackgroundService.isRunning();
+  if (!isRunning) {
+    const options = {
+      ...baseOptions,
+      parameters: {
+        delay: 1000,
+        startTimer: startTimer,
+      },
+    };
+
     await BackgroundService.start(callTimerTask, options);
   }
 };
 
+// Stop timer
 export const stopCallTimer = async () => {
-  const running = await BackgroundService.isRunning();
-  if (running) {
-    await BackgroundService.stop();
+  const isRunning = await BackgroundService.isRunning();
+  console.log('Stopping call timer, isRunning:', isRunning);
+  if (isRunning) {
+    try {
+      await BackgroundService.stop();
+      console.log('Background service stopped.');
+    } catch (err) {
+      console.warn('Failed to stop service:', err);
+    }
   }
 
-  // Cancel the notification
-  PushNotification.cancelLocalNotifications({id: '101'});
-  // For Android 13+, you may want to also use:
-  PushNotification.cancelAllLocalNotifications(); // Optional
+  // Cancel notification
+  // PushNotification.cancelLocalNotifications({id: '101'});
 };

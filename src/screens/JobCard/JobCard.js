@@ -305,7 +305,7 @@ const JobCard = ({navigation, route}) => {
       };
       console.log('setJobDataGlobally called in responseJobStart');
       dispatch(setJobDataGlobally(tempJob)); // Update global job data
-      startCallTimer();
+      startCallTimer(timer);
 
       // Live Activities are now handled automatically by useLiveActivityTimer hook
       // No manual timer widget start needed
@@ -321,7 +321,11 @@ const JobCard = ({navigation, route}) => {
   useEffect(() => {
     if (responseJobPause != null) {
       console.log('responseJobPause ===> ', responseJobPause);
-      Platform.OS == 'ios' ? TimerManager.stop() : stopCallTimer();
+      if (Platform.OS == 'ios') {
+        TimerManager.stop();
+      } else {
+        stopCallTimer();
+      }
       dispatch(pauseTimer(jobData.id));
       stopBackgroundTimer(dispatch);
       stopLocationTracking();
@@ -392,6 +396,7 @@ const JobCard = ({navigation, route}) => {
     // Update Redux timer state to paused
     dispatch(pauseTimer(jobData.id));
     setIsPaused(true);
+    stopCallTimer();
 
     // Prepare and send API call with properly formatted data
     console.log('Making pause API call');
