@@ -36,12 +36,14 @@ const Chat = ({navigation}) => {
   const [orgData, setOrgData] = useState(null);
   const [name, setName] = useState('');
   const [chatGroups, setChatGroups] = useState('');
+  const [createChatGroup, setCreateChatGroup] = useState(null);
+  const [selectUser, setSelectUser] = useState(null);
 
   const isFocused = useIsFocused();
 
-  useEffect(() => {
-    console.log('Chat Groups ===> ', chatGroups);
-  }, [chatGroups]);
+  // useEffect(() => {
+  //   console.log('Chat Groups ===> ', chatGroups);
+  // }, [chatGroups]);
 
   useEffect(() => {
     if (isFocused) {
@@ -82,9 +84,25 @@ const Chat = ({navigation}) => {
       task_id: '',
     };
     console.log('Payload ===> ', payload);
-    emitSocketWithoutCallback('create_chat_group', payload);
+    emitSocket('create_chat_group', payload, setCreateChatGroup);
+    setSelectUser(item);
+    // emitSocketWithoutCallback('create_chat_group', payload);
     setVisibleModal(false);
   };
+
+  useEffect(() => {
+    console.log('CreateChatGroup ===> ', createChatGroup);
+    if (createChatGroup != null && createChatGroup.status === 'success') {
+      navigation.navigate('MainChatRoom', {
+        userId: globallyOrgData.appuser_id,
+        groupId: createChatGroup.chat_group_id,
+        name: selectUser?.first_name + ' ' + selectUser?.last_name,
+        image: selectUser?.avatar,
+        isGroup: false,
+      });
+      setCreateChatGroup(null);
+    }
+  }, [createChatGroup]);
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -150,7 +168,13 @@ const Chat = ({navigation}) => {
                     key={item.id}
                     style={styles.chatCard}
                     onPress={() =>
-                      navigation.navigate('MainChatRoom', {data: item})
+                      navigation.navigate('MainChatRoom', {
+                        userId: globallyOrgData.appuser_id,
+                        groupId: item.last_message.chat_group,
+                        name: item.full_name,
+                        image: item?.avatar,
+                        isGroup: false,
+                      })
                     }>
                     {item.avatar ? (
                       <Image
@@ -177,7 +201,7 @@ const Chat = ({navigation}) => {
                           fontSize: 12,
                           color: appColors.placeholderColor,
                         }}>
-                        Position
+                        {item.role}
                       </Text>
                       <Text style={{fontSize: 13, color: appColors.homeBlack}}>
                         {item.last_message.message}
@@ -185,19 +209,23 @@ const Chat = ({navigation}) => {
                     </View>
                     <View style={{flexDirection: 'column'}}>
                       <Text style={{fontSize: 10}}>09 APR</Text>
-                      <View
-                        style={{
-                          height: 24,
-                          width: 24,
-                          borderRadius: 12,
-                          backgroundColor: appColors.yellow,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          alignSelf: 'flex-end',
-                          marginTop: 8,
-                        }}>
-                        <Text style={{fontSize: 10}}>2</Text>
-                      </View>
+                      {item.unread_count > 0 && (
+                        <View
+                          style={{
+                            height: 24,
+                            width: 24,
+                            borderRadius: 12,
+                            backgroundColor: appColors.yellow,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            alignSelf: 'flex-end',
+                            marginTop: 8,
+                          }}>
+                          <Text style={{fontSize: 10}}>
+                            {item.unread_count}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </TouchableOpacity>
                 )

@@ -28,11 +28,11 @@ export const disconnectSocket = () => {
   }
 };
 
-export const emitSocket = (event, data,callback) => {
+export const emitSocket = (event, data, callback) => {
   console.log('event ===> ', event, '  socket ====> ', socket);
   if (socket) {
     socket.emit(event, data, response => {
-      callback(response)
+      callback(response);
       console.log('Response Chat', response); // ok
     });
   }
@@ -48,27 +48,23 @@ export const emitSocketWithAck = (eventName, data) => {
   if (socket) {
     return new Promise((resolve, reject) => {
       // emit with ack callback
-      this.socket.timeout(5000).emit(
-        'register_user',
-        data,
-        (err, response) => {
-          if (err) {
-            // e.g. timeout
-            return reject(new Error('register_user timed out'));
-          }
-          if (response.status === 'success') {
-            resolve(response);
-          } else {
-            reject(new Error(response.message || 'register_user error'));
-          }
+      this.socket.timeout(5000).emit('register_user', data, (err, response) => {
+        if (err) {
+          // e.g. timeout
+          return reject(new Error('register_user timed out'));
         }
-      );
+        if (response.status === 'success') {
+          resolve(response);
+        } else {
+          reject(new Error(response.message || 'register_user error'));
+        }
+      });
     });
   }
 };
 
 export const onSocket = (event, callback) => {
-  console.log("Event ===> ",event)
+  console.log('Event ===> ', event);
   if (socket) {
     socket.on(event, callback);
   }

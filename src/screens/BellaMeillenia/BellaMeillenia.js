@@ -9,8 +9,9 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   TouchableOpacity,
+  Image,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {appColors} from '../../utils/appColors';
 import WhiteBackIcon from '../../assets/svg/WhiteBackIcon';
 import DoubleTick from '../../assets/svg/DoubleTick';
@@ -19,67 +20,141 @@ import ChatGirl from '../../assets/svg/ChatGirl';
 import AddCircle from '../../assets/svg/AddCircle';
 import SendIcon from '../../assets/svg/SendIcon';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {emitSocket, getSocket, onSocket} from '../../socketService';
 
-const ChatBubble = ({item}) => {
+const ChatBubble = ({item, userId}) => {
   return (
-    <View style={[item?.isSender ? styles.sender : styles.receiver]}>
-      <Text
-        style={item?.isSender ? styles.receiverMessage : styles.senderMessage}>
-        {item?.text}
-      </Text>
+    <View>
+      <View style={[item?.sender == userId ? styles.sender : styles.receiver]}>
+        <Text
+          style={
+            item?.sender == userId
+              ? styles.receiverMessage
+              : styles.senderMessage
+          }>
+          {item?.message}
+        </Text>
+      </View>
       <View style={styles.metaData}>
-        <View
-          style={{marginTop: 10, flexDirection: 'row', alignItems: 'stretch'}}>
-          {item?.isSender && (
+        {item?.sender == userId && (
+          <View style={{flexDirection: 'row', alignItems: 'stretch'}}>
             <View style={{marginTop: 2}}>
-              {item?.seen ? (
+              {item?.read_by?.length > 1 ? (
                 <DoubleTick width={18} height={18} />
+              ) : item?.delivered_to?.length > 1 ? (
+                <DoubleTick width={18} height={18} fill={'#75808A'} />
               ) : (
                 <SingleTick width={18} height={18} />
               )}
             </View>
-          )}
-          <Text style={styles.timestamp}>{item?.timestamp}</Text>
-        </View>
+
+            <Text style={styles.timestamp}>11:00</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
+const ChatBubbleGroup = ({item, userId}) => {
+  return (
+    <View>
+      <View style={[item?.sender == userId ? styles.sender : styles.receiver]}>
+        <Text
+          style={
+            item?.sender == userId
+              ? styles.receiverMessage
+              : styles.senderMessage
+          }>
+          {item?.message}
+        </Text>
+      </View>
+      <View style={styles.metaData}>
+        {item?.sender == userId && (
+          <View style={{flexDirection: 'row', alignItems: 'stretch'}}>
+            {/* {item?.isSender && (
+            <View style={{marginTop: 2}}>
+              {item?.seen ? ( */}
+            <DoubleTick width={18} height={18} />
+            {/* ) : (
+                <SingleTick width={18} height={18} />
+              )}
+            </View>
+          )} */}
+            <Text style={styles.timestamp}>11:00</Text>
+          </View>
+        )}
       </View>
     </View>
   );
 };
 
-const MainChatRoom = ({navigation}) => {
+const MainChatRoom = ({navigation, route}) => {
+  const {userId, groupId, name, image, isGroup} = route.params;
+
+  const flatListRef = useRef();
+
+  const [chatResponse, setChatResponse] = useState(null);
   const [message, setMessage] = useState('');
-  ``;
-  const messages = [
-    {
-      id: '1',
-      text: "I'm great, thanks for asking. I wanted to touch base with you about the project deadline. Are you on track to complete your tasks by the end of the week?",
-      isSender: false,
-      timestamp: '18:46',
-    },
-    {
-      id: '2',
-      text: "I'm great, thanks for asking. I wanted to touch base with you about the project deadline. Are you on track to complete your tasks by the end of the week?",
-      isSender: true,
-      timestamp: '18:51',
-      seen: true,
-    },
-    {id: '3', text: 'ok', isSender: false, timestamp: '18:52'},
-    {
-      id: '4',
-      text: 'Are you on track to complete your tasks.',
-      isSender: true,
-      timestamp: '18:53',
-      seen: true,
-    },
-    {id: '5', text: 'yes!', isSender: false, timestamp: '18:55'},
-    {
-      id: '6',
-      text: 'great, keep it up!',
-      isSender: true,
-      timestamp: '18:59',
-      seen: false,
-    },
-  ];
+
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const payload = {
+      user_id: userId,
+      group_id: groupId,
+    };
+    console.log('Payload ===> ', payload);
+    emitSocket('get_group_messages', payload, setChatResponse);
+
+    onSocket('new_message', response => {
+      console.log('new_message ===> ', response);
+
+      if (response.group_id === groupId) {
+        setMessages(prevData => [response, ...prevData]);
+        emitSocketWithoutCallback('message_read', {
+          message_id: response.id,
+          user_id: userId,
+        });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log('Messages ===> ', messages);
+    if (chatResponse !== null && chatResponse.status === 'success') {
+      setMessages(chatResponse.messages);
+    }
+  }, [chatResponse]);
+
+  // useEffect(() => {
+  //   // Scroll to bottom whenever messages change
+  //   if (messages.length > 0) {
+  //     flatListRef.current.scrollToEnd({animated: false});
+  //   }
+  // }, [messages]);
+
+  const onSendMessage = () => {
+    if (message.trim() === '') {
+      // Check if the message is not empty
+      return;
+    }
+
+    const payload = {
+      user_id: userId, // your OrganizationUser.id
+      chat_group_id: groupId, // the group you’re chatting in
+      message: message, // your message text
+      reply_to_id: null, // or the ID of the message you’re replying to
+      file_url: null, // or a presigned-upload URL
+      file_type: null, // e.g. "image/png"
+    };
+
+    emitSocket('send_message', payload, response => {
+      console.log('Message sent successfully:', response);
+      setMessages(prevData => [response.sent_message, ...prevData]);
+    });
+
+    setMessage(''); // Clear the input field after sending
+  };
 
   return (
     <SafeAreaView style={styles.containerStyle}>
@@ -89,44 +164,53 @@ const MainChatRoom = ({navigation}) => {
         </View>
         <View style={{justifyContent: 'center', alignItems: 'center'}}>
           <Text style={{color: appColors.black, fontWeight: '600'}}>
-            Bella Meillenia
+            {name}
           </Text>
           <Text style={{fontSize: 12}}>Organisation Name</Text>
         </View>
-        <ChatGirl width={40} height={40} />
+        <Image
+          source={{
+            uri: 'https://dev.memate.com.au/media/' + image,
+          }}
+          style={styles.avatar_}
+          resizeMode="contain"
+        />
+        {/* <ChatGirl width={40} height={40} /> */}
       </View>
 
-      <KeyboardAvoidingView
+      {/* <KeyboardAvoidingView
         style={styles.container}
         // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <FlatList
-            data={messages}
-            keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={false}
-            renderItem={({item}) => <ChatBubble item={item} />}
-            style={{paddingHorizontal: 10}}
-            contentContainerStyle={{paddingBottom: 16}} // Ensures content is not covered by the chatBox
-          />
-        </TouchableWithoutFeedback>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}> */}
+      <View style={styles.container}>
+        <FlatList
+          // ref={flatListRef}
+          data={messages}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          renderItem={({item}) => <ChatBubble item={item} userId={userId} />}
+          style={{paddingHorizontal: 10}}
+          contentContainerStyle={{paddingBottom: 16}} // Ensures content is not covered by the chatBox
+          inverted
+        />
+      </View>
+      {/* </TouchableWithoutFeedback>
+              </KeyboardAvoidingView> */}
 
-        <View style={styles.chatBox}>
-          <AddCircle width={25} height={25} />
-          <TextInput
-            style={styles.input}
-            placeholder="Type a message"
-            placeholderTextColor={appColors.placeholderColor}
-            value={message}
-            onChangeText={setMessage}
-          />
-          <TouchableOpacity
-            style={{}}
-            onPress={() => console.log(`send "${message}" message success!`)}>
-            <SendIcon width={40} height={40} />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+      <View style={styles.chatBox}>
+        <AddCircle width={25} height={25} />
+        <TextInput
+          style={styles.input}
+          placeholder="Type a message"
+          placeholderTextColor={appColors.placeholderColor}
+          value={message}
+          onChangeText={setMessage}
+        />
+        <TouchableOpacity onPress={() => onSendMessage()}>
+          <SendIcon width={40} height={40} />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -137,7 +221,6 @@ const styles = StyleSheet.create({
   containerStyle: {
     flex: 1,
     backgroundColor: appColors.white,
-    paddingHorizontal: 16,
     paddingTop: 16,
   },
   headerStyle: {
@@ -145,13 +228,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+    marginHorizontal: 16,
   },
   chatBox: {
     backgroundColor: appColors.white,
     width: '100%',
-    paddingVertical: 10,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
     justifyContent: 'space-between',
     // bottom: 0
   },
@@ -176,7 +261,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
     borderBottomLeftRadius: 15,
-    marginVertical: 5,
+    marginTop: 5,
   },
   receiver: {
     alignSelf: 'flex-start',
@@ -207,5 +292,10 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 11,
     color: appColors.grey,
+  },
+  avatar_: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
 });

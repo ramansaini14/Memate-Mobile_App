@@ -20,7 +20,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {setGloballyOrgData} from '../../redux/GlobalSlice';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
 import SimpleCalenderIcon from '../../assets/svg/SimpleCalenderIcon';
-import {emitSocket, emitSocketWithAck, getSocket} from '../../socketService';
+import {
+  emitSocket,
+  emitSocketWithAck,
+  emitSocketWithoutCallback,
+  getSocket,
+} from '../../socketService';
 import {useIsFocused} from '@react-navigation/native';
 import PushNotification from 'react-native-push-notification';
 import {selectJobTimer} from '../../redux/TimerSlice';
@@ -90,16 +95,25 @@ const ChooseOrganization = ({navigation}) => {
   const onNextClick = async itemData => {
     console.log('ORG ID ===> ', JSON.stringify(itemData.id));
 
-    // try {
-    //   const payload = {
-    //     user_id: itemData.appuser_id,
-    //   }
-    //   emitSocket("register_user",payload,setMessage)
-    //   // const registerUser = await emitSocketWithAck('register_user', payload);
-    //   // console.log('Response in variable registerUser:', registerUser);
-    // } catch (err) {
-    //   console.error('Error from socket:', err.message);
-    // }
+    try {
+      const payload = {
+        user_id: itemData.appuser_id,
+      };
+      emitSocketWithoutCallback('register_user', payload);
+
+      onSocket('new_message', response => {
+        console.log('new_message ===> ', response);
+        emitSocketWithoutCallback('message_delivered', {
+          message_id: response.id,
+          user_id: itemData.appuser_id,
+        });
+      });
+
+      // const registerUser = await emitSocketWithAck('register_user', payload);
+      // console.log('Response in variable registerUser:', registerUser);
+    } catch (err) {
+      console.error('Error from socket:', err.message);
+    }
 
     await AsyncStorage.setItem('orgId', JSON.stringify(itemData.id));
 

@@ -66,9 +66,7 @@ const ModalCreateChat = ({
                       <TouchableOpacity
                         key={item.id}
                         style={styles.chatCard}
-                        onPress={() =>
-                          navigation.navigate('JobCard', {data: item})
-                        }>
+                        onPress={() => onCreateClick(item)}>
                         {item.avatar ? (
                           <Image
                             source={{
@@ -80,7 +78,7 @@ const ModalCreateChat = ({
                             resizeMode="contain"
                           />
                         ) : (
-                          <ProfilePictureIcon height={60} width={60} />
+                          <ProfilePictureIcon height={40} width={40} />
                         )}
                         <View style={{flex: 1, paddingHorizontal: 8}}>
                           <Text
@@ -99,13 +97,13 @@ const ModalCreateChat = ({
                             Position
                           </Text>
                         </View>
-                        <View style={{flexDirection: 'column'}}>
+                        {/* <View style={{flexDirection: 'column'}}>
                           <TouchableOpacity
                             onPress={() => onCreateClick(item)}
                             style={styles.startButton}>
                             <Text style={styles.closeButtonText}>Start</Text>
                           </TouchableOpacity>
-                        </View>
+                        </View> */}
                       </TouchableOpacity>
                     )
                   }
@@ -186,13 +184,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   avatar_: {
-    width: 60,
-    height: 60,
+    width: 40,
+    height: 40,
     borderRadius: 30,
   },
   chatCard: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginTop: 12,
     alignItems: 'center',
   },
 });
