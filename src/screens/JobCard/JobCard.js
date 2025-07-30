@@ -80,6 +80,7 @@ import {clearPauseStatus, hitPauseJob} from '../../redux/PauseJobSlice';
 import ImagePicker from 'react-native-image-crop-picker';
 import {createAsyncThunk} from '@reduxjs/toolkit';
 import {startCallTimer, stopCallTimer} from '../../services/backgroundService';
+import {emitSocket} from '../../socketService';
 
 const {MeMateTimer} = NativeModules;
 
@@ -1104,6 +1105,23 @@ const JobCard = ({navigation, route}) => {
   //   }
   // },[])
 
+  const onStartChat = () => {
+    // navigation.navigate('MainChatRoom')}
+
+    const payload = {
+      user_id: globallyOrgData.appuser_id,
+      name: jobData.short_description,
+      participants: [jobData.manager],
+      organization_id: globallyOrgData.id,
+      project_id: '',
+      job_id: jobData.id,
+    };
+    console.log('Payload ===> ', payload);
+    emitSocket('create_chat_group', payload, response => {
+      console.log('Chat group created:', response);
+    });
+  };
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
@@ -1623,7 +1641,7 @@ const JobCard = ({navigation, route}) => {
             alignItems: 'center',
             justifyContent: 'center',
           }}
-          onPress={() => navigation.navigate('MainChatRoom')}>
+          onPress={() => onStartChat()}>
           <ChatIconJob />
           <Text style={styles.ChatButton}>Start Chat</Text>
         </TouchableOpacity>

@@ -189,7 +189,10 @@ const JobsScreen = ({navigation, route}) => {
         .filter(item => item.name !== 'All Jobs')
         .reduce(
           (sum, item) =>
-            sum + (item.status == 'p' || item.status == '4' ? 0 : item.total),
+            sum +
+            (item.status == 'p' || item.status == '4' || item.status == '6'
+              ? 0
+              : item.total),
           0,
         );
 

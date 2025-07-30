@@ -21,6 +21,7 @@ import AddCircle from '../../assets/svg/AddCircle';
 import SendIcon from '../../assets/svg/SendIcon';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {emitSocket, getSocket, onSocket} from '../../socketService';
+import {getTimeAgo} from '../../utils/utility';
 
 const ChatBubble = ({item, userId}) => {
   return (
@@ -48,7 +49,7 @@ const ChatBubble = ({item, userId}) => {
               )}
             </View>
 
-            <Text style={styles.timestamp}>11:00</Text>
+            <Text style={styles.timestamp}>{getTimeAgo(item.sent_at)}</Text>
           </View>
         )}
       </View>
@@ -59,6 +60,7 @@ const ChatBubbleGroup = ({item, userId}) => {
   return (
     <View>
       <View style={[item?.sender == userId ? styles.sender : styles.receiver]}>
+        <View></View>
         <Text
           style={
             item?.sender == userId
@@ -189,7 +191,13 @@ const MainChatRoom = ({navigation, route}) => {
           data={messages}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
-          renderItem={({item}) => <ChatBubble item={item} userId={userId} />}
+          renderItem={({item}) =>
+            isGroup ? (
+              <ChatBubble item={item} userId={userId} />
+            ) : (
+              <ChatBubbleGroup item={item} userId={userId} />
+            )
+          }
           style={{paddingHorizontal: 10}}
           contentContainerStyle={{paddingBottom: 16}} // Ensures content is not covered by the chatBox
           inverted
@@ -255,7 +263,7 @@ const styles = StyleSheet.create({
   },
   sender: {
     alignSelf: 'flex-end',
-    backgroundColor: appColors.white,
+    backgroundColor: appColors.lightGrey,
     maxWidth: '80%',
     padding: 10,
     borderTopLeftRadius: 15,
@@ -265,7 +273,7 @@ const styles = StyleSheet.create({
   },
   receiver: {
     alignSelf: 'flex-start',
-    backgroundColor: appColors.black,
+    backgroundColor: appColors.white,
     maxWidth: '80%',
     padding: 10,
     borderTopRightRadius: 15,
@@ -276,7 +284,7 @@ const styles = StyleSheet.create({
   senderMessage: {
     fontSize: 13,
     lineHeight: 17,
-    color: appColors.white,
+    color: appColors.black,
   },
   receiverMessage: {
     fontSize: 13,

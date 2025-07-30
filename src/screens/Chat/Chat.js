@@ -25,6 +25,9 @@ import {
 import DummyUserIcon from '../../assets/svg/DummyUserIcon';
 import ProfilePictureIcon from '../../assets/svg/ProfilePictureIcon';
 import {useIsFocused} from '@react-navigation/native';
+import {SwipeListView} from 'react-native-swipe-list-view';
+import BagIcon from '../../assets/svg/BagIcon';
+import BagIconTrans from '../../assets/svg/BagIconTrans';
 
 const Chat = ({navigation}) => {
   const globallyOrgData = useSelector(
@@ -33,17 +36,23 @@ const Chat = ({navigation}) => {
 
   const [managers, setManagers] = useState([]);
 
+  const [selectedChat, setSelectedChat] = useState(0);
+
   const [orgData, setOrgData] = useState(null);
   const [name, setName] = useState('');
+  const [chatData, setChatData] = useState([]);
   const [chatGroups, setChatGroups] = useState('');
   const [createChatGroup, setCreateChatGroup] = useState(null);
   const [selectUser, setSelectUser] = useState(null);
 
   const isFocused = useIsFocused();
 
-  // useEffect(() => {
-  //   console.log('Chat Groups ===> ', chatGroups);
-  // }, [chatGroups]);
+  useEffect(() => {
+    console.log('Chat Groups ===> ', chatData);
+    if (chatData.status == 'success') {
+      setChatGroups(chatData.chat_groups);
+    }
+  }, [chatData]);
 
   useEffect(() => {
     if (isFocused) {
@@ -62,7 +71,7 @@ const Chat = ({navigation}) => {
     emitSocket(
       'get_user_chat_groups',
       {user_id: globallyOrgData.appuser_id},
-      setChatGroups,
+      setChatData,
     );
   }, [isFocused]);
 
@@ -104,6 +113,96 @@ const Chat = ({navigation}) => {
     }
   }, [createChatGroup]);
 
+  // const chatData = [
+  //   {
+  //     id: '1',
+  //     title: 'Business Plan Template',
+  //     subtitle: 'THE-JB-113-234998',
+  //     time: '17:32',
+  //     badge: 2,
+  //     avatars: [
+  //       'https://picsum.photos/200/300',
+  //       'https://picsum.photos/200/300',
+  //       'https://picsum.photos/200/300',
+  //     ],
+  //     more: 4,
+  //   },
+  //   {
+  //     id: '2',
+  //     title: 'SMM theAd Templates',
+  //     subtitle: 'THE-JB-113-234998',
+  //     time: '17:32',
+  //     avatars: [
+  //       'https://picsum.photos/200/300',
+  //       'https://picsum.photos/200/300',
+  //       'https://picsum.photos/200/300',
+  //     ],
+  //     more: 0,
+  //   },
+  //   {
+  //     id: '3',
+  //     title: 'SMM theAd Templates',
+  //     subtitle: 'THE-JB-113-234998',
+  //     time: '17:32',
+  //     avatars: [
+  //       'https://picsum.photos/200/300',
+  //       'https://picsum.photos/200/300',
+  //       'https://picsum.photos/200/300',
+  //     ],
+  //     more: 0,
+  //   },
+  // ];
+
+  const renderItem = ({item}) => (
+    console.log('Item ===> ', item),
+    (
+      <View style={styles.rowFront}>
+        <View style={styles.leftIcon}>
+          <View style={styles.circleIcon}>
+            <BagIconTrans />
+          </View>
+          <View style={styles.middleContent}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={styles.subtitle}>{item.job_number}</Text>
+            <View style={styles.avatarsRow}>
+              {item.participants.map((item1, index) => (
+                <Image
+                  key={index}
+                  source={{
+                    uri: 'https://dev.memate.com.au/media/' + item1.photo,
+                  }}
+                  style={styles.avatar}
+                />
+              ))}
+              {item.more > 0 && (
+                <Text style={styles.moreText}>+{item.more}</Text>
+              )}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.rightInfo}>
+          <Text style={styles.time}>{item.time}</Text>
+          {item.badge > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.badge}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    )
+  );
+
+  const renderHiddenItem = () => (
+    <View style={styles.rowBack}>
+      <TouchableOpacity style={styles.archiveButton}>
+        <Text style={{color: '#fff'}}>Archive</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.containerStyle}>
       <View style={styles.headerStyle}>
@@ -124,7 +223,7 @@ const Chat = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </View>
-      <View style={{flex: 1, padding: 16}}>
+      <View style={{flex: 1, paddingHorizontal: 16, marginTop: 8}}>
         <View>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <Text
@@ -234,6 +333,55 @@ const Chat = ({navigation}) => {
           )}
         </View>
       </View>
+      <Text style={styles.personalStyle}>Job Chats</Text>
+      <View
+        style={{
+          borderRadius: 24,
+          borderWidth: 1,
+          borderColor: appColors.lightGrey,
+          flexDirection: 'row',
+          marginTop: 16,
+        }}>
+        <Text
+          style={{
+            fontSize: 14,
+            color: selectedChat == 0 ? appColors.white : appColors.black,
+            fontWeight: '600',
+            backgroundColor:
+              selectedChat == 0 ? appColors.black : appColors.white,
+            padding: 12,
+            borderRadius: 24,
+            flex: 1,
+            textAlign: 'center',
+          }}
+          onPress={() => setSelectedChat(0)}>
+          Active
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: selectedChat == 1 ? appColors.white : appColors.black,
+            fontWeight: '600',
+            backgroundColor:
+              selectedChat == 1 ? appColors.black : appColors.white,
+            padding: 12,
+            borderRadius: 24,
+            flex: 1,
+            textAlign: 'center',
+          }}
+          onPress={() => setSelectedChat(1)}>
+          Archive
+        </Text>
+      </View>
+      <ScrollView style={{flex: 1}} nestedScrollEnabled={true}>
+        <SwipeListView
+          data={chatGroups}
+          renderItem={renderItem}
+          renderHiddenItem={renderHiddenItem}
+          rightOpenValue={-80}
+          keyExtractor={item => item.id}
+        />
+      </ScrollView>
       {orgData && (
         <ModalCreateChat
           modalVisible={visibleModal}
@@ -301,5 +449,96 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
+  },
+
+  rowFront: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 12,
+    alignItems: 'center',
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  rowBack: {
+    alignItems: 'center',
+    backgroundColor: '#222',
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingRight: 20,
+    flexDirection: 'row',
+  },
+  archiveButton: {
+    width: 70,
+    height: 50,
+    backgroundColor: '#222',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  leftIcon: {
+    marginRight: 12,
+    flexDirection: 'row',
+  },
+  circleIcon: {
+    backgroundColor: '#FDE68A',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  middleContent: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  title: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: '#888',
+  },
+  avatarsRow: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  avatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#fff',
+    position: 'relative',
+    marginLeft: 5,
+  },
+  moreText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 5,
+    alignSelf: 'center',
+  },
+  rightInfo: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 50,
+  },
+  time: {
+    fontSize: 12,
+    color: '#666',
+  },
+  badge: {
+    backgroundColor: '#FACC15',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#000',
+    fontWeight: 'bold',
   },
 });
