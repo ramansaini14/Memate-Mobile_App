@@ -134,7 +134,9 @@ const TaskComponent = ({itemData}) => {
                   fontFamily: 'SF-Pro-Text-Semibold',
                   fontSize: 11,
                 }}>
-                {moment.unix(parseInt(itemData.start_date, 10)).format('DD.MM.YYYY')}
+                {moment
+                  .unix(parseInt(itemData.start_date, 10))
+                  .format('DD.MM.YYYY')}
               </Text>
               <Text
                 style={{
@@ -173,7 +175,9 @@ const TaskComponent = ({itemData}) => {
                   fontFamily: 'SF-Pro-Text-Semibold',
                   fontSize: 12,
                 }}>
-                {moment.unix(parseInt(itemData.end_date, 10)).format('DD.MM.YYYY')}
+                {moment
+                  .unix(parseInt(itemData.end_date, 10))
+                  .format('DD.MM.YYYY')}
               </Text>
               <Text
                 style={{

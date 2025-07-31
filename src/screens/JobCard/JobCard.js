@@ -1118,7 +1118,16 @@ const JobCard = ({navigation, route}) => {
     };
     console.log('Payload ===> ', payload);
     emitSocket('create_chat_group', payload, response => {
-      console.log('Chat group created:', response);
+      if (response.status === 'success') {
+        console.log('Chat group created successfully:', response.data);
+        navigation.navigate('MainChatRoom', {
+          userId: globallyOrgData.appuser_id,
+          groupId: response.chat_group_id,
+          name: jobData.short_description,
+          image: null,
+          isGroup: true,
+        });
+      }
     });
   };
 

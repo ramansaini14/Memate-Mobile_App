@@ -22,6 +22,11 @@ import SendIcon from '../../assets/svg/SendIcon';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {emitSocket, getSocket, onSocket} from '../../socketService';
 import {getTimeAgo} from '../../utils/utility';
+import CalenderIcon from '../../assets/svg/CalenderIcon';
+import MenuIcon from '../../assets/svg/MenuIcon';
+import NotificationIcon from '../../assets/svg/NotificationIcon';
+import ProfilePictureIcon from '../../assets/svg/ProfilePictureIcon';
+import {useSelector} from 'react-redux';
 
 const ChatBubble = ({item, userId}) => {
   return (
@@ -56,42 +61,83 @@ const ChatBubble = ({item, userId}) => {
     </View>
   );
 };
-const ChatBubbleGroup = ({item, userId}) => {
+const ChatBubbleGroup = ({item, userId, orgName}) => {
   return (
     <View>
-      <View style={[item?.sender == userId ? styles.sender : styles.receiver]}>
-        <View></View>
-        <Text
-          style={
-            item?.sender == userId
-              ? styles.receiverMessage
-              : styles.senderMessage
-          }>
-          {item?.message}
-        </Text>
-      </View>
-      <View style={styles.metaData}>
-        {item?.sender == userId && (
-          <View style={{flexDirection: 'row', alignItems: 'stretch'}}>
-            {/* {item?.isSender && (
-            <View style={{marginTop: 2}}>
-              {item?.seen ? ( */}
-            <DoubleTick width={18} height={18} />
-            {/* ) : (
-                <SingleTick width={18} height={18} />
-              )}
-            </View>
-          )} */}
-            <Text style={styles.timestamp}>11:00</Text>
+      {item.sender == userId ? (
+        <View>
+          <View style={styles.sender}>
+            <Text style={styles.receiverMessage}>{item?.message}</Text>
           </View>
-        )}
-      </View>
+          <View style={styles.metaData}>
+            {item?.sender == userId && (
+              <View style={{flexDirection: 'row', alignItems: 'stretch'}}>
+                <View style={{marginTop: 2}}>
+                  {item?.read_by?.length > 1 ? (
+                    <DoubleTick width={18} height={18} />
+                  ) : item?.delivered_to?.length > 1 ? (
+                    <DoubleTick width={18} height={18} fill={'#75808A'} />
+                  ) : (
+                    <SingleTick width={18} height={18} />
+                  )}
+                </View>
+
+                <Text style={styles.timestamp}>{getTimeAgo(item.sent_at)}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      ) : (
+        <View>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            {item.sender_photo ? (
+              <Image
+                source={{
+                  uri: 'https://dev.memate.com.au' + item.sender_photo,
+                }}
+                style={styles.avatar_}
+                resizeMode="contain"
+              />
+            ) : (
+              <ProfilePictureIcon height={40} width={40} />
+            )}
+            <View style={{marginLeft: 8}}>
+              <Text
+                style={{
+                  fontWeight: '600',
+                  color: appColors.black,
+                  fontSize: 12,
+                }}>
+                {item.sender_name}
+              </Text>
+              <Text style={{color: appColors.black, fontSize: 12}}>
+                {orgName}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.receiver, {marginLeft: 48}]}>
+            <View></View>
+            <Text style={styles.senderMessage}>{item?.message}</Text>
+          </View>
+          <View style={styles.metaData}>
+            {item?.sender == userId && (
+              <View style={{flexDirection: 'row', alignItems: 'stretch'}}>
+                <Text style={styles.timestamp}>11:00</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   );
 };
 
 const MainChatRoom = ({navigation, route}) => {
   const {userId, groupId, name, image, isGroup} = route.params;
+
+  const globallyOrgData = useSelector(
+    state => state.globalReducer.globallyOrgData,
+  );
 
   const flatListRef = useRef();
 
@@ -111,10 +157,10 @@ const MainChatRoom = ({navigation, route}) => {
     onSocket('new_message', response => {
       console.log('new_message ===> ', response);
 
-      if (response.group_id === groupId) {
+      if (response.chat_group === groupId) {
         setMessages(prevData => [response, ...prevData]);
         emitSocketWithoutCallback('message_read', {
-          message_id: response.id,
+          message_ids: [response.id],
           user_id: userId,
         });
       }
@@ -152,7 +198,9 @@ const MainChatRoom = ({navigation, route}) => {
 
     emitSocket('send_message', payload, response => {
       console.log('Message sent successfully:', response);
-      setMessages(prevData => [response.sent_message, ...prevData]);
+      if (response.status === 'success') {
+        setMessages(prevData => [response.sent_message, ...prevData]);
+      }
     });
 
     setMessage(''); // Clear the input field after sending
@@ -168,15 +216,32 @@ const MainChatRoom = ({navigation, route}) => {
           <Text style={{color: appColors.black, fontWeight: '600'}}>
             {name}
           </Text>
-          <Text style={{fontSize: 12}}>Organisation Name</Text>
         </View>
-        <Image
-          source={{
-            uri: 'https://dev.memate.com.au/media/' + image,
-          }}
-          style={styles.avatar_}
-          resizeMode="contain"
-        />
+        {image != null ? (
+          <Image
+            source={{
+              uri: 'https://dev.memate.com.au/media/' + image,
+            }}
+            style={styles.avatar_}
+            resizeMode="contain"
+          />
+        ) : (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <TouchableOpacity style={{marginHorizontal: 8}}>
+              <NotificationIcon />
+            </TouchableOpacity>
+            <TouchableOpacity style={{marginHorizontal: 8}}>
+              <CalenderIcon />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Menu')}>
+              <MenuIcon />
+            </TouchableOpacity>
+          </View>
+        )}
         {/* <ChatGirl width={40} height={40} /> */}
       </View>
 
@@ -193,9 +258,13 @@ const MainChatRoom = ({navigation, route}) => {
           showsVerticalScrollIndicator={false}
           renderItem={({item}) =>
             isGroup ? (
-              <ChatBubble item={item} userId={userId} />
+              <ChatBubbleGroup
+                item={item}
+                userId={userId}
+                orgName={globallyOrgData.name}
+              />
             ) : (
-              <ChatBubbleGroup item={item} userId={userId} />
+              <ChatBubble item={item} userId={userId} />
             )
           }
           style={{paddingHorizontal: 10}}

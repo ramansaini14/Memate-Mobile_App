@@ -17,4 +17,5 @@ export const appColors = {
   homeBlack: '#191C1F',
   jobLightGreen: '#DAFD90',
   lightPurple: '#EECBFF',
+  tickGreen: '#66c570',
 };

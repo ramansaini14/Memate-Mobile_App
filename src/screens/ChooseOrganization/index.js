@@ -20,12 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {setGloballyOrgData} from '../../redux/GlobalSlice';
 import CalenderIcon from '../../assets/svg/CalenderIcon';
 import SimpleCalenderIcon from '../../assets/svg/SimpleCalenderIcon';
-import {
-  emitSocket,
-  emitSocketWithAck,
-  emitSocketWithoutCallback,
-  getSocket,
-} from '../../socketService';
+import {emitSocketWithoutCallback} from '../../socketService';
 import {useIsFocused} from '@react-navigation/native';
 import PushNotification from 'react-native-push-notification';
 import {selectJobTimer} from '../../redux/TimerSlice';
@@ -98,6 +93,7 @@ const ChooseOrganization = ({navigation}) => {
     try {
       const payload = {
         user_id: itemData.appuser_id,
+        org_id: itemData.id,
       };
       emitSocketWithoutCallback('register_user', payload);
 

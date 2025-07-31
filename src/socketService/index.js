@@ -29,7 +29,14 @@ export const disconnectSocket = () => {
 };
 
 export const emitSocket = (event, data, callback) => {
-  console.log('event ===> ', event, '  socket ====> ', socket);
+  console.log(
+    'event ===> ',
+    event,
+    '  socket ====> ',
+    socket,
+    ' data ===> ',
+    data,
+  );
   if (socket) {
     socket.emit(event, data, response => {
       callback(response);
