@@ -9,8 +9,8 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import MainLogo from '../../assets/svg/MainLogo';
 
 const SignInWithPhone = ({navigation}) => {
-  const [phoneNumber, setPhoneNumber] = useState('91');
-  const [countryCode, setCountryCode] = useState('IN');
+  const [phoneNumber, setPhoneNumber] = useState('61');
+  const [countryCode, setCountryCode] = useState('AU');
 
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
 
@@ -101,7 +101,7 @@ const SignInWithPhone = ({navigation}) => {
       <TouchableOpacity
         style={styles.signInStyle}
         onPress={() => {
-          navigation.navigate('SignInWithEmail',{from:0});
+          navigation.navigate('SignInWithEmail', {from: 0});
         }}>
         <Text style={{color: appColors.white, fontWeight: '700', fontSize: 18}}>
           Sign in with Email

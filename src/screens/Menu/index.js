@@ -33,7 +33,7 @@ const Menu = ({navigation}) => {
   const dispatch = useDispatch();
 
   const clearToken = async () => {
-    await AsyncStorage.clear();
+    await AsyncStorage.removeItem('token');
     navigation.reset({
       index: 0,
       routes: [{name: 'StartScreen'}],
@@ -63,13 +63,19 @@ const Menu = ({navigation}) => {
 
       {profile != null && (
         <View style={{alignItems: 'center'}}>
-          {profile.has_photo?<Image
-            source={{uri: profile.photo}}
-            style={styles.avatar_}
-            resizeMode="contain"
-          />:<ProfileDummy width={120} height={120}/>}
+          {profile.has_photo ? (
+            <Image
+              source={{uri: profile.photo}}
+              style={styles.avatar_}
+              resizeMode="contain"
+            />
+          ) : (
+            <ProfileDummy width={120} height={120} />
+          )}
 
-          <Text style={styles.usernameStyle}>{profile.first_name} {profile.last_name}</Text>
+          <Text style={styles.usernameStyle}>
+            {profile.first_name} {profile.last_name}
+          </Text>
           {/* <Text style={styles.smallTextStyle}>Designer</Text> */}
         </View>
       )}
@@ -159,33 +165,32 @@ const Menu = ({navigation}) => {
             </TouchableOpacity>
           </View>
           <View style={{}}>
-          <TouchableOpacity 
-          // onPress={() => navigation.navigate('BottomBar')}
-          >
-            <View
-              style={{
-                backgroundColor: appColors.black,
-                marginHorizontal: 16,
-                borderRadius: 30,
-                marginTop: 32,
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexDirection: 'row',
-                paddingVertical: 16,
-                borderWidth: 1,
-                borderColor: appColors.grey,
-              }}>
-              <RateStar />
-              <Text style={styles.rateTextStyle}>Rate MeMate</Text>
-            </View>
-          </TouchableOpacity>
-          <Text
-            style={styles.termsStyle}
-            onPress={() => navigation.navigate('Conditions')}>
-            Terms and Conditions
-          </Text>
+            <TouchableOpacity
+            // onPress={() => navigation.navigate('BottomBar')}
+            >
+              <View
+                style={{
+                  backgroundColor: appColors.black,
+                  marginHorizontal: 16,
+                  borderRadius: 30,
+                  marginTop: 32,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  paddingVertical: 16,
+                  borderWidth: 1,
+                  borderColor: appColors.grey,
+                }}>
+                <RateStar />
+                <Text style={styles.rateTextStyle}>Rate MeMate</Text>
+              </View>
+            </TouchableOpacity>
+            <Text
+              style={styles.termsStyle}
+              onPress={() => navigation.navigate('Conditions')}>
+              Terms and Conditions
+            </Text>
           </View>
-          
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -209,7 +214,7 @@ const styles = StyleSheet.create({
     fontFamily: 'SF-Pro',
     fontWeight: '600',
     fontSize: 20,
-    marginTop:8
+    marginTop: 8,
   },
   smallTextStyle: {
     fontSize: 12,

@@ -8,25 +8,26 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { appColors } from '../../utils/appColors';
+import React, {useEffect, useState} from 'react';
+import {appColors} from '../../utils/appColors';
 import OTPTextView from 'react-native-otp-textinput';
 import MainLogo from '../../assets/svg/MainLogo';
-import { useDispatch, useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {
   clearVerifyEmailCodeSlice,
   hitVerifyEmailCode,
 } from '../../redux/VerifyEmailCodeSlice';
-import { clearVerifyEmailSlice } from '../../redux/VerifyEmailSlice';
+import {clearVerifyEmailSlice} from '../../redux/VerifyEmailSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { clearLoginData, loginUser } from '../../redux/loginSlice';
+import {clearLoginData, loginUser} from '../../redux/loginSlice';
 import BackIcon from '../../assets/svg/BackIcon';
-import { OtpInput } from 'react-native-otp-entry';
+import {OtpInput} from 'react-native-otp-entry';
 import * as Keychain from 'react-native-keychain';
 import FaceId from '../../assets/svg/FaceId.js';
 
-const LoginPin = ({ navigation, route }) => {
-  const { email, from,isFacelock } = route.params;
+const LoginPin = ({navigation, route}) => {
+  const {email, from, isFacelock} = route.params;
+  const [myEmail, setMyEmail] = useState(email);
 
   const dispatch = useDispatch();
 
@@ -35,11 +36,34 @@ const LoginPin = ({ navigation, route }) => {
   );
 
   const responseLogin = useSelector(state => state.loginReducer.data);
-  const { error } = useSelector(state => state.verifyEmailReducer);
+  const {error} = useSelector(state => state.verifyEmailReducer);
 
   const [otp, setOtp] = useState('');
 
-  const [faceLogin,setFaceLgin] = useState(false) 
+  const [faceLogin, setFaceLgin] = useState(false);
+
+  useEffect(() => {
+    const getExistingMail = async () => {
+      try {
+        const existingEmail = await AsyncStorage.getItem('email');
+        if (existingEmail) {
+          setMyEmail(existingEmail);
+          setFaceLgin(true);
+        } else {
+          setMyEmail(email);
+        }
+      } catch (error) {
+        console.error('Error retrieving email from AsyncStorage:', error);
+      }
+    };
+    getExistingMail();
+  }, []);
+
+  const saveEmail = async () => {
+    console.log('my Email ===> ', myEmail);
+    await AsyncStorage.setItem('email', myEmail);
+    await AsyncStorage.setItem('pin', otp);
+  };
 
   useEffect(() => {
     if (responseVerifyCode != null) {
@@ -49,7 +73,7 @@ const LoginPin = ({ navigation, route }) => {
         dispatch(clearVerifyEmailCodeSlice());
         navigation.reset({
           index: 0,
-          routes: [{ name: 'ChooseOrganization' }],
+          routes: [{name: 'ChooseOrganization'}],
         });
         dispatch(clearVerifyEmailCodeSlice());
       }
@@ -63,21 +87,21 @@ const LoginPin = ({ navigation, route }) => {
       dispatch(clearLoginData());
       return;
     } else if (responseLogin != null) {
-      if(faceLogin){
+      console.log('faceLogin ===> ', faceLogin);
+      if (faceLogin) {
         saveToken(responseLogin.access);
+        saveEmail();
         navigation.reset({
           index: 0,
-          routes: [{ name: 'ChooseOrganization' }],
+          routes: [{name: 'ChooseOrganization'}],
         });
         dispatch(clearVerifyEmailSlice());
         dispatch(clearVerifyEmailCodeSlice());
         dispatch(clearVerifyEmailCodeSlice());
         dispatch(clearLoginData());
+      } else {
+        showFaceIDAlert();
       }
-      else{
-        showFaceIDAlert()
-      }
-      
     }
   }, [responseLogin]);
 
@@ -87,8 +111,6 @@ const LoginPin = ({ navigation, route }) => {
   };
 
   const onSubmitClick = () => {
-
-    setFaceLgin(false)
     if (otp.length < 6) {
       Alert.alert('MeMate', 'Please enter valid otp');
     } else {
@@ -108,7 +130,6 @@ const LoginPin = ({ navigation, route }) => {
       }
     }
   };
-  
 
   const handleAuthUsingFaceId = async () => {
     try {
@@ -127,23 +148,26 @@ const LoginPin = ({ navigation, route }) => {
   };
 
   /**
-  * @param {string} email 
-  * @param {string} pin 
-  * @callback {handles face id login payload data}
-  * @returns {void} <void>
-  * @handles {Face ID and fingerPrint authentication for biometrics authentication for ios and android}
-  */
-  const handleFaceIdLoginPayloadData = async (emailFromKeychain, pinFromKeychain) => {
-    setFaceLgin(true)
+   * @param {string} email
+   * @param {string} pin
+   * @callback {handles face id login payload data}
+   * @returns {void} <void>
+   * @handles {Face ID and fingerPrint authentication for biometrics authentication for ios and android}
+   */
+  const handleFaceIdLoginPayloadData = async (
+    emailFromKeychain,
+    pinFromKeychain,
+  ) => {
+    setFaceLgin(true);
     setOtp(pinFromKeychain);
     const payload = {
       device_id: 'Abc',
       email: emailFromKeychain,
-      password: pinFromKeychain
-    }
+      password: pinFromKeychain,
+    };
     console.log('Payload from Keychain to login ===> ', payload);
     dispatch(loginUser(payload));
-  }
+  };
 
   useEffect(() => {
     console.log('Error Error ===>', error);
@@ -155,7 +179,7 @@ const LoginPin = ({ navigation, route }) => {
     dispatch(clearVerifyEmailSlice());
   }, [error]);
 
-// Register face id
+  // Register face id
   const registerFaceID = async () => {
     try {
       await Keychain.setGenericPassword(email, otp, {
@@ -163,9 +187,10 @@ const LoginPin = ({ navigation, route }) => {
         accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED,
         authenticationPrompt: 'Authenticate to register Face ID',
       });
-  
+
       const credentials = await Keychain.getGenericPassword();
       if (credentials) {
+        saveEmail();
         console.log('Face ID registered successfully');
         return true;
       } else {
@@ -184,12 +209,12 @@ const LoginPin = ({ navigation, route }) => {
         Alert.alert(
           'Not Available',
           'Face ID/Touch ID is not available on this device.',
-          [{ text: 'OK', onPress: () => savePinCreated() }],
-          { cancelable: false }
+          [{text: 'OK', onPress: () => savePinCreated()}],
+          {cancelable: false},
         );
         return;
       }
-  
+
       const attemptFaceIDRegistration = async () => {
         try {
           const success = await registerFaceID();
@@ -198,8 +223,8 @@ const LoginPin = ({ navigation, route }) => {
             Alert.alert(
               'Success',
               'Face ID has been registered successfully!',
-              [{ text: 'OK', onPress: () => savePinCreated() }],
-              { cancelable: false }
+              [{text: 'OK', onPress: () => savePinCreated()}],
+              {cancelable: false},
             );
           }
         } catch (error) {
@@ -210,7 +235,7 @@ const LoginPin = ({ navigation, route }) => {
               {
                 text: 'Try Again',
                 onPress: () => {
-                  attemptFaceIDRegistration(); 
+                  attemptFaceIDRegistration();
                 },
               },
               {
@@ -219,11 +244,11 @@ const LoginPin = ({ navigation, route }) => {
                 onPress: () => savePinCreated(),
               },
             ],
-            { cancelable: false }
+            {cancelable: false},
           );
         }
       };
-  
+
       Alert.alert(
         'Face ID Registration',
         'Do you want to register Face ID for quick and secure access?',
@@ -238,7 +263,7 @@ const LoginPin = ({ navigation, route }) => {
             onPress: attemptFaceIDRegistration,
           },
         ],
-        { cancelable: false }
+        {cancelable: false},
       );
     } catch (error) {
       console.log('Error checking biometric availability:', error);
@@ -250,7 +275,7 @@ const LoginPin = ({ navigation, route }) => {
     saveToken(responseLogin.access);
     navigation.reset({
       index: 0,
-      routes: [{ name: 'ChooseOrganization' }],
+      routes: [{name: 'ChooseOrganization'}],
     });
     dispatch(clearVerifyEmailSlice());
     dispatch(clearVerifyEmailCodeSlice());
@@ -273,7 +298,7 @@ const LoginPin = ({ navigation, route }) => {
 
       {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss}> */}
       <ScrollView style={styles.innerContainer}>
-        <View style={{ marginTop: 150, alignSelf: 'center' }}>
+        <View style={{marginTop: 150, alignSelf: 'center'}}>
           <MainLogo width={200} />
         </View>
         <View style={styles.logoStyle}>
@@ -298,7 +323,7 @@ const LoginPin = ({ navigation, route }) => {
             onTextChange={text => {
               setOtp(text);
               if (text.length === 6) {
-                Keyboard.dismiss(); 
+                Keyboard.dismiss();
               }
             }}
             autoFocus={true}
@@ -308,9 +333,8 @@ const LoginPin = ({ navigation, route }) => {
               pinCodeContainerStyle: styles.roundedTextInput,
               focusedPinCodeContainerStyle: styles.roundedTextInput,
               pinCodeTextStyle: styles.otpTextInput,
-              focusStickStyle: { backgroundColor: appColors.borderLightGrey }
-            }
-            }
+              focusStickStyle: {backgroundColor: appColors.borderLightGrey},
+            }}
           />
         </View>
 
@@ -327,22 +351,37 @@ const LoginPin = ({ navigation, route }) => {
             Sign In
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={{ marginTop: 16, alignItems: 'center' }} onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={{ color: appColors.white, textAlign: 'right', width: '100%', marginRight: 42 }}>Forgot Pin</Text>
+        <TouchableOpacity
+          style={{marginTop: 16, alignItems: 'center'}}
+          onPress={() => navigation.navigate('ForgotPassword')}>
+          <Text
+            style={{
+              color: appColors.white,
+              textAlign: 'right',
+              width: '100%',
+              marginRight: 42,
+            }}>
+            Forgot Pin
+          </Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={{ alignItems: 'center', marginTop: 16 }} onPress={() => {
-          handleAuthUsingFaceId()
-        }}><FaceId />
+
+        <TouchableOpacity
+          style={{alignItems: 'center', marginTop: 16}}
+          onPress={() => {
+            handleAuthUsingFaceId();
+          }}>
+          <FaceId />
         </TouchableOpacity>
       </ScrollView>
       {/* </TouchableWithoutFeedback> */}
       <TouchableOpacity
         style={styles.signInPhoneStyle}
         onPress={() => {
-          navigation.navigate('SignIn');
+          // navigation.navigate('SignIn');
+
+          Alert.alert('MeMate', 'In progress, please try again later');
         }}>
-        <Text style={{ color: appColors.white, fontWeight: '700', fontSize: 16 }}>
+        <Text style={{color: appColors.white, fontWeight: '700', fontSize: 16}}>
           Sign in with Phone
         </Text>
       </TouchableOpacity>
@@ -440,7 +479,7 @@ const styles = StyleSheet.create({
     backgroundColor: appColors.inputBackground,
   },
   otpTextInput: {
-    color: appColors.white
+    color: appColors.white,
   },
   container: {
     justifyContent: 'center',
